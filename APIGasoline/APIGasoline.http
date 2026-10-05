@@ -1,0 +1,55 @@
+@host = http://localhost:5234
+
+### 1. Listar todos los usuarios
+GET {{host}}/api/usuarios
+Accept: application/json
+
+### 2. Crear un usuario
+POST {{host}}/api/usuarios
+Content-Type: application/json
+
+{
+  "usuarioId": 1,
+  "email": "vic@ejemplo.com",
+  "estado": "activo"
+}
+
+### 3. Obtener un usuario por id
+GET {{host}}/api/usuarios/1
+Accept: application/json
+
+### 4. Actualizar un usuario
+PUT {{host}}/api/usuarios/1
+Content-Type: application/json
+
+{
+  "email": "vic.nuevo@ejemplo.com",
+  "estado": "inactivo"
+}
+
+### 5. Probar conflicto (409): crear otra vez el mismo id
+POST {{host}}/api/usuarios
+Content-Type: application/json
+
+{
+  "usuarioId": 1,
+  "email": "otro@ejemplo.com",
+  "estado": "activo"
+}
+
+### 6. Probar validación (400): email inválido
+POST {{host}}/api/usuarios
+Content-Type: application/json
+
+{
+  "usuarioId": 2,
+  "email": "esto-no-es-email",
+  "estado": "activo"
+}
+
+### 7. Eliminar un usuario
+DELETE {{host}}/api/usuarios/1
+
+### 8. Probar no encontrado (404)
+GET {{host}}/api/usuarios/1
+Accept: application/json

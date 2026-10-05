@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="APIGasoline.Application/APIGasoline.Application.csproj" Id="1783c90d-29c2-451c-852f-5c1316bd7f67" />
+  <Project Path="APIGasoline.Domain/APIGasoline.Domain.csproj" Id="881ef6b4-de21-4c1c-a539-15254d7a7b4e" />
+  <Project Path="APIGasoline.Infrastructure/APIGasoline.Infrastructure.csproj" Id="60afb146-e7dc-42f8-8609-27ca36ff1c01" />
+  <Project Path="APIGasoline/APIGasoline.csproj" />
+</Solution>
