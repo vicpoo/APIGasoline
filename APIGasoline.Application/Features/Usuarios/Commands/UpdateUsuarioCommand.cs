@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using APIGasoline.Application.Common.Exceptions;
+﻿using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Features.Usuarios.DTOs;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
@@ -28,13 +25,12 @@ public class UpdateUsuarioCommandHandler : IRequestHandler<UpdateUsuarioCommand,
         var usuario = await _unitOfWork.Usuarios.GetByIdAsync(request.UsuarioId, cancellationToken)
             ?? throw new NotFoundException($"No existe un usuario con el id {request.UsuarioId}.");
 
-        var email = request.Email.Trim();
+        // El dominio valida y normaliza los datos
+        usuario.CambiarEmail(request.Email);
+        usuario.CambiarEstado(request.Estado);
 
-        if (await _unitOfWork.Usuarios.EmailExistsAsync(email, request.UsuarioId, cancellationToken))
-            throw new ConflictException($"Ya existe otro usuario con el email '{email}'.");
-
-        usuario.Email = email;
-        usuario.Estado = request.Estado;
+        if (await _unitOfWork.Usuarios.EmailExistsAsync(usuario.Email, usuario.UsuarioId, cancellationToken))
+            throw new ConflictException($"Ya existe otro usuario con el email '{usuario.Email}'.");
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

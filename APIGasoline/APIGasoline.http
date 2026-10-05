@@ -9,8 +9,8 @@ POST {{host}}/api/usuarios
 Content-Type: application/json
 
 {
-  "usuarioId": 1,
   "email": "vic@ejemplo.com",
+  "password": "Gasolina2026",
   "estado": "activo"
 }
 
@@ -27,13 +27,13 @@ Content-Type: application/json
   "estado": "inactivo"
 }
 
-### 5. Probar conflicto (409): crear otra vez el mismo id
+### 5. Probar conflicto (409): email repetido
 POST {{host}}/api/usuarios
 Content-Type: application/json
 
 {
-  "usuarioId": 1,
-  "email": "otro@ejemplo.com",
+  "email": "vic.nuevo@ejemplo.com",
+  "password": "OtraClave123",
   "estado": "activo"
 }
 
@@ -42,8 +42,8 @@ POST {{host}}/api/usuarios
 Content-Type: application/json
 
 {
-  "usuarioId": 2,
   "email": "esto-no-es-email",
+  "password": "Gasolina2026",
   "estado": "activo"
 }
 
@@ -52,4 +52,1055 @@ DELETE {{host}}/api/usuarios/1
 
 ### 8. Probar no encontrado (404)
 GET {{host}}/api/usuarios/1
+Accept: application/json
+
+
+# =========================== ROLES ===========================
+
+### R1. Listar todos los roles
+GET {{host}}/api/roles
+Accept: application/json
+
+### R2. Crear un rol
+POST {{host}}/api/roles
+Content-Type: application/json
+
+{
+  "nombre": "Operador",
+  "descripcion": "Registra viajes y cargas de combustible",
+  "activo": true
+}
+
+### R3. Obtener un rol por id
+GET {{host}}/api/roles/1
+Accept: application/json
+
+### R4. Actualizar un rol
+PUT {{host}}/api/roles/1
+Content-Type: application/json
+
+{
+  "nombre": "Operador",
+  "descripcion": "Usa vehículos de la empresa",
+  "activo": false
+}
+
+### R5. Probar conflicto (409): nombre repetido
+POST {{host}}/api/roles
+Content-Type: application/json
+
+{
+  "nombre": "Operador",
+  "activo": true
+}
+
+### R6. Probar validación (400): nombre vacío
+POST {{host}}/api/roles
+Content-Type: application/json
+
+{
+  "nombre": "",
+  "activo": true
+}
+
+### R7. Eliminar un rol
+DELETE {{host}}/api/roles/1
+
+### R8. Probar no encontrado (404)
+GET {{host}}/api/roles/1
+Accept: application/json
+
+
+# ========================= PRIVILEGIOS =========================
+
+### P1. Listar todos los privilegios
+GET {{host}}/api/privilegios
+Accept: application/json
+
+### P2. Crear un privilegio
+POST {{host}}/api/privilegios
+Content-Type: application/json
+
+{
+  "nombre": "reservar_carro",
+  "descripcion": "Permite solicitar la reserva de un vehículo",
+  "activo": true
+}
+
+### P3. Obtener un privilegio por id
+GET {{host}}/api/privilegios/1
+Accept: application/json
+
+### P4. Actualizar un privilegio
+PUT {{host}}/api/privilegios/1
+Content-Type: application/json
+
+{
+  "nombre": "reservar_carro",
+  "descripcion": "Solicitar reserva de vehículos de su empresa",
+  "activo": false
+}
+
+### P5. Probar conflicto (409): nombre repetido
+POST {{host}}/api/privilegios
+Content-Type: application/json
+
+{
+  "nombre": "reservar_carro",
+  "activo": true
+}
+
+### P6. Probar validación (400): nombre vacío
+POST {{host}}/api/privilegios
+Content-Type: application/json
+
+{
+  "nombre": "",
+  "activo": true
+}
+
+### P7. Eliminar un privilegio
+DELETE {{host}}/api/privilegios/1
+
+### P8. Probar no encontrado (404)
+GET {{host}}/api/privilegios/1
+Accept: application/json
+
+
+# ======================== USUARIO-ROLES ========================
+# Requiere que existan el usuario y el rol (crea primero con las pruebas 2 y R2)
+
+### UR1. Listar todas las asignaciones
+GET {{host}}/api/usuario-roles
+Accept: application/json
+
+### UR2. Listar los roles de un usuario
+GET {{host}}/api/usuario-roles?usuarioId=1
+Accept: application/json
+
+### UR3. Listar los usuarios que tienen un rol
+GET {{host}}/api/usuario-roles?rolId=1
+Accept: application/json
+
+### UR4. Asignar un rol a un usuario
+POST {{host}}/api/usuario-roles
+Content-Type: application/json
+
+{
+  "usuarioId": 1,
+  "rolId": 1
+}
+
+### UR5. Obtener una asignación por id
+GET {{host}}/api/usuario-roles/1
+Accept: application/json
+
+### UR6. Cambiar la asignación (otro rol)
+PUT {{host}}/api/usuario-roles/1
+Content-Type: application/json
+
+{
+  "usuarioId": 1,
+  "rolId": 2
+}
+
+### UR7. Probar conflicto (409): misma asignación repetida
+POST {{host}}/api/usuario-roles
+Content-Type: application/json
+
+{
+  "usuarioId": 1,
+  "rolId": 2
+}
+
+### UR8. Probar no encontrado (404): rol inexistente
+POST {{host}}/api/usuario-roles
+Content-Type: application/json
+
+{
+  "usuarioId": 1,
+  "rolId": 9999
+}
+
+### UR9. Eliminar una asignación
+DELETE {{host}}/api/usuario-roles/1
+
+
+# ======================= ROL-PRIVILEGIOS =======================
+# Requiere que existan el rol y el privilegio (crea primero con R2 y P2)
+
+### RP1. Listar todas las asignaciones
+GET {{host}}/api/rol-privilegios
+Accept: application/json
+
+### RP2. Listar los privilegios de un rol
+GET {{host}}/api/rol-privilegios?rolId=1
+Accept: application/json
+
+### RP3. Listar los roles que tienen un privilegio
+GET {{host}}/api/rol-privilegios?privilegioId=1
+Accept: application/json
+
+### RP4. Asignar un privilegio a un rol
+POST {{host}}/api/rol-privilegios
+Content-Type: application/json
+
+{
+  "rolId": 1,
+  "privilegioId": 1
+}
+
+### RP5. Obtener una asignación por id
+GET {{host}}/api/rol-privilegios/1
+Accept: application/json
+
+### RP6. Cambiar la asignación (otro privilegio)
+PUT {{host}}/api/rol-privilegios/1
+Content-Type: application/json
+
+{
+  "rolId": 1,
+  "privilegioId": 2
+}
+
+### RP7. Probar conflicto (409): misma asignación repetida
+POST {{host}}/api/rol-privilegios
+Content-Type: application/json
+
+{
+  "rolId": 1,
+  "privilegioId": 2
+}
+
+### RP8. Probar no encontrado (404): privilegio inexistente
+POST {{host}}/api/rol-privilegios
+Content-Type: application/json
+
+{
+  "rolId": 1,
+  "privilegioId": 9999
+}
+
+### RP9. Eliminar una asignación
+DELETE {{host}}/api/rol-privilegios/1
+
+
+# ========================= CORPORATIVOS =========================
+
+### C1. Listar todos los corporativos
+GET {{host}}/api/corporativos
+Accept: application/json
+
+### C2. Crear un corporativo
+POST {{host}}/api/corporativos
+Content-Type: application/json
+
+{
+  "nombre": "Grupo Corporativo del Sureste",
+  "activo": true
+}
+
+### C3. Obtener un corporativo por id
+GET {{host}}/api/corporativos/1
+Accept: application/json
+
+### C4. Actualizar un corporativo
+PUT {{host}}/api/corporativos/1
+Content-Type: application/json
+
+{
+  "nombre": "Grupo Corporativo del Sureste S.A. de C.V.",
+  "activo": false
+}
+
+### C5. Probar validación (400): nombre vacío
+POST {{host}}/api/corporativos
+Content-Type: application/json
+
+{
+  "nombre": "",
+  "activo": true
+}
+
+### C6. Eliminar un corporativo
+DELETE {{host}}/api/corporativos/1
+
+### C7. Probar no encontrado (404)
+GET {{host}}/api/corporativos/1
+Accept: application/json
+
+
+# ========================== DIVISIONES ==========================
+# Requiere que exista el corporativo (crea primero con C2)
+
+### D1. Listar todas las divisiones
+GET {{host}}/api/divisiones
+Accept: application/json
+
+### D2. Listar las divisiones de un corporativo
+GET {{host}}/api/divisiones?corporativoId=1
+Accept: application/json
+
+### D3. Crear una división
+POST {{host}}/api/divisiones
+Content-Type: application/json
+
+{
+  "corporativoId": 1,
+  "nombre": "División Combustibles",
+  "activo": true
+}
+
+### D4. Obtener una división por id
+GET {{host}}/api/divisiones/1
+Accept: application/json
+
+### D5. Actualizar una división
+PUT {{host}}/api/divisiones/1
+Content-Type: application/json
+
+{
+  "corporativoId": 1,
+  "nombre": "División Transporte",
+  "activo": false
+}
+
+### D6. Probar no encontrado (404): corporativo inexistente
+POST {{host}}/api/divisiones
+Content-Type: application/json
+
+{
+  "corporativoId": 9999,
+  "nombre": "División X",
+  "activo": true
+}
+
+### D7. Probar conflicto (409): borrar corporativo que tiene divisiones
+DELETE {{host}}/api/corporativos/1
+
+### D8. Eliminar una división
+DELETE {{host}}/api/divisiones/1
+
+
+# =========================== EMPRESAS ===========================
+# Requiere corporativo y división (crea primero con C2 y D3)
+
+### E1. Listar todas las empresas (no eliminadas)
+GET {{host}}/api/empresas
+Accept: application/json
+
+### E2. Listar las empresas de un corporativo
+GET {{host}}/api/empresas?corporativoId=1
+Accept: application/json
+
+### E3. Listar las empresas de una división
+GET {{host}}/api/empresas?divisionId=1
+Accept: application/json
+
+### E4. Crear una empresa con corporativo y división
+POST {{host}}/api/empresas
+Content-Type: application/json
+
+{
+  "nombre": "Gasolinera Tuxtla Centro",
+  "corporativoId": 1,
+  "divisionId": 1
+}
+
+### E5. Crear una empresa solo con corporativo (sin división)
+POST {{host}}/api/empresas
+Content-Type: application/json
+
+{
+  "nombre": "Transportes del Sur",
+  "corporativoId": 1
+}
+
+### E6. Crear una empresa independiente (sin corporativo)
+POST {{host}}/api/empresas
+Content-Type: application/json
+
+{
+  "nombre": "Empresa Independiente"
+}
+
+### E7. Obtener una empresa por id
+GET {{host}}/api/empresas/1
+Accept: application/json
+
+### E8. Actualizar una empresa
+PUT {{host}}/api/empresas/1
+Content-Type: application/json
+
+{
+  "nombre": "Gasolinera Tuxtla Norte",
+  "corporativoId": 1,
+  "divisionId": null
+}
+
+### E9. Probar validación (400): división sin corporativo
+POST {{host}}/api/empresas
+Content-Type: application/json
+
+{
+  "nombre": "Empresa X",
+  "divisionId": 1
+}
+
+### E10. Probar no encontrado (404): corporativo inexistente
+POST {{host}}/api/empresas
+Content-Type: application/json
+
+{
+  "nombre": "Empresa Y",
+  "corporativoId": 9999
+}
+
+### E11. Eliminar una empresa (soft delete)
+DELETE {{host}}/api/empresas/1
+
+### E12. Ya no aparece (404)
+GET {{host}}/api/empresas/1
+Accept: application/json
+
+
+# ======================= CENTROS DE COSTO =======================
+# Requiere que exista la empresa (crea primero con E4)
+
+### CC1. Listar todos los centros de costo
+GET {{host}}/api/centros-costo
+Accept: application/json
+
+### CC2. Listar los centros de costo de una empresa
+GET {{host}}/api/centros-costo?empresaId=1
+Accept: application/json
+
+### CC3. Crear un centro de costo
+POST {{host}}/api/centros-costo
+Content-Type: application/json
+
+{
+  "empresaId": 1,
+  "nombre": "Logística",
+  "clave": "CC-LOG-01",
+  "activo": true
+}
+
+### CC4. Obtener un centro de costo por id
+GET {{host}}/api/centros-costo/1
+Accept: application/json
+
+### CC5. Actualizar un centro de costo
+PUT {{host}}/api/centros-costo/1
+Content-Type: application/json
+
+{
+  "empresaId": 1,
+  "nombre": "Logística y Distribución",
+  "clave": "CC-LOG-01",
+  "activo": false
+}
+
+### CC6. Probar conflicto (409): clave repetida en la misma empresa
+POST {{host}}/api/centros-costo
+Content-Type: application/json
+
+{
+  "empresaId": 1,
+  "nombre": "Otro",
+  "clave": "CC-LOG-01",
+  "activo": true
+}
+
+### CC7. Probar no encontrado (404): empresa inexistente
+POST {{host}}/api/centros-costo
+Content-Type: application/json
+
+{
+  "empresaId": 9999,
+  "nombre": "Ventas",
+  "clave": "CC-VEN-01",
+  "activo": true
+}
+
+### CC8. Eliminar un centro de costo
+DELETE {{host}}/api/centros-costo/1
+
+
+# =========================== EMPLEADOS ===========================
+# Requiere empresa y usuario (crea primero con E4 y con la prueba 2 de usuarios)
+
+### EM1. Listar todos los empleados (no eliminados)
+GET {{host}}/api/empleados
+Accept: application/json
+
+### EM2. Listar los empleados de una empresa
+GET {{host}}/api/empleados?empresaId=1
+Accept: application/json
+
+### EM3. Crear un empleado
+POST {{host}}/api/empleados
+Content-Type: application/json
+
+{
+  "empresaId": 1,
+  "usuarioId": 1,
+  "nombreCompleto": "Víctor Alejandro Pérez López",
+  "fotoPerfil": null,
+  "fotoLicencia": null
+}
+
+### EM4. Obtener un empleado por id
+GET {{host}}/api/empleados/1
+Accept: application/json
+
+### EM5. Obtener el empleado de un usuario
+GET {{host}}/api/empleados/por-usuario/1
+Accept: application/json
+
+### EM6. Actualizar un empleado (ej. después de subir su licencia)
+PUT {{host}}/api/empleados/1
+Content-Type: application/json
+
+{
+  "empresaId": 1,
+  "usuarioId": 1,
+  "nombreCompleto": "Víctor Alejandro Pérez López",
+  "fotoPerfil": "empleados/1/perfil.jpg",
+  "fotoLicencia": "empleados/1/licencia.pdf"
+}
+
+### EM7. Probar conflicto (409): usuario ya asignado a otro empleado
+POST {{host}}/api/empleados
+Content-Type: application/json
+
+{
+  "empresaId": 1,
+  "usuarioId": 1,
+  "nombreCompleto": "Otra Persona"
+}
+
+### EM8. Probar conflicto (409): borrar usuario que tiene empleado
+DELETE {{host}}/api/usuarios/1
+
+### EM9. Eliminar un empleado (soft delete)
+DELETE {{host}}/api/empleados/1
+
+### EM10. Ya no aparece (404)
+GET {{host}}/api/empleados/1
+Accept: application/json
+
+
+# ============================ CARROS ============================
+# Requiere que exista la empresa (crea primero con E4)
+# Estados en JSON: "disponible", "ocupado", "enMantenimiento"
+
+### CA1. Listar todos los carros
+GET {{host}}/api/carros
+Accept: application/json
+
+### CA2. Listar los carros disponibles de una empresa
+GET {{host}}/api/carros?empresaId=1&estado=disponible
+Accept: application/json
+
+### CA3. Crear un carro
+POST {{host}}/api/carros
+Content-Type: application/json
+
+{
+  "empresaId": 1,
+  "marca": "Nissan",
+  "modelo": "NP300",
+  "anio": 2023,
+  "color": "Blanco",
+  "placas": "dfg-123-a",
+  "fotoVehiculo": null,
+  "capacidadTanque": 80.00,
+  "kilometrajeActual": 15230.50,
+  "estado": "disponible"
+}
+
+### CA4. Obtener un carro por id
+GET {{host}}/api/carros/1
+Accept: application/json
+
+### CA5. Actualizar un carro (más kilometraje, en mantenimiento)
+PUT {{host}}/api/carros/1
+Content-Type: application/json
+
+{
+  "empresaId": 1,
+  "marca": "Nissan",
+  "modelo": "NP300",
+  "anio": 2023,
+  "color": "Blanco",
+  "placas": "DFG-123-A",
+  "fotoVehiculo": "carros/1/foto.jpg",
+  "capacidadTanque": 80.00,
+  "kilometrajeActual": 15480.00,
+  "estado": "enMantenimiento"
+}
+
+### CA6. Probar regla de dominio (400): kilometraje menor al actual
+PUT {{host}}/api/carros/1
+Content-Type: application/json
+
+{
+  "empresaId": 1,
+  "marca": "Nissan",
+  "modelo": "NP300",
+  "placas": "DFG-123-A",
+  "kilometrajeActual": 100,
+  "estado": "disponible"
+}
+
+### CA7. Probar conflicto (409): placas repetidas
+POST {{host}}/api/carros
+Content-Type: application/json
+
+{
+  "empresaId": 1,
+  "marca": "Toyota",
+  "modelo": "Hilux",
+  "placas": "DFG-123-A",
+  "kilometrajeActual": 0
+}
+
+### CA8. Eliminar un carro
+DELETE {{host}}/api/carros/1
+
+
+# ===================== SOLICITUDES DE RESERVA =====================
+# Requiere: empresa 1, carro 1 "disponible", empleados 1 y 2 de la empresa 1
+# El solicitante necesita foto_licencia (usa EM6 para cargarla)
+
+### SR1. Cola de pendientes de una empresa (más antigua primero)
+GET {{host}}/api/solicitudes-reserva?empresaId=1&estado=pendiente
+Accept: application/json
+
+### SR2. Solicitudes de un empleado
+GET {{host}}/api/solicitudes-reserva?empleadoSolicitanteId=1
+Accept: application/json
+
+### SR3. Crear una solicitud
+POST {{host}}/api/solicitudes-reserva
+Content-Type: application/json
+
+{
+  "empresaId": 1,
+  "carroId": 1,
+  "empleadoSolicitanteId": 1
+}
+
+### SR4. Obtener una solicitud por id
+GET {{host}}/api/solicitudes-reserva/1
+Accept: application/json
+
+### SR5. Aprobar (ocupa el carro y rechaza las demás pendientes del carro)
+POST {{host}}/api/solicitudes-reserva/1/aprobar
+Content-Type: application/json
+
+{
+  "empleadoConfirmadorId": 2,
+  "motivo": "Viaje a sucursal Tapachula"
+}
+
+### SR6. Rechazar (el motivo es obligatorio)
+POST {{host}}/api/solicitudes-reserva/2/rechazar
+Content-Type: application/json
+
+{
+  "empleadoConfirmadorId": 2,
+  "motivo": "No hay viajes programados"
+}
+
+### SR7. Cancelar (si estaba aprobada, libera el carro)
+POST {{host}}/api/solicitudes-reserva/1/cancelar
+Content-Type: application/json
+
+{
+  "motivo": "Ya no se necesita"
+}
+
+### SR8. Probar regla (400): aprobar la propia solicitud
+POST {{host}}/api/solicitudes-reserva/1/aprobar
+Content-Type: application/json
+
+{
+  "empleadoConfirmadorId": 1
+}
+
+### SR9. Probar conflicto (409): borrar una solicitud aprobada
+DELETE {{host}}/api/solicitudes-reserva/1
+
+### SR10. Eliminar una solicitud (no aprobada)
+DELETE {{host}}/api/solicitudes-reserva/2
+
+
+# ============================ VIAJES ============================
+# Requiere una solicitud de reserva aprobada (SR5) del empleado 1 para el carro 1
+# Estados en JSON: "enCurso", "finalizado", "interrumpido"
+
+### V1. Viajes en curso de una empresa
+GET {{host}}/api/viajes?empresaId=1&estado=enCurso
+Accept: application/json
+
+### V2. Viajes de una reserva
+GET {{host}}/api/viajes?solicitudReservaId=1
+Accept: application/json
+
+### V3. Iniciar un viaje
+POST {{host}}/api/viajes
+Content-Type: application/json
+
+{
+  "empresaId": 1,
+  "carroId": 1,
+  "solicitudReservaId": 1,
+  "empleadoOperadorId": 1,
+  "fechaInicio": "2026-10-05T08:30:00",
+  "ubicacionInicioLat": 16.753056,
+  "ubicacionInicioLng": -93.115556,
+  "kilometrajeInicial": 15480.00
+}
+
+### V4. Obtener un viaje por id
+GET {{host}}/api/viajes/1
+Accept: application/json
+
+### V5. Finalizar (calcula distancia y actualiza el kilometraje del carro)
+POST {{host}}/api/viajes/1/finalizar
+Content-Type: application/json
+
+{
+  "fechaFin": "2026-10-05T12:10:00",
+  "ubicacionFinLat": 14.905556,
+  "ubicacionFinLng": -92.263056,
+  "kilometrajeFinal": 15775.40
+}
+
+### V6. Interrumpir (motivo obligatorio, lo demás opcional)
+POST {{host}}/api/viajes/2/interrumpir
+Content-Type: application/json
+
+{
+  "motivo": "Ponchadura de llanta en carretera"
+}
+
+### V7. Sincronizar un viaje registrado offline
+POST {{host}}/api/viajes/sincronizar
+Content-Type: application/json
+
+{
+  "empresaId": 1,
+  "carroId": 1,
+  "solicitudReservaId": 1,
+  "empleadoOperadorId": 1,
+  "fechaInicio": "2026-10-04T09:00:00",
+  "ubicacionInicioLat": 16.753056,
+  "ubicacionInicioLng": -93.115556,
+  "kilometrajeInicial": 15300.00,
+  "estado": "finalizado",
+  "fechaFin": "2026-10-04T10:15:00",
+  "ubicacionFinLat": 16.737500,
+  "ubicacionFinLng": -92.637500,
+  "kilometrajeFinal": 15380.00
+}
+
+### V8. Probar regla de dominio (400): kilometraje final menor al inicial
+POST {{host}}/api/viajes/1/finalizar
+Content-Type: application/json
+
+{
+  "fechaFin": "2026-10-05T12:10:00",
+  "kilometrajeFinal": 100
+}
+
+### V9. Eliminar un viaje (no en curso)
+DELETE {{host}}/api/viajes/1
+
+
+# ========================= PUNTOS DE RUTA =========================
+# Requiere un viaje (V3). Los timestamps deben caer dentro del viaje (±5 min)
+
+### PR1. Registrar un lote de puntos GPS
+POST {{host}}/api/viajes/1/puntos-ruta
+Content-Type: application/json
+
+{
+  "sincronizado": false,
+  "puntos": [
+    { "latitud": 16.753056, "longitud": -93.115556, "timestampCaptura": "2026-10-05T08:30:00" },
+    { "latitud": 16.750120, "longitud": -93.100340, "timestampCaptura": "2026-10-05T08:30:30" },
+    { "latitud": 16.745870, "longitud": -93.085210, "timestampCaptura": "2026-10-05T08:31:00" }
+  ]
+}
+
+### PR2. Reenviar el mismo lote (no duplica: insertados = 0, duplicados = 3)
+POST {{host}}/api/viajes/1/puntos-ruta
+Content-Type: application/json
+
+{
+  "sincronizado": true,
+  "puntos": [
+    { "latitud": 16.753056, "longitud": -93.115556, "timestampCaptura": "2026-10-05T08:30:00" },
+    { "latitud": 16.750120, "longitud": -93.100340, "timestampCaptura": "2026-10-05T08:30:30" },
+    { "latitud": 16.745870, "longitud": -93.085210, "timestampCaptura": "2026-10-05T08:31:00" }
+  ]
+}
+
+### PR3. Ruta del viaje (en orden de captura)
+GET {{host}}/api/viajes/1/puntos-ruta
+Accept: application/json
+
+### PR4. Obtener un punto por id
+GET {{host}}/api/puntos-ruta/1
+Accept: application/json
+
+### PR5. Probar validación (400): punto fuera del periodo del viaje
+POST {{host}}/api/viajes/1/puntos-ruta
+Content-Type: application/json
+
+{
+  "puntos": [
+    { "latitud": 16.75, "longitud": -93.11, "timestampCaptura": "2020-01-01T00:00:00" }
+  ]
+}
+
+### PR6. Eliminar un punto
+DELETE {{host}}/api/puntos-ruta/1
+
+
+# ===================== CARGAS DE COMBUSTIBLE =====================
+# Requiere un viaje (V3). La fecha debe caer dentro del viaje (±5 min)
+
+### CG1. Cargas de una empresa en un periodo (consumo = suma de litros)
+GET {{host}}/api/cargas-combustible?empresaId=1&desde=2026-10-01&hasta=2026-10-31T23:59:59
+Accept: application/json
+
+### CG2. Cargas de un viaje
+GET {{host}}/api/cargas-combustible?viajeId=1
+Accept: application/json
+
+### CG3. Registrar una carga
+POST {{host}}/api/cargas-combustible
+Content-Type: application/json
+
+{
+  "viajeId": 1,
+  "litros": 45.30,
+  "monto": 1087.20,
+  "fotoComprobante": "cargas/1/ticket.jpg",
+  "fechaCarga": "2026-10-05T10:05:00",
+  "ubicacionLat": 15.676111,
+  "ubicacionLng": -92.995278,
+  "sincronizado": false
+}
+
+### CG4. Obtener una carga por id
+GET {{host}}/api/cargas-combustible/1
+Accept: application/json
+
+### CG5. Corregir una carga
+PUT {{host}}/api/cargas-combustible/1
+Content-Type: application/json
+
+{
+  "litros": 45.80,
+  "monto": 1099.20,
+  "fotoComprobante": "cargas/1/ticket.jpg",
+  "fechaCarga": "2026-10-05T10:05:00",
+  "ubicacionLat": 15.676111,
+  "ubicacionLng": -92.995278
+}
+
+### CG6. Probar conflicto (409): reenviar la misma carga
+POST {{host}}/api/cargas-combustible
+Content-Type: application/json
+
+{
+  "viajeId": 1,
+  "litros": 45.30,
+  "fotoComprobante": "cargas/1/ticket.jpg",
+  "fechaCarga": "2026-10-05T10:05:00",
+  "sincronizado": true
+}
+
+### CG7. Probar validación (400): más litros que la capacidad del tanque
+POST {{host}}/api/cargas-combustible
+Content-Type: application/json
+
+{
+  "viajeId": 1,
+  "litros": 500,
+  "fotoComprobante": "cargas/1/ticket2.jpg",
+  "fechaCarga": "2026-10-05T11:00:00"
+}
+
+### CG8. Eliminar una carga
+DELETE {{host}}/api/cargas-combustible/1
+
+
+# =================== CAMBIOS DE ESTATUS DE CARRO ===================
+# Bitácora: aprobar/cancelar reservas también escribe aquí automáticamente
+# Estatus en JSON: "disponible", "ocupado", "enMantenimiento"
+
+### CE1. Historial de un carro
+GET {{host}}/api/cambios-estatus-carro?carroId=1
+Accept: application/json
+
+### CE2. Historial de una empresa en un periodo
+GET {{host}}/api/cambios-estatus-carro?empresaId=1&desde=2026-10-01&hasta=2026-10-31T23:59:59
+Accept: application/json
+
+### CE3. Mandar un carro a mantenimiento (motivo obligatorio)
+POST {{host}}/api/cambios-estatus-carro
+Content-Type: application/json
+
+{
+  "carroId": 1,
+  "empleadoId": 2,
+  "estatusNuevo": "enMantenimiento",
+  "motivo": "Servicio de los 20,000 km"
+}
+
+### CE4. Falla durante un viaje: mantenimiento + interrumpe el viaje
+POST {{host}}/api/cambios-estatus-carro
+Content-Type: application/json
+
+{
+  "carroId": 1,
+  "empleadoId": 1,
+  "estatusNuevo": "enMantenimiento",
+  "motivo": "Se sobrecalentó el motor en carretera",
+  "viajeAfectadoId": 1
+}
+
+### CE5. Regresar el carro a disponible
+POST {{host}}/api/cambios-estatus-carro
+Content-Type: application/json
+
+{
+  "carroId": 1,
+  "empleadoId": 2,
+  "estatusNuevo": "disponible",
+  "motivo": "Mantenimiento terminado"
+}
+
+### CE6. Probar validación (400): "ocupado" solo por aprobación de reserva
+POST {{host}}/api/cambios-estatus-carro
+Content-Type: application/json
+
+{
+  "carroId": 1,
+  "empleadoId": 2,
+  "estatusNuevo": "ocupado"
+}
+
+### CE7. Obtener un registro por id
+GET {{host}}/api/cambios-estatus-carro/1
+Accept: application/json
+
+
+# ========================= NOTIFICACIONES =========================
+# Se generan solas: nueva solicitud (a los empleados con rol "Confirmador"),
+# aprobada/rechazada (al solicitante) y cambio de estatus forzado (a quien tiene el carro).
+# Tipos en JSON: "nuevaSolicitud", "resultadoSolicitud", "cambioEstatusForzado"
+
+### N1. Bandeja de un empleado
+GET {{host}}/api/notificaciones?empleadoDestinatarioId=2
+Accept: application/json
+
+### N2. Solo no leídas
+GET {{host}}/api/notificaciones?empleadoDestinatarioId=2&soloNoLeidas=true
+Accept: application/json
+
+### N3. Contador para el badge
+GET {{host}}/api/notificaciones/no-leidas/2
+Accept: application/json
+
+### N4. Obtener una notificación por id
+GET {{host}}/api/notificaciones/1
+Accept: application/json
+
+### N5. Marcar una como leída
+POST {{host}}/api/notificaciones/1/marcar-leida
+
+### N6. Marcar todas como leídas
+POST {{host}}/api/notificaciones/marcar-todas-leidas/2
+
+### N7. Alta manual
+POST {{host}}/api/notificaciones
+Content-Type: application/json
+
+{
+  "empleadoDestinatarioId": 2,
+  "tipo": "cambioEstatusForzado",
+  "referenciaId": 1,
+  "mensaje": "Prueba de notificación manual"
+}
+
+### N8. Eliminar una notificación
+DELETE {{host}}/api/notificaciones/1
+
+
+# ============================ AUTH ============================
+# Usa el usuario creado en la prueba 2 (email vic@ejemplo.com / Gasolina2026)
+
+### A1. Login (copia el "token" de la respuesta)
+# @name login
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "vic@ejemplo.com",
+  "password": "Gasolina2026"
+}
+
+### A2. Perfil del usuario del token
+GET {{host}}/api/auth/perfil
+Authorization: Bearer {{login.response.body.$.token}}
+Accept: application/json
+
+### A3. Probar 401: contraseña incorrecta
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "vic@ejemplo.com",
+  "password": "incorrecta123"
+}
+
+### A4. Cambiar contraseña
+POST {{host}}/api/usuarios/1/cambiar-password
+Content-Type: application/json
+
+{
+  "passwordActual": "Gasolina2026",
+  "passwordNueva": "NuevaClave2026"
+}
+
+### A5. Crear un rol global
+POST {{host}}/api/roles
+Content-Type: application/json
+
+{
+  "nombre": "Confirmador",
+  "descripcion": "Aprueba o rechaza solicitudes de reserva",
+  "activo": true
+}
+
+### A6. Crear un rol exclusivo de la empresa 1
+POST {{host}}/api/roles
+Content-Type: application/json
+
+{
+  "empresaId": 1,
+  "nombre": "Gestor de activos",
+  "descripcion": "Da de alta los carros de su empresa",
+  "activo": true
+}
+
+### A7. Roles disponibles para la empresa 1 (globales + exclusivos)
+GET {{host}}/api/roles?empresaId=1
 Accept: application/json

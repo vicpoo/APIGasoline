@@ -14,6 +14,22 @@ public class AppDbContext : DbContext
     }
 
     public DbSet<Usuario> Usuarios => Set<Usuario>();
+    public DbSet<Rol> Roles => Set<Rol>();
+    public DbSet<Privilegio> Privilegios => Set<Privilegio>();
+    public DbSet<UsuarioRol> UsuarioRoles => Set<UsuarioRol>();
+    public DbSet<RolPrivilegio> RolPrivilegios => Set<RolPrivilegio>();
+    public DbSet<Corporativo> Corporativos => Set<Corporativo>();
+    public DbSet<Division> Divisiones => Set<Division>();
+    public DbSet<Empresa> Empresas => Set<Empresa>();
+    public DbSet<CentroCosto> CentrosCosto => Set<CentroCosto>();
+    public DbSet<Empleado> Empleados => Set<Empleado>();
+    public DbSet<Carro> Carros => Set<Carro>();
+    public DbSet<SolicitudReserva> SolicitudesReserva => Set<SolicitudReserva>();
+    public DbSet<Viaje> Viajes => Set<Viaje>();
+    public DbSet<PuntoRuta> PuntosRuta => Set<PuntoRuta>();
+    public DbSet<CargaCombustible> CargasCombustible => Set<CargaCombustible>();
+    public DbSet<CambioEstatusCarro> CambiosEstatusCarro => Set<CambioEstatusCarro>();
+    public DbSet<Notificacion> Notificaciones => Set<Notificacion>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

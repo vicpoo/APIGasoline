@@ -36,7 +36,7 @@ public class UsuariosController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<UsuarioDto>> Create(CreateUsuarioRequest request, CancellationToken cancellationToken)
     {
-        var command = new CreateUsuarioCommand(request.UsuarioId, request.Email, request.Estado);
+        var command = new CreateUsuarioCommand(request.Email, request.Password, request.Estado);
         var usuario = await _sender.Send(command, cancellationToken);
 
         return CreatedAtAction(nameof(GetById), new { usuarioId = usuario.UsuarioId }, usuario);
@@ -49,6 +49,16 @@ public class UsuariosController : ControllerBase
         var usuario = await _sender.Send(command, cancellationToken);
 
         return Ok(usuario);
+    }
+
+    /// <summary>
+    /// Cambia la contraseña verificando la actual.
+    /// </summary>
+    [HttpPost("{usuarioId:int}/cambiar-password")]
+    public async Task<IActionResult> CambiarPassword(int usuarioId, CambiarPasswordRequest request, CancellationToken cancellationToken)
+    {
+        await _sender.Send(new CambiarPasswordCommand(usuarioId, request.PasswordActual, request.PasswordNueva), cancellationToken);
+        return NoContent();
     }
 
     [HttpDelete("{usuarioId:int}")]

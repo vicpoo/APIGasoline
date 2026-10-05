@@ -16,9 +16,41 @@ public class UnitOfWork : IUnitOfWork
     {
         _context = context;
         Usuarios = new UsuarioRepository(context);
+        Roles = new RolRepository(context);
+        Privilegios = new PrivilegioRepository(context);
+        UsuarioRoles = new UsuarioRolRepository(context);
+        RolPrivilegios = new RolPrivilegioRepository(context);
+        Corporativos = new CorporativoRepository(context);
+        Divisiones = new DivisionRepository(context);
+        Empresas = new EmpresaRepository(context);
+        CentrosCosto = new CentroCostoRepository(context);
+        Empleados = new EmpleadoRepository(context);
+        Carros = new CarroRepository(context);
+        SolicitudesReserva = new SolicitudReservaRepository(context);
+        Viajes = new ViajeRepository(context);
+        PuntosRuta = new PuntoRutaRepository(context);
+        CargasCombustible = new CargaCombustibleRepository(context);
+        CambiosEstatusCarro = new CambioEstatusCarroRepository(context);
+        Notificaciones = new NotificacionRepository(context);
     }
 
     public IUsuarioRepository Usuarios { get; }
+    public IRolRepository Roles { get; }
+    public IPrivilegioRepository Privilegios { get; }
+    public IUsuarioRolRepository UsuarioRoles { get; }
+    public IRolPrivilegioRepository RolPrivilegios { get; }
+    public ICorporativoRepository Corporativos { get; }
+    public IDivisionRepository Divisiones { get; }
+    public IEmpresaRepository Empresas { get; }
+    public ICentroCostoRepository CentrosCosto { get; }
+    public IEmpleadoRepository Empleados { get; }
+    public ICarroRepository Carros { get; }
+    public ISolicitudReservaRepository SolicitudesReserva { get; }
+    public IViajeRepository Viajes { get; }
+    public IPuntoRutaRepository PuntosRuta { get; }
+    public ICargaCombustibleRepository CargasCombustible { get; }
+    public ICambioEstatusCarroRepository CambiosEstatusCarro { get; }
+    public INotificacionRepository Notificaciones { get; }
 
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         => _context.SaveChangesAsync(cancellationToken);

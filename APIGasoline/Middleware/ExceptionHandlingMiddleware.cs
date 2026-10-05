@@ -1,4 +1,5 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
+using APIGasoline.Domain.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace APIGasoline.Middleware;
@@ -20,6 +21,22 @@ public class ExceptionHandlingMiddleware
         {
             await _next(context);
         }
+        catch (DomainException ex)
+        {
+            await WriteProblemAsync(context, StatusCodes.Status400BadRequest, "Regla de negocio no válida", ex.Message);
+        }
+        catch (BadRequestException ex)
+        {
+            await WriteProblemAsync(context, StatusCodes.Status400BadRequest, "Solicitud no válida", ex.Message);
+        }
+        catch (UnauthorizedException ex)
+        {
+            await WriteProblemAsync(context, StatusCodes.Status401Unauthorized, "No autorizado", ex.Message);
+        }
+        catch (ForbiddenException ex)
+        {
+            await WriteProblemAsync(context, StatusCodes.Status403Forbidden, "Acceso denegado", ex.Message);
+        }
         catch (NotFoundException ex)
         {
             await WriteProblemAsync(context, StatusCodes.Status404NotFound, "Recurso no encontrado", ex.Message);
@@ -39,11 +56,14 @@ public class ExceptionHandlingMiddleware
     {
         context.Response.StatusCode = statusCode;
 
-        await context.Response.WriteAsJsonAsync(new ProblemDetails
-        {
-            Status = statusCode,
-            Title = title,
-            Detail = detail
-        });
+        await context.Response.WriteAsJsonAsync(
+            new ProblemDetails
+            {
+                Status = statusCode,
+                Title = title,
+                Detail = detail
+            },
+            options: null,
+            contentType: "application/problem+json");
     }
 }

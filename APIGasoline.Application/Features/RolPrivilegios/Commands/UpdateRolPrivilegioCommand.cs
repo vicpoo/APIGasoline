@@ -1,0 +1,43 @@
+﻿using APIGasoline.Application.Common.Exceptions;
+using APIGasoline.Application.Features.RolPrivilegios.DTOs;
+using APIGasoline.Domain.Interfaces;
+using AutoMapper;
+using MediatR;
+
+namespace APIGasoline.Application.Features.RolPrivilegios.Commands;
+
+public record UpdateRolPrivilegioCommand(int RolPrivilegioId, int RolId, int PrivilegioId) : IRequest<RolPrivilegioDto>;
+
+public class UpdateRolPrivilegioCommandHandler : IRequestHandler<UpdateRolPrivilegioCommand, RolPrivilegioDto>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
+
+    public UpdateRolPrivilegioCommandHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    {
+        _unitOfWork = unitOfWork;
+        _mapper = mapper;
+    }
+
+    public async Task<RolPrivilegioDto> Handle(UpdateRolPrivilegioCommand request, CancellationToken cancellationToken)
+    {
+        var rolPrivilegio = await _unitOfWork.RolPrivilegios.GetByIdAsync(request.RolPrivilegioId, cancellationToken)
+            ?? throw new NotFoundException($"No existe una asignación rol-privilegio con el id {request.RolPrivilegioId}.");
+
+        // El dominio valida los datos
+        rolPrivilegio.Reasignar(request.RolId, request.PrivilegioId);
+
+        if (!await _unitOfWork.Roles.ExistsAsync(rolPrivilegio.RolId, cancellationToken))
+            throw new NotFoundException($"No existe un rol con el id {rolPrivilegio.RolId}.");
+
+        if (!await _unitOfWork.Privilegios.ExistsAsync(rolPrivilegio.PrivilegioId, cancellationToken))
+            throw new NotFoundException($"No existe un privilegio con el id {rolPrivilegio.PrivilegioId}.");
+
+        if (await _unitOfWork.RolPrivilegios.AsignacionExistsAsync(rolPrivilegio.RolId, rolPrivilegio.PrivilegioId, rolPrivilegio.RolPrivilegioId, cancellationToken))
+            throw new ConflictException($"El rol {rolPrivilegio.RolId} ya tiene asignado el privilegio {rolPrivilegio.PrivilegioId}.");
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return _mapper.Map<RolPrivilegioDto>(rolPrivilegio);
+    }
+}

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-using APIGasoline.Domain.Entities;
+﻿using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,6 +15,9 @@ public class UsuarioRepository : IUsuarioRepository
 
     public Task<Usuario?> GetByIdAsync(int usuarioId, CancellationToken cancellationToken = default)
         => _context.Usuarios.FirstOrDefaultAsync(u => u.UsuarioId == usuarioId, cancellationToken);
+
+    public Task<Usuario?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
+        => _context.Usuarios.FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
 
     public async Task<IReadOnlyList<Usuario>> GetAllAsync(CancellationToken cancellationToken = default)
         => await _context.Usuarios

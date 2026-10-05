@@ -1,0 +1,77 @@
+﻿using APIGasoline.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace APIGasoline.Infrastructure.Persistence.Configurations;
+
+public class CargaCombustibleConfiguration : IEntityTypeConfiguration<CargaCombustible>
+{
+    public void Configure(EntityTypeBuilder<CargaCombustible> builder)
+    {
+        builder.ToTable("carga_combustible");
+
+        builder.HasKey(c => c.CargaCombustibleId);
+        builder.Property(c => c.CargaCombustibleId)
+            .HasColumnName("carga_combustible_id")
+            .ValueGeneratedOnAdd();
+
+        builder.Property(c => c.EmpresaId).HasColumnName("empresa_id").IsRequired();
+        builder.Property(c => c.ViajeId).HasColumnName("viaje_id").IsRequired();
+
+        builder.Property(c => c.Litros)
+            .HasColumnName("litros")
+            .HasPrecision(8, 2)
+            .IsRequired();
+
+        builder.Property(c => c.Monto)
+            .HasColumnName("monto")
+            .HasPrecision(10, 2);
+
+        builder.Property(c => c.FotoComprobante)
+            .HasColumnName("foto_comprobante")
+            .HasMaxLength(CargaCombustible.FotoMaxLength)
+            .IsRequired();
+
+        builder.Property(c => c.FechaCarga)
+            .HasColumnName("fecha_carga")
+            .HasColumnType("timestamp")
+            .IsRequired();
+
+        builder.Property(c => c.UbicacionLat).HasColumnName("ubicacion_lat").HasPrecision(9, 6);
+        builder.Property(c => c.UbicacionLng).HasColumnName("ubicacion_lng").HasPrecision(9, 6);
+
+        builder.Property(c => c.Sincronizado)
+            .HasColumnName("sincronizado")
+            .HasDefaultValue(false)
+            .ValueGeneratedNever()
+            .IsRequired();
+
+        // Propiedad calculada en el dominio, no es columna
+        builder.Ignore(c => c.PrecioPorLitro);
+
+        builder.HasOne<Empresa>()
+            .WithMany()
+            .HasForeignKey(c => c.EmpresaId)
+            .HasConstraintName("fk_carga_combustible_empresa")
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Restrict: las cargas son registros de gasto; no se borran en cascada con el viaje.
+        builder.HasOne<Viaje>()
+            .WithMany()
+            .HasForeignKey(c => new { c.EmpresaId, c.ViajeId })
+            .HasPrincipalKey(v => new { v.EmpresaId, v.ViajeId })
+            .HasConstraintName("fk_carga_combustible_viaje")
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(c => c.EmpresaId)
+            .HasDatabaseName("ix_carga_combustible_empresa_id");
+
+        builder.HasIndex(c => new { c.EmpresaId, c.CargaCombustibleId })
+            .IsUnique()
+            .HasDatabaseName("uq_carga_combustible_empresa_id_carga_combustible_id");
+
+        builder.HasIndex(c => new { c.EmpresaId, c.ViajeId })
+            .HasDatabaseName("ix_carga_combustible_empresa_id_viaje_id");
+
+    }
+}

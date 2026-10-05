@@ -5,13 +5,15 @@ namespace APIGasoline.Contracts.Usuarios;
 
 public class CreateUsuarioRequest
 {
-    [Range(1, int.MaxValue)]
-    public int UsuarioId { get; set; }
-
     [Required]
     [EmailAddress]
     [StringLength(150)]
     public string Email { get; set; } = string.Empty;
+
+    /// <summary>Contraseña en texto plano; la API solo guarda su hash.</summary>
+    [Required]
+    [StringLength(100, MinimumLength = 8)]
+    public string Password { get; set; } = string.Empty;
 
     public EstadoUsuario Estado { get; set; } = EstadoUsuario.Activo;
 }
