@@ -1,4 +1,6 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
+using APIGasoline.Application.Common.Interfaces;
+using APIGasoline.Application.Common.Storage;
 using APIGasoline.Application.Features.Carros.DTOs;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
@@ -7,6 +9,9 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.Carros.Commands;
 
+/// <summary>
+/// Actualiza los datos del carro. La foto NO se cambia aquí: usa SubirFotoVehiculoCommand / EliminarFotoVehiculoCommand.
+/// </summary>
 public record UpdateCarroCommand(
     int CarroId,
     int EmpresaId,
@@ -15,7 +20,6 @@ public record UpdateCarroCommand(
     int? Anio,
     string? Color,
     string Placas,
-    string? FotoVehiculo,
     decimal? CapacidadTanque,
     decimal KilometrajeActual) : IRequest<CarroDto>;
 
@@ -23,11 +27,15 @@ public class UpdateCarroCommandHandler : IRequestHandler<UpdateCarroCommand, Car
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly IFileStorageService _storage;
+    private readonly IDateTimeProvider _dateTime;
 
-    public UpdateCarroCommandHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    public UpdateCarroCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IFileStorageService storage, IDateTimeProvider dateTime)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _storage = storage;
+        _dateTime = dateTime;
     }
 
     public async Task<CarroDto> Handle(UpdateCarroCommand request, CancellationToken cancellationToken)
@@ -37,9 +45,8 @@ public class UpdateCarroCommandHandler : IRequestHandler<UpdateCarroCommand, Car
 
         // El dominio valida y normaliza los datos
         carro.CambiarEmpresa(request.EmpresaId);
-        carro.CambiarDatos(request.Marca, request.Modelo, request.Anio, request.Color);
+        carro.CambiarDatos(request.Marca, request.Modelo, request.Anio, request.Color, _dateTime.Now.Year);
         carro.CambiarPlacas(request.Placas);
-        carro.CambiarFotoVehiculo(request.FotoVehiculo);
         carro.CambiarCapacidadTanque(request.CapacidadTanque);
         carro.ActualizarKilometraje(request.KilometrajeActual);
         // El estado NO se cambia aquí: usa /api/cambios-estatus-carro (queda en la bitácora)
@@ -52,6 +59,6 @@ public class UpdateCarroCommandHandler : IRequestHandler<UpdateCarroCommand, Car
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return _mapper.Map<CarroDto>(carro);
+        return await _mapper.Map<CarroDto>(carro).ConUrlsAsync(_storage, cancellationToken);
     }
 }

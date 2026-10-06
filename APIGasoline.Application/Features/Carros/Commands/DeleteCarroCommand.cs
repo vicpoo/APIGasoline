@@ -1,4 +1,5 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
+using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Domain.Interfaces;
 using MediatR;
 
@@ -9,10 +10,12 @@ public record DeleteCarroCommand(int CarroId) : IRequest;
 public class DeleteCarroCommandHandler : IRequestHandler<DeleteCarroCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IFileStorageService _storage;
 
-    public DeleteCarroCommandHandler(IUnitOfWork unitOfWork)
+    public DeleteCarroCommandHandler(IUnitOfWork unitOfWork, IFileStorageService storage)
     {
         _unitOfWork = unitOfWork;
+        _storage = storage;
     }
 
     public async Task Handle(DeleteCarroCommand request, CancellationToken cancellationToken)
@@ -29,7 +32,12 @@ public class DeleteCarroCommandHandler : IRequestHandler<DeleteCarroCommand>
         if (await _unitOfWork.CambiosEstatusCarro.ExistsByCarroAsync(carro.CarroId, cancellationToken))
             throw new ConflictException("No se puede eliminar el carro porque tiene historial de cambios de estatus.");
 
+        var foto = carro.FotoVehiculo;
+
         _unitOfWork.Carros.Remove(carro);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // El registro ya se borró: si falla la limpieza del archivo solo se registra en el log
+        await _storage.IntentarEliminarAsync(foto);
     }
 }

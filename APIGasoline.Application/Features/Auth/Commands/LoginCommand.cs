@@ -25,17 +25,20 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, LoginResponseDt
     private readonly IMapper _mapper;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
+    private readonly IFileStorageService _storage;
 
     public LoginCommandHandler(
         IUnitOfWork unitOfWork,
         IMapper mapper,
         IPasswordHasher passwordHasher,
-        IJwtTokenGenerator jwtTokenGenerator)
+        IJwtTokenGenerator jwtTokenGenerator,
+        IFileStorageService storage)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _passwordHasher = passwordHasher;
         _jwtTokenGenerator = jwtTokenGenerator;
+        _storage = storage;
     }
 
     public async Task<LoginResponseDto> Handle(LoginCommand request, CancellationToken cancellationToken)
@@ -54,7 +57,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, LoginResponseDt
             throw new UnauthorizedException(CredencialesInvalidas);
 
         // Valida estado del usuario/empleado/empresa y carga roles y privilegios
-        var (perfil, empleado) = await PerfilUsuarioBuilder.ConstruirAsync(_unitOfWork, _mapper, usuario, cancellationToken);
+        var (perfil, empleado) = await PerfilUsuarioBuilder.ConstruirAsync(_unitOfWork, _mapper, _storage, usuario, cancellationToken);
 
         var token = _jwtTokenGenerator.Generar(new TokenUsuario(
             usuario.UsuarioId,

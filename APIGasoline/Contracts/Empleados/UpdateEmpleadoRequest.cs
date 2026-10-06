@@ -13,10 +13,4 @@ public class UpdateEmpleadoRequest
     [Required]
     [StringLength(150)]
     public string NombreCompleto { get; set; } = string.Empty;
-
-    [StringLength(255)]
-    public string? FotoPerfil { get; set; }
-
-    [StringLength(255)]
-    public string? FotoLicencia { get; set; }
 }

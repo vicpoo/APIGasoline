@@ -1,4 +1,6 @@
-﻿using APIGasoline.Application.Common.Exceptions;
+﻿using APIGasoline.Application.Common.Interfaces;
+using APIGasoline.Application.Common.Storage;
+using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Features.Empleados.Common;
 using APIGasoline.Application.Features.Empleados.DTOs;
 using APIGasoline.Domain.Interfaces;
@@ -7,23 +9,26 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.Empleados.Commands;
 
+/// <summary>
+/// Actualiza los datos del empleado. Las fotos NO se cambian aquí: usa SubirFotoEmpleadoCommand / EliminarFotoEmpleadoCommand.
+/// </summary>
 public record UpdateEmpleadoCommand(
     int EmpleadoId,
     int EmpresaId,
     int UsuarioId,
-    string NombreCompleto,
-    string? FotoPerfil,
-    string? FotoLicencia) : IRequest<EmpleadoDto>;
+    string NombreCompleto) : IRequest<EmpleadoDto>;
 
 public class UpdateEmpleadoCommandHandler : IRequestHandler<UpdateEmpleadoCommand, EmpleadoDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly IFileStorageService _storage;
 
-    public UpdateEmpleadoCommandHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    public UpdateEmpleadoCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IFileStorageService storage)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _storage = storage;
     }
 
     public async Task<EmpleadoDto> Handle(UpdateEmpleadoCommand request, CancellationToken cancellationToken)
@@ -35,13 +40,11 @@ public class UpdateEmpleadoCommandHandler : IRequestHandler<UpdateEmpleadoComman
         empleado.CambiarEmpresa(request.EmpresaId);
         empleado.CambiarUsuario(request.UsuarioId);
         empleado.CambiarNombreCompleto(request.NombreCompleto);
-        empleado.CambiarFotoPerfil(request.FotoPerfil);
-        empleado.CambiarFotoLicencia(request.FotoLicencia);
 
         await EmpleadoValidator.ValidarAsync(_unitOfWork, empleado.EmpresaId, empleado.UsuarioId, empleado.EmpleadoId, cancellationToken);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return _mapper.Map<EmpleadoDto>(empleado);
+        return await _mapper.Map<EmpleadoDto>(empleado).ConUrlsAsync(_storage, cancellationToken);
     }
 }

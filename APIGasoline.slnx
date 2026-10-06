@@ -3,4 +3,8 @@
   <Project Path="APIGasoline.Domain/APIGasoline.Domain.csproj" Id="881ef6b4-de21-4c1c-a539-15254d7a7b4e" />
   <Project Path="APIGasoline.Infrastructure/APIGasoline.Infrastructure.csproj" Id="60afb146-e7dc-42f8-8609-27ca36ff1c01" />
   <Project Path="APIGasoline/APIGasoline.csproj" />
+  <Folder Name="/tests/">
+    <Project Path="tests/APIGasoline.Application.Tests/APIGasoline.Application.Tests.csproj" />
+    <Project Path="tests/APIGasoline.Domain.Tests/APIGasoline.Domain.Tests.csproj" />
+  </Folder>
 </Solution>

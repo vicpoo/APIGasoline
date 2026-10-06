@@ -1,4 +1,6 @@
-﻿using APIGasoline.Application.Features.CargasCombustible.DTOs;
+﻿using APIGasoline.Application.Common.Interfaces;
+using APIGasoline.Application.Common.Storage;
+using APIGasoline.Application.Features.CargasCombustible.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
 using MediatR;
@@ -19,11 +21,13 @@ public class GetCargasCombustibleQueryHandler : IRequestHandler<GetCargasCombust
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly IFileStorageService _storage;
 
-    public GetCargasCombustibleQueryHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    public GetCargasCombustibleQueryHandler(IUnitOfWork unitOfWork, IMapper mapper, IFileStorageService storage)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _storage = storage;
     }
 
     public async Task<IReadOnlyList<CargaCombustibleDto>> Handle(GetCargasCombustibleQuery request, CancellationToken cancellationToken)
@@ -31,6 +35,6 @@ public class GetCargasCombustibleQueryHandler : IRequestHandler<GetCargasCombust
         var cargas = await _unitOfWork.CargasCombustible.GetAllAsync(
             request.EmpresaId, request.ViajeId, request.Desde, request.Hasta, cancellationToken);
 
-        return _mapper.Map<IReadOnlyList<CargaCombustibleDto>>(cargas);
+        return await _mapper.Map<IReadOnlyList<CargaCombustibleDto>>(cargas).ConUrlsAsync(_storage, cancellationToken);
     }
 }

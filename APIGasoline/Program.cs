@@ -4,6 +4,7 @@ using System.Text;
 using APIGasoline.Application;
 using APIGasoline.Infrastructure;
 using APIGasoline.Infrastructure.Authentication;
+using APIGasoline.Infrastructure.Storage;
 using APIGasoline.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -26,7 +27,10 @@ builder.Services.AddApplication();
 var jwtSettings = builder.Configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>()
     ?? throw new InvalidOperationException("Falta la sección 'Jwt' en la configuración.");
 
-builder.Services.AddInfrastructure(connectionString, jwtSettings);
+var minioSettings = builder.Configuration.GetSection(MinioSettings.SectionName).Get<MinioSettings>()
+    ?? throw new InvalidOperationException("Falta la sección 'Minio' en la configuración.");
+
+builder.Services.AddInfrastructure(connectionString, jwtSettings, minioSettings);
 
 // Autenticación con JWT (el token lo emite POST /api/auth/login)
 builder.Services

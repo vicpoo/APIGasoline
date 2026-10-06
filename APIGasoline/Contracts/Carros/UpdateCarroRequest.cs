@@ -25,9 +25,6 @@ public class UpdateCarroRequest
     [StringLength(20)]
     public string Placas { get; set; } = string.Empty;
 
-    [StringLength(255)]
-    public string? FotoVehiculo { get; set; }
-
     public decimal? CapacidadTanque { get; set; }
 
     public decimal KilometrajeActual { get; set; }

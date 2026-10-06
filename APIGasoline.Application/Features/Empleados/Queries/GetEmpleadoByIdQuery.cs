@@ -1,4 +1,6 @@
-﻿using APIGasoline.Application.Common.Exceptions;
+﻿using APIGasoline.Application.Common.Interfaces;
+using APIGasoline.Application.Common.Storage;
+using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Features.Empleados.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
@@ -12,11 +14,13 @@ public class GetEmpleadoByIdQueryHandler : IRequestHandler<GetEmpleadoByIdQuery,
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly IFileStorageService _storage;
 
-    public GetEmpleadoByIdQueryHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    public GetEmpleadoByIdQueryHandler(IUnitOfWork unitOfWork, IMapper mapper, IFileStorageService storage)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _storage = storage;
     }
 
     public async Task<EmpleadoDto> Handle(GetEmpleadoByIdQuery request, CancellationToken cancellationToken)
@@ -24,6 +28,6 @@ public class GetEmpleadoByIdQueryHandler : IRequestHandler<GetEmpleadoByIdQuery,
         var empleado = await _unitOfWork.Empleados.GetByIdAsync(request.EmpleadoId, cancellationToken)
             ?? throw new NotFoundException($"No existe un empleado con el id {request.EmpleadoId}.");
 
-        return _mapper.Map<EmpleadoDto>(empleado);
+        return await _mapper.Map<EmpleadoDto>(empleado).ConUrlsAsync(_storage, cancellationToken);
     }
 }

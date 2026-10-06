@@ -10,7 +10,10 @@ public record CarroDto(
     int? Anio,
     string? Color,
     string Placas,
+    /// <summary>Llave del archivo en el almacenamiento (lo que se guarda en BD).</summary>
     string? FotoVehiculo,
+    /// <summary>URL temporal para ver la foto (la llena el handler, no AutoMapper).</summary>
+    string? FotoVehiculoUrl,
     decimal? CapacidadTanque,
     decimal KilometrajeActual,
     EstadoCarro Estado,

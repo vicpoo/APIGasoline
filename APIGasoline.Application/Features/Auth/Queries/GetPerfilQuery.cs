@@ -1,4 +1,6 @@
-﻿using APIGasoline.Application.Common.Exceptions;
+﻿using APIGasoline.Application.Common.Interfaces;
+using APIGasoline.Application.Common.Storage;
+using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Features.Auth.Common;
 using APIGasoline.Application.Features.Auth.DTOs;
 using APIGasoline.Domain.Interfaces;
@@ -16,11 +18,13 @@ public class GetPerfilQueryHandler : IRequestHandler<GetPerfilQuery, PerfilUsuar
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly IFileStorageService _storage;
 
-    public GetPerfilQueryHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    public GetPerfilQueryHandler(IUnitOfWork unitOfWork, IMapper mapper, IFileStorageService storage)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _storage = storage;
     }
 
     public async Task<PerfilUsuarioDto> Handle(GetPerfilQuery request, CancellationToken cancellationToken)
@@ -28,7 +32,7 @@ public class GetPerfilQueryHandler : IRequestHandler<GetPerfilQuery, PerfilUsuar
         var usuario = await _unitOfWork.Usuarios.GetByIdAsync(request.UsuarioId, cancellationToken)
             ?? throw new UnauthorizedException("El usuario del token ya no existe.");
 
-        var (perfil, _) = await PerfilUsuarioBuilder.ConstruirAsync(_unitOfWork, _mapper, usuario, cancellationToken);
+        var (perfil, _) = await PerfilUsuarioBuilder.ConstruirAsync(_unitOfWork, _mapper, _storage, usuario, cancellationToken);
         return perfil;
     }
 }

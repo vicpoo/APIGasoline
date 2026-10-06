@@ -1,7 +1,10 @@
 ﻿using APIGasoline.Application.Features.Empleados.Commands;
+using APIGasoline.Application.Features.Empleados.Common;
 using APIGasoline.Application.Features.Empleados.DTOs;
 using APIGasoline.Application.Features.Empleados.Queries;
+using APIGasoline.Contracts.Archivos;
 using APIGasoline.Contracts.Empleados;
+using APIGasoline.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -48,7 +51,7 @@ public class EmpleadosController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<EmpleadoDto>> Create(CreateEmpleadoRequest request, CancellationToken cancellationToken)
     {
-        var command = new CreateEmpleadoCommand(request.EmpresaId, request.UsuarioId, request.NombreCompleto, request.FotoPerfil, request.FotoLicencia);
+        var command = new CreateEmpleadoCommand(request.EmpresaId, request.UsuarioId, request.NombreCompleto);
         var empleado = await _sender.Send(command, cancellationToken);
 
         return CreatedAtAction(nameof(GetById), new { empleadoId = empleado.EmpleadoId }, empleado);
@@ -57,8 +60,57 @@ public class EmpleadosController : ControllerBase
     [HttpPut("{empleadoId:int}")]
     public async Task<ActionResult<EmpleadoDto>> Update(int empleadoId, UpdateEmpleadoRequest request, CancellationToken cancellationToken)
     {
-        var command = new UpdateEmpleadoCommand(empleadoId, request.EmpresaId, request.UsuarioId, request.NombreCompleto, request.FotoPerfil, request.FotoLicencia);
+        var command = new UpdateEmpleadoCommand(empleadoId, request.EmpresaId, request.UsuarioId, request.NombreCompleto);
         var empleado = await _sender.Send(command, cancellationToken);
+
+        return Ok(empleado);
+    }
+
+    /// <summary>
+    /// Sube o reemplaza la foto de perfil (multipart/form-data, campo "archivo": jpg, png o webp, máx. 5 MB).
+    /// </summary>
+    [HttpPut("{empleadoId:int}/foto-perfil")]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(FormFileExtensions.LimiteCuerpoBytes)]
+    [RequestFormLimits(MultipartBodyLengthLimit = FormFileExtensions.LimiteCuerpoBytes)]
+    public Task<ActionResult<EmpleadoDto>> SubirFotoPerfil(int empleadoId, [FromForm] SubirArchivoRequest request, CancellationToken cancellationToken)
+        => SubirArchivoAsync(empleadoId, TipoFotoEmpleado.Perfil, request, cancellationToken);
+
+    /// <summary>
+    /// Sube o reemplaza la licencia (multipart/form-data, campo "archivo": jpg, png, webp o pdf, máx. 5 MB).
+    /// </summary>
+    [HttpPut("{empleadoId:int}/foto-licencia")]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(FormFileExtensions.LimiteCuerpoBytes)]
+    [RequestFormLimits(MultipartBodyLengthLimit = FormFileExtensions.LimiteCuerpoBytes)]
+    public Task<ActionResult<EmpleadoDto>> SubirFotoLicencia(int empleadoId, [FromForm] SubirArchivoRequest request, CancellationToken cancellationToken)
+        => SubirArchivoAsync(empleadoId, TipoFotoEmpleado.Licencia, request, cancellationToken);
+
+    [HttpDelete("{empleadoId:int}/foto-perfil")]
+    public async Task<IActionResult> EliminarFotoPerfil(int empleadoId, CancellationToken cancellationToken)
+    {
+        await _sender.Send(new EliminarFotoEmpleadoCommand(empleadoId, TipoFotoEmpleado.Perfil), cancellationToken);
+        return NoContent();
+    }
+
+    [HttpDelete("{empleadoId:int}/foto-licencia")]
+    public async Task<IActionResult> EliminarFotoLicencia(int empleadoId, CancellationToken cancellationToken)
+    {
+        await _sender.Send(new EliminarFotoEmpleadoCommand(empleadoId, TipoFotoEmpleado.Licencia), cancellationToken);
+        return NoContent();
+    }
+
+    private async Task<ActionResult<EmpleadoDto>> SubirArchivoAsync(
+        int empleadoId,
+        TipoFotoEmpleado tipo,
+        SubirArchivoRequest request,
+        CancellationToken cancellationToken)
+    {
+        await using var contenido = request.Archivo!.OpenReadStream();
+
+        var empleado = await _sender.Send(
+            new SubirFotoEmpleadoCommand(empleadoId, tipo, request.Archivo.ToArchivoEntrada(contenido)),
+            cancellationToken);
 
         return Ok(empleado);
     }

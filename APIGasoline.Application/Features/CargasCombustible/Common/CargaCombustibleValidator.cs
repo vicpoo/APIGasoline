@@ -1,5 +1,6 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Common.Interfaces;
+using APIGasoline.Application.Features.Viajes.Common;
 using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Interfaces;
 
@@ -10,9 +11,6 @@ namespace APIGasoline.Application.Features.CargasCombustible.Common;
 /// </summary>
 internal static class CargaCombustibleValidator
 {
-    // Margen por diferencias de reloj entre el teléfono y el servidor
-    private static readonly TimeSpan Tolerancia = TimeSpan.FromMinutes(5);
-
     public static async Task ValidarAsync(
         IUnitOfWork unitOfWork,
         IDateTimeProvider dateTime,
@@ -20,17 +18,14 @@ internal static class CargaCombustibleValidator
         CargaCombustible carga,
         CancellationToken cancellationToken)
     {
-        var desde = viaje.FechaInicio - Tolerancia;
-        var hasta = (viaje.FechaFin ?? dateTime.Now) + Tolerancia;
-
-        if (carga.FechaCarga < desde || carga.FechaCarga > hasta)
+        if (!VentanaViaje.Contiene(carga.FechaCarga, viaje.FechaInicio, viaje.FechaFin, dateTime.Now))
             throw new BadRequestException("La fecha de carga está fuera del periodo del viaje.");
 
         // No se pueden cargar más litros de los que caben en el tanque
         var carro = await unitOfWork.Carros.GetByIdAsync(viaje.CarroId, cancellationToken)
             ?? throw new NotFoundException($"No existe un carro con el id {viaje.CarroId}.");
 
-        if (carro.CapacidadTanque is not null && carga.Litros > carro.CapacidadTanque)
+        if (ReglaCapacidadTanque.Excede(carga.Litros, carro.CapacidadTanque))
             throw new BadRequestException(
                 $"Los litros ({carga.Litros}) exceden la capacidad del tanque del carro ({carro.CapacidadTanque}).");
 

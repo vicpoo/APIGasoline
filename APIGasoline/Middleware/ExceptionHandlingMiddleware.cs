@@ -45,6 +45,15 @@ public class ExceptionHandlingMiddleware
         {
             await WriteProblemAsync(context, StatusCodes.Status409Conflict, "Conflicto", ex.Message);
         }
+        catch (AlmacenamientoException ex)
+        {
+            _logger.LogError(ex, "Falla del almacenamiento de archivos.");
+            await WriteProblemAsync(context, StatusCodes.Status503ServiceUnavailable, "Almacenamiento no disponible", ex.Message);
+        }
+        catch (BadHttpRequestException ex) when (ex.StatusCode == StatusCodes.Status413PayloadTooLarge)
+        {
+            await WriteProblemAsync(context, StatusCodes.Status413PayloadTooLarge, "Archivo demasiado grande", "El cuerpo de la solicitud excede el tamaño permitido.");
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error no controlado.");

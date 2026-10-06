@@ -8,6 +8,9 @@ public class CargaCombustibleProfile : Profile
 {
     public CargaCombustibleProfile()
     {
-        CreateMap<CargaCombustible, CargaCombustibleDto>();
+        // La URL no sale de la entidad: la genera el handler con IFileStorageService
+        CreateMap<CargaCombustible, CargaCombustibleDto>()
+            .ForCtorParam(nameof(CargaCombustibleDto.FotoComprobanteUrl), opt => opt.MapFrom(_ => (string?)null))
+            .ForMember(d => d.FotoComprobanteUrl, opt => opt.Ignore());
     }
 }

@@ -1,4 +1,6 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
+using APIGasoline.Application.Common.Interfaces;
+using APIGasoline.Application.Common.Storage;
 using APIGasoline.Application.Features.Auth.DTOs;
 using APIGasoline.Application.Features.Empleados.DTOs;
 using APIGasoline.Application.Features.Usuarios.DTOs;
@@ -17,6 +19,7 @@ internal static class PerfilUsuarioBuilder
     public static async Task<(PerfilUsuarioDto Perfil, Empleado? Empleado)> ConstruirAsync(
         IUnitOfWork unitOfWork,
         IMapper mapper,
+        IFileStorageService storage,
         Usuario usuario,
         CancellationToken cancellationToken)
     {
@@ -37,9 +40,13 @@ internal static class PerfilUsuarioBuilder
         var privilegios = await unitOfWork.Privilegios.GetNombresActivosByRolesAsync(
             roles.Select(r => r.RolId).ToList(), cancellationToken);
 
+        var empleadoDto = empleado is null
+            ? null
+            : await mapper.Map<EmpleadoDto>(empleado).ConUrlsAsync(storage, cancellationToken);
+
         var perfil = new PerfilUsuarioDto(
             mapper.Map<UsuarioDto>(usuario),
-            empleado is null ? null : mapper.Map<EmpleadoDto>(empleado),
+            empleadoDto,
             roles.Select(r => r.Nombre).ToList(),
             privilegios);
 

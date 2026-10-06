@@ -545,9 +545,7 @@ Content-Type: application/json
 {
   "empresaId": 1,
   "usuarioId": 1,
-  "nombreCompleto": "Víctor Alejandro Pérez López",
-  "fotoPerfil": null,
-  "fotoLicencia": null
+  "nombreCompleto": "Víctor Alejandro Pérez López"
 }
 
 ### EM4. Obtener un empleado por id
@@ -558,17 +556,51 @@ Accept: application/json
 GET {{host}}/api/empleados/por-usuario/1
 Accept: application/json
 
-### EM6. Actualizar un empleado (ej. después de subir su licencia)
+### EM6. Actualizar un empleado (las fotos se suben con EM6a/EM6b)
 PUT {{host}}/api/empleados/1
 Content-Type: application/json
 
 {
   "empresaId": 1,
   "usuarioId": 1,
-  "nombreCompleto": "Víctor Alejandro Pérez López",
-  "fotoPerfil": "empleados/1/perfil.jpg",
-  "fotoLicencia": "empleados/1/licencia.pdf"
+  "nombreCompleto": "Víctor Alejandro Pérez López"
 }
+
+### EM6a. Subir la licencia (jpg, png, webp o pdf; máx. 5 MB) -> MinIO; en BD solo queda la llave
+PUT {{host}}/api/empleados/1/foto-licencia
+Content-Type: multipart/form-data; boundary=----APIGasolineBoundary
+
+------APIGasolineBoundary
+Content-Disposition: form-data; name="archivo"; filename="licencia.pdf"
+Content-Type: application/pdf
+
+< ./pruebas/licencia.pdf
+------APIGasolineBoundary--
+
+### EM6b. Subir la foto de perfil (jpg, png o webp; máx. 5 MB)
+PUT {{host}}/api/empleados/1/foto-perfil
+Content-Type: multipart/form-data; boundary=----APIGasolineBoundary
+
+------APIGasolineBoundary
+Content-Disposition: form-data; name="archivo"; filename="perfil.png"
+Content-Type: image/png
+
+< ./pruebas/perfil.png
+------APIGasolineBoundary--
+
+### EM6c. Probar validación (400): la foto de perfil no acepta PDF
+PUT {{host}}/api/empleados/1/foto-perfil
+Content-Type: multipart/form-data; boundary=----APIGasolineBoundary
+
+------APIGasolineBoundary
+Content-Disposition: form-data; name="archivo"; filename="licencia.pdf"
+Content-Type: application/pdf
+
+< ./pruebas/licencia.pdf
+------APIGasolineBoundary--
+
+### EM6d. Quitar la foto de perfil (borra la llave en BD y el archivo en MinIO)
+DELETE {{host}}/api/empleados/1/foto-perfil
 
 ### EM7. Probar conflicto (409): usuario ya asignado a otro empleado
 POST {{host}}/api/empleados
@@ -614,7 +646,6 @@ Content-Type: application/json
   "anio": 2023,
   "color": "Blanco",
   "placas": "dfg-123-a",
-  "fotoVehiculo": null,
   "capacidadTanque": 80.00,
   "kilometrajeActual": 15230.50,
   "estado": "disponible"
@@ -635,11 +666,24 @@ Content-Type: application/json
   "anio": 2023,
   "color": "Blanco",
   "placas": "DFG-123-A",
-  "fotoVehiculo": "carros/1/foto.jpg",
   "capacidadTanque": 80.00,
   "kilometrajeActual": 15480.00,
   "estado": "enMantenimiento"
 }
+
+### CA5a. Subir o reemplazar la foto del carro (jpg, png o webp; máx. 5 MB)
+PUT {{host}}/api/carros/1/foto
+Content-Type: multipart/form-data; boundary=----APIGasolineBoundary
+
+------APIGasolineBoundary
+Content-Disposition: form-data; name="archivo"; filename="carro.jpg"
+Content-Type: image/jpeg
+
+< ./pruebas/carro.jpg
+------APIGasolineBoundary--
+
+### CA5b. Quitar la foto del carro
+DELETE {{host}}/api/carros/1/foto
 
 ### CA6. Probar regla de dominio (400): kilometraje menor al actual
 PUT {{host}}/api/carros/1
@@ -672,7 +716,7 @@ DELETE {{host}}/api/carros/1
 
 # ===================== SOLICITUDES DE RESERVA =====================
 # Requiere: empresa 1, carro 1 "disponible", empleados 1 y 2 de la empresa 1
-# El solicitante necesita foto_licencia (usa EM6 para cargarla)
+# El solicitante necesita foto_licencia (usa EM6a para subirla)
 
 ### SR1. Cola de pendientes de una empresa (más antigua primero)
 GET {{host}}/api/solicitudes-reserva?empresaId=1&estado=pendiente
@@ -882,60 +926,165 @@ Accept: application/json
 GET {{host}}/api/cargas-combustible?viajeId=1
 Accept: application/json
 
-### CG3. Registrar una carga
+### CG3. Registrar una carga (multipart: datos + foto del ticket -> MinIO; en BD solo queda la llave)
 POST {{host}}/api/cargas-combustible
-Content-Type: application/json
+Content-Type: multipart/form-data; boundary=----APIGasolineBoundary
 
-{
-  "viajeId": 1,
-  "litros": 45.30,
-  "monto": 1087.20,
-  "fotoComprobante": "cargas/1/ticket.jpg",
-  "fechaCarga": "2026-10-05T10:05:00",
-  "ubicacionLat": 15.676111,
-  "ubicacionLng": -92.995278,
-  "sincronizado": false
-}
+------APIGasolineBoundary
+Content-Disposition: form-data; name="viajeId"
+
+1
+------APIGasolineBoundary
+Content-Disposition: form-data; name="litros"
+
+45.30
+------APIGasolineBoundary
+Content-Disposition: form-data; name="monto"
+
+1087.20
+------APIGasolineBoundary
+Content-Disposition: form-data; name="fechaCarga"
+
+2026-10-05T10:05:00
+------APIGasolineBoundary
+Content-Disposition: form-data; name="ubicacionLat"
+
+15.676111
+------APIGasolineBoundary
+Content-Disposition: form-data; name="ubicacionLng"
+
+-92.995278
+------APIGasolineBoundary
+Content-Disposition: form-data; name="sincronizado"
+
+false
+------APIGasolineBoundary
+Content-Disposition: form-data; name="fotoComprobante"; filename="ticket.jpg"
+Content-Type: image/jpeg
+
+< ./pruebas/ticket.jpg
+------APIGasolineBoundary--
 
 ### CG4. Obtener una carga por id
 GET {{host}}/api/cargas-combustible/1
 Accept: application/json
 
-### CG5. Corregir una carga
+### CG5. Corregir una carga (sin archivo: se conserva el comprobante actual)
 PUT {{host}}/api/cargas-combustible/1
-Content-Type: application/json
+Content-Type: multipart/form-data; boundary=----APIGasolineBoundary
 
-{
-  "litros": 45.80,
-  "monto": 1099.20,
-  "fotoComprobante": "cargas/1/ticket.jpg",
-  "fechaCarga": "2026-10-05T10:05:00",
-  "ubicacionLat": 15.676111,
-  "ubicacionLng": -92.995278
-}
+------APIGasolineBoundary
+Content-Disposition: form-data; name="litros"
 
-### CG6. Probar conflicto (409): reenviar la misma carga
+45.80
+------APIGasolineBoundary
+Content-Disposition: form-data; name="monto"
+
+1099.20
+------APIGasolineBoundary
+Content-Disposition: form-data; name="fechaCarga"
+
+2026-10-05T10:05:00
+------APIGasolineBoundary
+Content-Disposition: form-data; name="ubicacionLat"
+
+15.676111
+------APIGasolineBoundary
+Content-Disposition: form-data; name="ubicacionLng"
+
+-92.995278
+------APIGasolineBoundary--
+
+### CG5a. Corregir una carga y reemplazar el comprobante
+PUT {{host}}/api/cargas-combustible/1
+Content-Type: multipart/form-data; boundary=----APIGasolineBoundary
+
+------APIGasolineBoundary
+Content-Disposition: form-data; name="litros"
+
+45.80
+------APIGasolineBoundary
+Content-Disposition: form-data; name="monto"
+
+1099.20
+------APIGasolineBoundary
+Content-Disposition: form-data; name="fechaCarga"
+
+2026-10-05T10:05:00
+------APIGasolineBoundary
+Content-Disposition: form-data; name="fotoComprobante"; filename="ticket.jpg"
+Content-Type: image/jpeg
+
+< ./pruebas/ticket.jpg
+------APIGasolineBoundary--
+
+### CG6. Probar conflicto (409): reenviar la misma carga (no se sube el archivo)
 POST {{host}}/api/cargas-combustible
-Content-Type: application/json
+Content-Type: multipart/form-data; boundary=----APIGasolineBoundary
 
-{
-  "viajeId": 1,
-  "litros": 45.30,
-  "fotoComprobante": "cargas/1/ticket.jpg",
-  "fechaCarga": "2026-10-05T10:05:00",
-  "sincronizado": true
-}
+------APIGasolineBoundary
+Content-Disposition: form-data; name="viajeId"
+
+1
+------APIGasolineBoundary
+Content-Disposition: form-data; name="litros"
+
+45.30
+------APIGasolineBoundary
+Content-Disposition: form-data; name="fechaCarga"
+
+2026-10-05T10:05:00
+------APIGasolineBoundary
+Content-Disposition: form-data; name="sincronizado"
+
+true
+------APIGasolineBoundary
+Content-Disposition: form-data; name="fotoComprobante"; filename="ticket.jpg"
+Content-Type: image/jpeg
+
+< ./pruebas/ticket.jpg
+------APIGasolineBoundary--
 
 ### CG7. Probar validación (400): más litros que la capacidad del tanque
 POST {{host}}/api/cargas-combustible
-Content-Type: application/json
+Content-Type: multipart/form-data; boundary=----APIGasolineBoundary
 
-{
-  "viajeId": 1,
-  "litros": 500,
-  "fotoComprobante": "cargas/1/ticket2.jpg",
-  "fechaCarga": "2026-10-05T11:00:00"
-}
+------APIGasolineBoundary
+Content-Disposition: form-data; name="viajeId"
+
+1
+------APIGasolineBoundary
+Content-Disposition: form-data; name="litros"
+
+500
+------APIGasolineBoundary
+Content-Disposition: form-data; name="fechaCarga"
+
+2026-10-05T11:00:00
+------APIGasolineBoundary
+Content-Disposition: form-data; name="fotoComprobante"; filename="ticket.jpg"
+Content-Type: image/jpeg
+
+< ./pruebas/ticket.jpg
+------APIGasolineBoundary--
+
+### CG7a. Probar validación (400): falta el comprobante
+POST {{host}}/api/cargas-combustible
+Content-Type: multipart/form-data; boundary=----APIGasolineBoundary
+
+------APIGasolineBoundary
+Content-Disposition: form-data; name="viajeId"
+
+1
+------APIGasolineBoundary
+Content-Disposition: form-data; name="litros"
+
+20
+------APIGasolineBoundary
+Content-Disposition: form-data; name="fechaCarga"
+
+2026-10-05T12:00:00
+------APIGasolineBoundary--
 
 ### CG8. Eliminar una carga
 DELETE {{host}}/api/cargas-combustible/1

@@ -1,5 +1,7 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Common.Interfaces;
+using APIGasoline.Application.Features.PuntosRuta.Common;
+using APIGasoline.Application.Features.Viajes.Common;
 using APIGasoline.Application.Features.PuntosRuta.DTOs;
 using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Interfaces;
@@ -23,9 +25,6 @@ public class RegistrarLotePuntosRutaCommandHandler : IRequestHandler<RegistrarLo
 {
     public const int MaxPuntosPorLote = 1000;
 
-    // Margen por diferencias de reloj entre el teléfono y el servidor
-    private static readonly TimeSpan Tolerancia = TimeSpan.FromMinutes(5);
-
     private readonly IUnitOfWork _unitOfWork;
     private readonly IDateTimeProvider _dateTime;
 
@@ -46,12 +45,8 @@ public class RegistrarLotePuntosRutaCommandHandler : IRequestHandler<RegistrarLo
         var viaje = await _unitOfWork.Viajes.GetByIdAsync(request.ViajeId, cancellationToken)
             ?? throw new NotFoundException($"No existe un viaje con el id {request.ViajeId}.");
 
-        // Los puntos deben caer dentro del periodo del viaje (con tolerancia)
-        var desde = viaje.FechaInicio - Tolerancia;
-        var hasta = (viaje.FechaFin ?? _dateTime.Now) + Tolerancia;
-
-        var existentes = await _unitOfWork.PuntosRuta.GetTimestampsByViajeAsync(viaje.ViajeId, cancellationToken);
-        var nuevos = new List<PuntoRuta>();
+        var ahora = _dateTime.Now;
+        var puntos = new List<PuntoRuta>();
 
         foreach (var punto in request.Puntos)
         {
@@ -64,14 +59,16 @@ public class RegistrarLotePuntosRutaCommandHandler : IRequestHandler<RegistrarLo
                 punto.TimestampCaptura,
                 request.Sincronizado);
 
-            if (puntoRuta.TimestampCaptura < desde || puntoRuta.TimestampCaptura > hasta)
+            // Los puntos deben caer dentro del periodo del viaje (con tolerancia)
+            if (!VentanaViaje.Contiene(puntoRuta.TimestampCaptura, viaje.FechaInicio, viaje.FechaFin, ahora))
                 throw new BadRequestException(
                     $"El punto capturado el {puntoRuta.TimestampCaptura:yyyy-MM-dd HH:mm:ss} está fuera del periodo del viaje.");
 
-            // Add devuelve false si ya estaba: cubre duplicados en la BD y dentro del mismo lote
-            if (existentes.Add(puntoRuta.TimestampCaptura))
-                nuevos.Add(puntoRuta);
+            puntos.Add(puntoRuta);
         }
+
+        var existentes = await _unitOfWork.PuntosRuta.GetTimestampsByViajeAsync(viaje.ViajeId, cancellationToken);
+        var nuevos = DeduplicadorPuntosRuta.FiltrarNuevos(puntos, existentes);
 
         if (nuevos.Count > 0)
         {

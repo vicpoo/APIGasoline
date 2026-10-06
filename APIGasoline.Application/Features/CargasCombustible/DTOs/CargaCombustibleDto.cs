@@ -7,7 +7,10 @@ public record CargaCombustibleDto(
     decimal Litros,
     decimal? Monto,
     decimal? PrecioPorLitro,
+    /// <summary>Llave del comprobante en el almacenamiento (lo que se guarda en BD).</summary>
     string FotoComprobante,
+    /// <summary>URL temporal para ver el comprobante (la llena el handler, no AutoMapper).</summary>
+    string? FotoComprobanteUrl,
     DateTime FechaCarga,
     decimal? UbicacionLat,
     decimal? UbicacionLng,

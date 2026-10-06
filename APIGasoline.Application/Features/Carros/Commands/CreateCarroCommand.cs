@@ -1,4 +1,5 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
+using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Features.Carros.DTOs;
 using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Enums;
@@ -8,6 +9,10 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.Carros.Commands;
 
+/// <summary>
+/// Crea el carro sin foto. La foto se sube después con <see cref="SubirFotoVehiculoCommand"/>
+/// (PUT /api/carros/{id}/foto), porque la llave del archivo usa el id del carro.
+/// </summary>
 public record CreateCarroCommand(
     int EmpresaId,
     string Marca,
@@ -15,7 +20,6 @@ public record CreateCarroCommand(
     int? Anio,
     string? Color,
     string Placas,
-    string? FotoVehiculo,
     decimal? CapacidadTanque,
     decimal KilometrajeActual,
     EstadoCarro Estado) : IRequest<CarroDto>;
@@ -24,11 +28,13 @@ public class CreateCarroCommandHandler : IRequestHandler<CreateCarroCommand, Car
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly IDateTimeProvider _dateTime;
 
-    public CreateCarroCommandHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    public CreateCarroCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IDateTimeProvider dateTime)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _dateTime = dateTime;
     }
 
     public async Task<CarroDto> Handle(CreateCarroCommand request, CancellationToken cancellationToken)
@@ -41,9 +47,10 @@ public class CreateCarroCommandHandler : IRequestHandler<CreateCarroCommand, Car
             request.Anio,
             request.Color,
             request.Placas,
-            request.FotoVehiculo,
+            null, // foto: se sube con SubirFotoVehiculoCommand
             request.CapacidadTanque,
             request.KilometrajeActual,
+            _dateTime.Now.Year,
             request.Estado);
 
         // Las empresas eliminadas (soft delete) no cuentan como existentes

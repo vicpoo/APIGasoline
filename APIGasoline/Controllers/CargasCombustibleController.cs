@@ -2,6 +2,7 @@
 using APIGasoline.Application.Features.CargasCombustible.DTOs;
 using APIGasoline.Application.Features.CargasCombustible.Queries;
 using APIGasoline.Contracts.CargasCombustible;
+using APIGasoline.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -41,14 +42,23 @@ public class CargasCombustibleController : ControllerBase
         return Ok(carga);
     }
 
+    /// <summary>
+    /// Registra una carga. Se envía como multipart/form-data con el archivo "fotoComprobante"
+    /// (jpg, png o webp, máx. 5 MB). En la BD solo se guarda la llave del archivo.
+    /// </summary>
     [HttpPost]
-    public async Task<ActionResult<CargaCombustibleDto>> Create(CreateCargaCombustibleRequest request, CancellationToken cancellationToken)
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(FormFileExtensions.LimiteCuerpoBytes)]
+    [RequestFormLimits(MultipartBodyLengthLimit = FormFileExtensions.LimiteCuerpoBytes)]
+    public async Task<ActionResult<CargaCombustibleDto>> Create([FromForm] CreateCargaCombustibleRequest request, CancellationToken cancellationToken)
     {
+        await using var contenido = request.FotoComprobante!.OpenReadStream();
+
         var command = new CreateCargaCombustibleCommand(
             request.ViajeId,
             request.Litros!.Value,
             request.Monto,
-            request.FotoComprobante,
+            request.FotoComprobante.ToArchivoEntrada(contenido),
             request.FechaCarga!.Value,
             request.UbicacionLat,
             request.UbicacionLng,
@@ -59,14 +69,23 @@ public class CargasCombustibleController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { cargaCombustibleId = carga.CargaCombustibleId }, carga);
     }
 
+    /// <summary>
+    /// Corrige una carga. Se envía como multipart/form-data; "fotoComprobante" es opcional
+    /// (si no se manda, se conserva el comprobante actual).
+    /// </summary>
     [HttpPut("{cargaCombustibleId:int}")]
-    public async Task<ActionResult<CargaCombustibleDto>> Update(int cargaCombustibleId, UpdateCargaCombustibleRequest request, CancellationToken cancellationToken)
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(FormFileExtensions.LimiteCuerpoBytes)]
+    [RequestFormLimits(MultipartBodyLengthLimit = FormFileExtensions.LimiteCuerpoBytes)]
+    public async Task<ActionResult<CargaCombustibleDto>> Update(int cargaCombustibleId, [FromForm] UpdateCargaCombustibleRequest request, CancellationToken cancellationToken)
     {
+        await using var contenido = request.FotoComprobante?.OpenReadStream();
+
         var command = new UpdateCargaCombustibleCommand(
             cargaCombustibleId,
             request.Litros!.Value,
             request.Monto,
-            request.FotoComprobante,
+            request.FotoComprobante is null || contenido is null ? null : request.FotoComprobante.ToArchivoEntrada(contenido),
             request.FechaCarga!.Value,
             request.UbicacionLat,
             request.UbicacionLng);

@@ -9,3 +9,6 @@ obj/
 
 # Configuración local con contraseñas
 appsettings.Development.json
+
+# Variables de entorno de Docker (secretos)
+.env

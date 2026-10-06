@@ -56,6 +56,7 @@ public class Carro
         string? fotoVehiculo,
         decimal? capacidadTanque,
         decimal kilometrajeActual,
+        int anioActual,
         EstadoCarro estado = EstadoCarro.Disponible)
     {
         if (kilometrajeActual < 0 || kilometrajeActual > KilometrajeMaximo)
@@ -63,7 +64,7 @@ public class Carro
 
         var carro = new Carro { KilometrajeActual = kilometrajeActual };
         carro.CambiarEmpresa(empresaId);
-        carro.CambiarDatos(marca, modelo, anio, color);
+        carro.CambiarDatos(marca, modelo, anio, color, anioActual);
         carro.CambiarPlacas(placas);
         carro.CambiarFotoVehiculo(fotoVehiculo);
         carro.CambiarCapacidadTanque(capacidadTanque);
@@ -80,12 +81,17 @@ public class Carro
         EmpresaId = empresaId;
     }
 
-    public void CambiarDatos(string marca, string modelo, int? anio, string? color)
+    /// <param name="anioActual">
+    /// Año de hoy (lo da IDateTimeProvider). Se recibe como parámetro para que la regla
+    /// no dependa del reloj del sistema y se pueda probar.
+    /// </param>
+    public void CambiarDatos(string marca, string modelo, int? anio, string? color, int anioActual)
     {
         Marca = Requerido(marca, "La marca", MarcaMaxLength);
         Modelo = Requerido(modelo, "El modelo", ModeloMaxLength);
 
-        var anioMaximo = DateTime.UtcNow.Year + 1;
+        // Se permite el modelo del año siguiente (los autos nuevos salen antes)
+        var anioMaximo = anioActual + 1;
         if (anio is not null && (anio < AnioMinimo || anio > anioMaximo))
             throw new DomainException($"El año debe estar entre {AnioMinimo} y {anioMaximo}.");
 

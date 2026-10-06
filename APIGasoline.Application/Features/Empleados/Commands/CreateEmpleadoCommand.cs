@@ -7,12 +7,14 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.Empleados.Commands;
 
+/// <summary>
+/// Crea el empleado sin fotos. La foto de perfil y la licencia se suben después con
+/// <see cref="SubirFotoEmpleadoCommand"/>, porque la llave del archivo usa el id del empleado.
+/// </summary>
 public record CreateEmpleadoCommand(
     int EmpresaId,
     int UsuarioId,
-    string NombreCompleto,
-    string? FotoPerfil,
-    string? FotoLicencia) : IRequest<EmpleadoDto>;
+    string NombreCompleto) : IRequest<EmpleadoDto>;
 
 public class CreateEmpleadoCommandHandler : IRequestHandler<CreateEmpleadoCommand, EmpleadoDto>
 {
@@ -28,7 +30,7 @@ public class CreateEmpleadoCommandHandler : IRequestHandler<CreateEmpleadoComman
     public async Task<EmpleadoDto> Handle(CreateEmpleadoCommand request, CancellationToken cancellationToken)
     {
         // El dominio valida y normaliza los datos
-        var empleado = Empleado.Crear(request.EmpresaId, request.UsuarioId, request.NombreCompleto, request.FotoPerfil, request.FotoLicencia);
+        var empleado = Empleado.Crear(request.EmpresaId, request.UsuarioId, request.NombreCompleto);
 
         await EmpleadoValidator.ValidarAsync(_unitOfWork, empleado.EmpresaId, empleado.UsuarioId, null, cancellationToken);
 

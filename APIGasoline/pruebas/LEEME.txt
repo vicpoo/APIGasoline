@@ -1,0 +1,7 @@
+Archivos de prueba para APIGasoline.http (subidas a MinIO).
+Son imágenes generadas, no contienen datos reales.
+
+  ticket.jpg    -> comprobante de carga de combustible (CG3, CG5a, CG6, CG7)
+  carro.jpg     -> foto del vehículo (CA5a)
+  perfil.png    -> foto de perfil del empleado (EM6b)
+  licencia.pdf  -> licencia del empleado (EM6a, EM6c)

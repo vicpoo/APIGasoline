@@ -2,6 +2,9 @@
 
 namespace APIGasoline.Contracts.CargasCombustible;
 
+/// <summary>
+/// Se envía como multipart/form-data: los datos de la carga + el archivo "fotoComprobante".
+/// </summary>
 public class CreateCargaCombustibleRequest
 {
     [Range(1, int.MaxValue)]
@@ -12,9 +15,9 @@ public class CreateCargaCombustibleRequest
 
     public decimal? Monto { get; set; }
 
+    /// <summary>Foto del ticket (jpg, png o webp, máx. 5 MB).</summary>
     [Required]
-    [StringLength(255)]
-    public string FotoComprobante { get; set; } = string.Empty;
+    public IFormFile? FotoComprobante { get; set; }
 
     [Required]
     public DateTime? FechaCarga { get; set; }
