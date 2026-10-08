@@ -3,6 +3,7 @@ using APIGasoline.Application.Features.Viajes.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
 using MediatR;
+using APIGasoline.Application.Features.RutasProcesadas.Notifications;
 
 namespace APIGasoline.Application.Features.Viajes.Commands;
 
@@ -20,11 +21,13 @@ public class FinalizarViajeCommandHandler : IRequestHandler<FinalizarViajeComman
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly IPublisher _publisher;
 
-    public FinalizarViajeCommandHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    public FinalizarViajeCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IPublisher publisher)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _publisher = publisher;
     }
 
     public async Task<ViajeDto> Handle(FinalizarViajeCommand request, CancellationToken cancellationToken)
@@ -39,6 +42,9 @@ public class FinalizarViajeCommandHandler : IRequestHandler<FinalizarViajeComman
         carro.AvanzarKilometraje(request.KilometrajeFinal);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // El viaje ya quedó cerrado; procesar la ruta no puede deshacerlo
+        await _publisher.Publish(new RutaViajeModificadaNotification(viaje.ViajeId), cancellationToken);
 
         return _mapper.Map<ViajeDto>(viaje);
     }

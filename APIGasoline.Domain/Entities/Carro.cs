@@ -3,9 +3,6 @@ using APIGasoline.Domain.Exceptions;
 
 namespace APIGasoline.Domain.Entities;
 
-/// <summary>
-/// Vehículo perteneciente a una empresa.
-/// </summary>
 public class Carro
 {
     public const int MarcaMaxLength = 80;
@@ -25,20 +22,15 @@ public class Carro
     public string? Color { get; private set; }
     public string Placas { get; private set; } = string.Empty;
 
-    /// <summary>Ruta/llave del archivo en el almacenamiento (MinIO).</summary>
     public string? FotoVehiculo { get; private set; }
 
-    /// <summary>Litros.</summary>
     public decimal? CapacidadTanque { get; private set; }
 
-    /// <summary>Kilómetros. Solo puede aumentar.</summary>
     public decimal KilometrajeActual { get; private set; }
 
     public EstadoCarro Estado { get; private set; } = EstadoCarro.Disponible;
 
-    /// <summary>
-    /// La asigna la base de datos al insertar (default now()). No se modifica después.
-    /// </summary>
+
     public DateTime? FechaAlta { get; private set; }
 
     // Requerido por Entity Framework
@@ -116,9 +108,7 @@ public class Carro
         CapacidadTanque = capacidadTanque;
     }
 
-    /// <summary>
-    /// El kilometraje nunca puede disminuir (se actualiza al devolver el carro).
-    /// </summary>
+
     public void ActualizarKilometraje(decimal nuevoKilometraje)
     {
         if (nuevoKilometraje > KilometrajeMaximo)
@@ -130,10 +120,7 @@ public class Carro
         KilometrajeActual = nuevoKilometraje;
     }
 
-    /// <summary>
-    /// Al cerrar un viaje: actualiza el kilometraje solo si es mayor al actual.
-    /// (Los viajes sincronizados offline pueden llegar en desorden.)
-    /// </summary>
+
     public void AvanzarKilometraje(decimal kilometraje)
     {
         if (kilometraje > KilometrajeMaximo)
@@ -153,9 +140,7 @@ public class Carro
 
     public bool EstaDisponible => Estado == EstadoCarro.Disponible;
 
-    /// <summary>
-    /// Se llama al aprobar una solicitud de reserva.
-    /// </summary>
+ 
     public void Ocupar()
     {
         if (Estado == EstadoCarro.EnMantenimiento)
@@ -167,9 +152,7 @@ public class Carro
         Estado = EstadoCarro.Ocupado;
     }
 
-    /// <summary>
-    /// Se llama al cancelar una reserva aprobada (o al devolver el carro).
-    /// </summary>
+ 
     public void Liberar()
     {
         if (Estado == EstadoCarro.Ocupado)

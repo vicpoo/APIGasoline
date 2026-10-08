@@ -7,4 +7,7 @@ public record PuntoRutaDto(
     decimal Latitud,
     decimal Longitud,
     DateTime TimestampCaptura,
-    bool Sincronizado);
+    bool Sincronizado,
+    decimal? PrecisionMetros,
+    decimal? Altitud,
+    decimal? Velocidad);

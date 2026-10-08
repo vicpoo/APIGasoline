@@ -27,6 +27,7 @@ public class AppDbContext : DbContext
     public DbSet<SolicitudReserva> SolicitudesReserva => Set<SolicitudReserva>();
     public DbSet<Viaje> Viajes => Set<Viaje>();
     public DbSet<PuntoRuta> PuntosRuta => Set<PuntoRuta>();
+    public DbSet<RutaProcesada> RutasProcesadas => Set<RutaProcesada>();
     public DbSet<CargaCombustible> CargasCombustible => Set<CargaCombustible>();
     public DbSet<CambioEstatusCarro> CambiosEstatusCarro => Set<CambioEstatusCarro>();
     public DbSet<Notificacion> Notificaciones => Set<Notificacion>();

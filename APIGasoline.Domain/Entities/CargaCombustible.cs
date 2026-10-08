@@ -2,9 +2,6 @@
 
 namespace APIGasoline.Domain.Entities;
 
-/// <summary>
-/// Registra una carga de combustible, incluyendo litros, monto, comprobante y ubicación geográfica.
-/// </summary>
 public class CargaCombustible
 {
     public const decimal LitrosMaximo = 999999.99m;     // decimal(8,2)
@@ -17,16 +14,13 @@ public class CargaCombustible
     public decimal Litros { get; private set; }
     public decimal? Monto { get; private set; }
 
-    /// <summary>Ruta/llave del comprobante en el almacenamiento (MinIO).</summary>
     public string FotoComprobante { get; private set; } = string.Empty;
 
-    /// <summary>La manda la app (la carga pudo registrarse offline).</summary>
     public DateTime FechaCarga { get; private set; }
 
     public decimal? UbicacionLat { get; private set; }
     public decimal? UbicacionLng { get; private set; }
 
-    /// <summary>true cuando la carga se registró sin conexión y se subió después.</summary>
     public bool Sincronizado { get; private set; }
 
     // Requerido por Entity Framework
@@ -100,6 +94,5 @@ public class CargaCombustible
         UbicacionLng = lng;
     }
 
-    /// <summary>Precio por litro calculado (si hay monto).</summary>
     public decimal? PrecioPorLitro => Monto is null ? null : Math.Round(Monto.Value / Litros, 2);
 }

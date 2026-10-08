@@ -2,27 +2,19 @@
 
 namespace APIGasoline.Domain.Entities;
 
-/// <summary>
-/// Representa un tenant. Una empresa puede pertenecer a un corporativo
-/// y opcionalmente a una división.
-/// </summary>
+
 public class Empresa
 {
     public const int NombreMaxLength = 150;
 
-    public int EmpresaId { get; private set; }
+    public Guid EmpresaId { get; private set; }
     public int? CorporativoId { get; private set; }
     public int? DivisionId { get; private set; }
     public string Nombre { get; private set; } = string.Empty;
 
-    /// <summary>
-    /// Soft delete: columna "delete" (false = activa, true = eliminada).
-    /// </summary>
+
     public bool Eliminado { get; private set; }
 
-    /// <summary>
-    /// La asigna la base de datos al insertar (default now()). No se modifica después.
-    /// </summary>
     public DateTime? FechaRegistro { get; private set; }
 
     // Requerido por Entity Framework
@@ -52,10 +44,7 @@ public class Empresa
         Nombre = normalizado;
     }
 
-    /// <summary>
-    /// El corporativo es opcional. La división es opcional, pero si se indica
-    /// también debe indicarse el corporativo.
-    /// </summary>
+
     public void AsignarOrganizacion(int? corporativoId, int? divisionId)
     {
         if (corporativoId is <= 0)

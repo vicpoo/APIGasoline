@@ -2,9 +2,7 @@
 
 namespace APIGasoline.Domain.Entities;
 
-/// <summary>
-/// Acción que puede ejecutar un rol dentro del sistema.
-/// </summary>
+
 public class Privilegio
 {
     public const int NombreMaxLength = 100;

@@ -3,10 +3,7 @@ using APIGasoline.Domain.Exceptions;
 
 namespace APIGasoline.Domain.Entities;
 
-/// <summary>
-/// Solicitud de un empleado para utilizar un carro de su empresa.
 /// Flujo: Pendiente → Aprobada | Rechazada | Cancelada.  Aprobada → Cancelada.
-/// </summary>
 public class SolicitudReserva
 {
     public const int MotivoMaxLength = 255;
@@ -16,9 +13,7 @@ public class SolicitudReserva
     public int CarroId { get; private set; }
     public int EmpleadoSolicitanteId { get; private set; }
 
-    /// <summary>
     /// La asigna la base de datos al insertar (default now()).
-    /// </summary>
     public DateTime? FechaSolicitud { get; private set; }
 
     public EstadoSolicitudReserva Estado { get; private set; } = EstadoSolicitudReserva.Pendiente;
@@ -77,10 +72,8 @@ public class SolicitudReserva
         MotivoResolucion = motivoNormalizado;
     }
 
-    /// <summary>
     /// Se puede cancelar una solicitud pendiente o una ya aprobada.
     /// Si estaba aprobada, quien la cancela debe liberar el carro.
-    /// </summary>
     public void Cancelar(DateTime fecha, string? motivo = null)
     {
         if (Estado is not (EstadoSolicitudReserva.Pendiente or EstadoSolicitudReserva.Aprobada))

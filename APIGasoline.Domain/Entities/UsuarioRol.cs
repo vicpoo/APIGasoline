@@ -2,10 +2,7 @@
 
 namespace APIGasoline.Domain.Entities;
 
-/// <summary>
-/// Relación N:M entre usuarios y roles. Un usuario puede tener varios roles
-/// y un rol puede pertenecer a varios usuarios.
-/// </summary>
+
 public class UsuarioRol
 {
     public int UsuarioRolId { get; private set; }

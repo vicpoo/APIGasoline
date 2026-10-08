@@ -6,6 +6,7 @@ using APIGasoline.Application.Features.PuntosRuta.DTOs;
 using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Interfaces;
 using MediatR;
+using APIGasoline.Application.Features.RutasProcesadas.Notifications;
 
 namespace APIGasoline.Application.Features.PuntosRuta.Commands;
 
@@ -27,11 +28,13 @@ public class RegistrarLotePuntosRutaCommandHandler : IRequestHandler<RegistrarLo
 
     private readonly IUnitOfWork _unitOfWork;
     private readonly IDateTimeProvider _dateTime;
+    private readonly IPublisher _publisher;
 
-    public RegistrarLotePuntosRutaCommandHandler(IUnitOfWork unitOfWork, IDateTimeProvider dateTime)
+    public RegistrarLotePuntosRutaCommandHandler(IUnitOfWork unitOfWork, IDateTimeProvider dateTime, IPublisher publisher)
     {
         _unitOfWork = unitOfWork;
         _dateTime = dateTime;
+        _publisher = publisher;
     }
 
     public async Task<LotePuntosRutaResultadoDto> Handle(RegistrarLotePuntosRutaCommand request, CancellationToken cancellationToken)
@@ -57,7 +60,10 @@ public class RegistrarLotePuntosRutaCommandHandler : IRequestHandler<RegistrarLo
                 punto.Latitud,
                 punto.Longitud,
                 punto.TimestampCaptura,
-                request.Sincronizado);
+                request.Sincronizado,
+                punto.PrecisionMetros,
+                punto.Altitud,
+                punto.Velocidad);
 
             // Los puntos deben caer dentro del periodo del viaje (con tolerancia)
             if (!VentanaViaje.Contiene(puntoRuta.TimestampCaptura, viaje.FechaInicio, viaje.FechaFin, ahora))
@@ -74,6 +80,10 @@ public class RegistrarLotePuntosRutaCommandHandler : IRequestHandler<RegistrarLo
         {
             await _unitOfWork.PuntosRuta.AddRangeAsync(nuevos, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            // Puntos que llegan después de cerrar el viaje (por ejemplo, sincronización offline)
+            if (!viaje.EstaEnCurso)
+                await _publisher.Publish(new RutaViajeModificadaNotification(viaje.ViajeId), cancellationToken);
         }
 
         return new LotePuntosRutaResultadoDto(

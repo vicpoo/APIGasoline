@@ -3,10 +3,7 @@ using APIGasoline.Domain.Exceptions;
 
 namespace APIGasoline.Domain.Entities;
 
-/// <summary>
-/// Registra un viaje realizado con un carro. Una reserva aprobada puede tener varios viajes.
-/// Flujo: EnCurso → Finalizado | Interrumpido.
-/// </summary>
+
 public class Viaje
 {
     public const int MotivoMaxLength = 255;
@@ -28,15 +25,14 @@ public class Viaje
     public decimal? UbicacionFinLng { get; private set; }
     public decimal? KilometrajeFinal { get; private set; }
 
-    /// <summary>Se calcula: kilometraje final - kilometraje inicial.</summary>
+    /// Se calcula: kilometraje final - kilometraje inicial.
     public decimal? DistanciaRecorrida { get; private set; }
 
     public EstadoViaje Estado { get; private set; } = EstadoViaje.EnCurso;
     public string? MotivoInterrupcion { get; private set; }
 
-    /// <summary>
     /// true cuando el viaje se registró desde la app en modo offline y se subió después.
-    /// </summary>
+
     public bool Sincronizado { get; private set; }
 
     // Requerido por Entity Framework
@@ -96,10 +92,9 @@ public class Viaje
         Estado = EstadoViaje.Finalizado;
     }
 
-    /// <summary>
     /// El viaje se corta antes de terminar (falla, accidente, etc.). El motivo es obligatorio;
     /// los datos de cierre son opcionales porque puede que no se puedan capturar.
-    /// </summary>
+
     public void Interrumpir(string motivo, DateTime fechaFin, decimal? lat, decimal? lng, decimal? kilometrajeFinal)
     {
         ValidarEnCurso("interrumpir");

@@ -6,6 +6,7 @@ using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
 using MediatR;
+using APIGasoline.Application.Features.RutasProcesadas.Notifications;
 
 namespace APIGasoline.Application.Features.Viajes.Commands;
 
@@ -33,11 +34,13 @@ public class SincronizarViajeCommandHandler : IRequestHandler<SincronizarViajeCo
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly IPublisher _publisher;
 
-    public SincronizarViajeCommandHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    public SincronizarViajeCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IPublisher publisher)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _publisher = publisher;
     }
 
     public async Task<ViajeDto> Handle(SincronizarViajeCommand request, CancellationToken cancellationToken)
@@ -79,6 +82,10 @@ public class SincronizarViajeCommandHandler : IRequestHandler<SincronizarViajeCo
 
         await _unitOfWork.Viajes.AddAsync(viaje, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Si llegó ya cerrado se procesa su ruta (y se vuelve a procesar cuando suban sus puntos)
+        if (!viaje.EstaEnCurso)
+            await _publisher.Publish(new RutaViajeModificadaNotification(viaje.ViajeId), cancellationToken);
 
         return _mapper.Map<ViajeDto>(viaje);
     }

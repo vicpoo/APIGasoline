@@ -53,6 +53,11 @@ public class CargaCombustibleRepository : ICargaCombustibleRepository
     public Task<bool> ExistsByViajeAsync(int viajeId, CancellationToken cancellationToken = default)
         => _context.CargasCombustible.AnyAsync(c => c.ViajeId == viajeId, cancellationToken);
 
+    public async Task<decimal> SumLitrosByViajeAsync(int viajeId, CancellationToken cancellationToken = default)
+        => await _context.CargasCombustible
+            .Where(c => c.ViajeId == viajeId)
+            .SumAsync(c => (decimal?)c.Litros, cancellationToken) ?? 0m;
+
     public async Task AddAsync(CargaCombustible cargaCombustible, CancellationToken cancellationToken = default)
         => await _context.CargasCombustible.AddAsync(cargaCombustible, cancellationToken);
 

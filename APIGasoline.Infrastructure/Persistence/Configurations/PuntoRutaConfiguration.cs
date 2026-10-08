@@ -39,6 +39,19 @@ public class PuntoRutaConfiguration : IEntityTypeConfiguration<PuntoRuta>
             .ValueGeneratedNever()
             .IsRequired();
 
+        // Datos opcionales del GPS del celular (sirven para limpiar la ruta en el servidor)
+        builder.Property(p => p.PrecisionMetros)
+            .HasColumnName("precision_metros")
+            .HasPrecision(6, 2);
+
+        builder.Property(p => p.Altitud)
+            .HasColumnName("altitud")
+            .HasPrecision(7, 2);
+
+        builder.Property(p => p.Velocidad)
+            .HasColumnName("velocidad")
+            .HasPrecision(6, 2);
+
         builder.HasOne<Empresa>()
             .WithMany()
             .HasForeignKey(p => p.EmpresaId)

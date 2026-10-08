@@ -2,10 +2,7 @@
 
 namespace APIGasoline.Domain.Entities;
 
-/// <summary>
-/// Relación N:M entre roles y privilegios. Un rol puede tener varios privilegios
-/// y un privilegio puede pertenecer a varios roles.
-/// </summary>
+
 public class RolPrivilegio
 {
     public int RolPrivilegioId { get; private set; }

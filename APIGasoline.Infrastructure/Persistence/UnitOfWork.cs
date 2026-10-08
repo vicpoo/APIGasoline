@@ -29,6 +29,7 @@ public class UnitOfWork : IUnitOfWork
         SolicitudesReserva = new SolicitudReservaRepository(context);
         Viajes = new ViajeRepository(context);
         PuntosRuta = new PuntoRutaRepository(context);
+        RutasProcesadas = new RutaProcesadaRepository(context);
         CargasCombustible = new CargaCombustibleRepository(context);
         CambiosEstatusCarro = new CambioEstatusCarroRepository(context);
         Notificaciones = new NotificacionRepository(context);
@@ -48,6 +49,7 @@ public class UnitOfWork : IUnitOfWork
     public ISolicitudReservaRepository SolicitudesReserva { get; }
     public IViajeRepository Viajes { get; }
     public IPuntoRutaRepository PuntosRuta { get; }
+    public IRutaProcesadaRepository RutasProcesadas { get; }
     public ICargaCombustibleRepository CargasCombustible { get; }
     public ICambioEstatusCarroRepository CambiosEstatusCarro { get; }
     public INotificacionRepository Notificaciones { get; }

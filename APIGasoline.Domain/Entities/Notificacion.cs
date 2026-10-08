@@ -3,9 +3,7 @@ using APIGasoline.Domain.Exceptions;
 
 namespace APIGasoline.Domain.Entities;
 
-/// <summary>
-/// Bandeja e historial de notificaciones dirigidas a empleados.
-/// </summary>
+
 public class Notificacion
 {
     public const int MensajeMaxLength = 255;
@@ -15,17 +13,12 @@ public class Notificacion
     public int EmpleadoDestinatarioId { get; private set; }
     public TipoNotificacion Tipo { get; private set; }
 
-    /// <summary>
-    /// Id del registro relacionado según el tipo:
-    /// NuevaSolicitud / ResultadoSolicitud → solicitud_reserva_id;
-    /// CambioEstatusForzado → cambio_estatus_carro_id.
-    /// </summary>
+  
     public int? ReferenciaId { get; private set; }
 
     public string? Mensaje { get; private set; }
     public bool Leida { get; private set; }
 
-    /// <summary>La asigna la base de datos al insertar (default now()).</summary>
     public DateTime? FechaEnvio { get; private set; }
 
     // Requerido por Entity Framework

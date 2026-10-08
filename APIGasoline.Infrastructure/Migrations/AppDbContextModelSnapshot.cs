@@ -582,6 +582,11 @@ namespace APIGasoline.Infrastructure.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("PuntoRutaId"));
 
+                    b.Property<decimal?>("Altitud")
+                        .HasPrecision(7, 2)
+                        .HasColumnType("decimal(7,2)")
+                        .HasColumnName("altitud");
+
                     b.Property<int>("EmpresaId")
                         .HasColumnType("int")
                         .HasColumnName("empresa_id");
@@ -596,6 +601,11 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasColumnType("decimal(9,6)")
                         .HasColumnName("longitud");
 
+                    b.Property<decimal?>("PrecisionMetros")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("decimal(6,2)")
+                        .HasColumnName("precision_metros");
+
                     b.Property<bool>("Sincronizado")
                         .HasColumnType("tinyint(1)")
                         .HasDefaultValue(false)
@@ -604,6 +614,11 @@ namespace APIGasoline.Infrastructure.Migrations
                     b.Property<DateTime>("TimestampCaptura")
                         .HasColumnType("timestamp")
                         .HasColumnName("timestamp_captura");
+
+                    b.Property<decimal?>("Velocidad")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("decimal(6,2)")
+                        .HasColumnName("velocidad");
 
                     b.Property<int>("ViajeId")
                         .HasColumnType("int")
@@ -698,6 +713,127 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasDatabaseName("uq_rol_privilegio_rol_id_privilegio_id");
 
                     b.ToTable("rol_privilegio", (string)null);
+                });
+
+            modelBuilder.Entity("APIGasoline.Domain.Entities.RutaProcesada", b =>
+                {
+                    b.Property<int>("RutaProcesadaId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("ruta_procesada_id");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("RutaProcesadaId"));
+
+                    b.Property<bool>("AlertaKilometraje")
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false)
+                        .HasColumnName("alerta_kilometraje");
+
+                    b.Property<decimal?>("DiferenciaKm")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)")
+                        .HasColumnName("diferencia_km");
+
+                    b.Property<decimal?>("DiferenciaPorcentaje")
+                        .HasPrecision(7, 2)
+                        .HasColumnType("decimal(7,2)")
+                        .HasColumnName("diferencia_porcentaje");
+
+                    b.Property<decimal>("DistanciaGpsKm")
+                        .HasPrecision(10, 3)
+                        .HasColumnType("decimal(10,3)")
+                        .HasDefaultValue(0m)
+                        .HasColumnName("distancia_gps_km");
+
+                    b.Property<decimal?>("DistanciaOdometroKm")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)")
+                        .HasColumnName("distancia_odometro_km");
+
+                    b.Property<int>("EmpresaId")
+                        .HasColumnType("int")
+                        .HasColumnName("empresa_id");
+
+                    b.Property<DateTime>("FechaProceso")
+                        .HasColumnType("timestamp")
+                        .HasColumnName("fecha_proceso")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<decimal>("LitrosCargados")
+                        .HasPrecision(8, 2)
+                        .HasColumnType("decimal(8,2)")
+                        .HasDefaultValue(0m)
+                        .HasColumnName("litros_cargados");
+
+                    b.Property<string>("Polyline")
+                        .HasColumnType("text")
+                        .HasColumnName("polyline");
+
+                    b.Property<int>("PuntosDescartados")
+                        .HasColumnType("int")
+                        .HasDefaultValue(0)
+                        .HasColumnName("puntos_descartados");
+
+                    b.Property<int>("PuntosRecibidos")
+                        .HasColumnType("int")
+                        .HasDefaultValue(0)
+                        .HasColumnName("puntos_recibidos");
+
+                    b.Property<decimal?>("RendimientoKmPorLitro")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("decimal(6,2)")
+                        .HasColumnName("rendimiento_km_por_litro");
+
+                    b.Property<int>("TiempoDetenidoSeg")
+                        .HasColumnType("int")
+                        .HasDefaultValue(0)
+                        .HasColumnName("tiempo_detenido_seg");
+
+                    b.Property<int>("TiempoMovimientoSeg")
+                        .HasColumnType("int")
+                        .HasDefaultValue(0)
+                        .HasColumnName("tiempo_movimiento_seg");
+
+                    b.Property<decimal?>("VelocidadMaximaKmh")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("decimal(6,2)")
+                        .HasColumnName("velocidad_maxima_kmh");
+
+                    b.Property<decimal?>("VelocidadPromedioKmh")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("decimal(6,2)")
+                        .HasColumnName("velocidad_promedio_kmh");
+
+                    b.Property<string>("VersionAlgoritmo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("version_algoritmo");
+
+                    b.Property<int>("ViajeId")
+                        .HasColumnType("int")
+                        .HasColumnName("viaje_id");
+
+                    b.HasKey("RutaProcesadaId");
+
+                    b.HasIndex("EmpresaId")
+                        .HasDatabaseName("ix_ruta_procesada_empresa_id");
+
+                    b.HasIndex("ViajeId")
+                        .IsUnique()
+                        .HasDatabaseName("uq_ruta_procesada_viaje_id");
+
+                    b.HasIndex("EmpresaId", "AlertaKilometraje")
+                        .HasDatabaseName("ix_ruta_procesada_empresa_id_alerta_kilometraje");
+
+                    b.HasIndex("EmpresaId", "RutaProcesadaId")
+                        .IsUnique()
+                        .HasDatabaseName("uq_ruta_procesada_empresa_id_ruta_procesada_id");
+
+                    b.HasIndex("EmpresaId", "ViajeId")
+                        .HasDatabaseName("ix_ruta_procesada_empresa_id_viaje_id");
+
+                    b.ToTable("ruta_procesada", (string)null);
                 });
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.SolicitudReserva", b =>
@@ -1118,6 +1254,24 @@ namespace APIGasoline.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_rol_privilegio_rol");
+                });
+
+            modelBuilder.Entity("APIGasoline.Domain.Entities.RutaProcesada", b =>
+                {
+                    b.HasOne("APIGasoline.Domain.Entities.Empresa", null)
+                        .WithMany()
+                        .HasForeignKey("EmpresaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_ruta_procesada_empresa");
+
+                    b.HasOne("APIGasoline.Domain.Entities.Viaje", null)
+                        .WithMany()
+                        .HasForeignKey("EmpresaId", "ViajeId")
+                        .HasPrincipalKey("EmpresaId", "ViajeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_ruta_procesada_viaje");
                 });
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.SolicitudReserva", b =>

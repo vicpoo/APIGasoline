@@ -16,6 +16,7 @@ public interface IUnitOfWork : IDisposable
     ISolicitudReservaRepository SolicitudesReserva { get; }
     IViajeRepository Viajes { get; }
     IPuntoRutaRepository PuntosRuta { get; }
+    IRutaProcesadaRepository RutasProcesadas { get; }
     ICargaCombustibleRepository CargasCombustible { get; }
     ICambioEstatusCarroRepository CambiosEstatusCarro { get; }
     INotificacionRepository Notificaciones { get; }

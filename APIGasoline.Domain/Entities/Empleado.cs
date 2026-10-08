@@ -2,10 +2,7 @@
 
 namespace APIGasoline.Domain.Entities;
 
-/// <summary>
-/// Relaciona un usuario del servicio externo de seguridad con un empleado
-/// perteneciente a una empresa.
-/// </summary>
+
 public class Empleado
 {
     public const int NombreCompletoMaxLength = 150;
@@ -16,20 +13,13 @@ public class Empleado
     public int UsuarioId { get; private set; }
     public string NombreCompleto { get; private set; } = string.Empty;
 
-    /// <summary>Ruta/llave del archivo en el almacenamiento (MinIO).</summary>
     public string? FotoPerfil { get; private set; }
 
-    /// <summary>Ruta/llave del archivo en el almacenamiento (MinIO).</summary>
     public string? FotoLicencia { get; private set; }
 
-    /// <summary>
-    /// Soft delete: columna "delete" (false = activo, true = eliminado).
-    /// </summary>
     public bool Eliminado { get; private set; }
 
-    /// <summary>
-    /// La asigna la base de datos al insertar (default now()). No se modifica después.
-    /// </summary>
+
     public DateTime? FechaAlta { get; private set; }
 
     // Requerido por Entity Framework
@@ -84,9 +74,7 @@ public class Empleado
     public void CambiarFotoLicencia(string? fotoLicencia)
         => FotoLicencia = NormalizarFoto(fotoLicencia, "foto de licencia");
 
-    /// <summary>
-    /// El empleado debe subir su licencia antes de poder usar la app.
-    /// </summary>
+
     public bool TieneLicencia => !string.IsNullOrWhiteSpace(FotoLicencia);
 
     public void Eliminar()

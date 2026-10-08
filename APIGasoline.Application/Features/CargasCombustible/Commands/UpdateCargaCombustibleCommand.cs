@@ -7,6 +7,7 @@ using APIGasoline.Application.Features.CargasCombustible.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
 using MediatR;
+using APIGasoline.Application.Features.RutasProcesadas.Notifications;
 
 namespace APIGasoline.Application.Features.CargasCombustible.Commands;
 
@@ -29,13 +30,15 @@ public class UpdateCargaCombustibleCommandHandler : IRequestHandler<UpdateCargaC
     private readonly IMapper _mapper;
     private readonly IDateTimeProvider _dateTime;
     private readonly IFileStorageService _storage;
+    private readonly IPublisher _publisher;
 
-    public UpdateCargaCombustibleCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IDateTimeProvider dateTime, IFileStorageService storage)
+    public UpdateCargaCombustibleCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IDateTimeProvider dateTime, IFileStorageService storage, IPublisher publisher)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _dateTime = dateTime;
         _storage = storage;
+        _publisher = publisher;
     }
 
     public async Task<CargaCombustibleDto> Handle(UpdateCargaCombustibleCommand request, CancellationToken cancellationToken)
@@ -82,6 +85,10 @@ public class UpdateCargaCombustibleCommandHandler : IRequestHandler<UpdateCargaC
             // Ya confirmado en BD: se borra el comprobante anterior
             await _storage.IntentarEliminarAsync(comprobanteAnterior);
         }
+
+        // Los litros cambian el rendimiento km/L de un viaje ya cerrado
+        if (!viaje.EstaEnCurso)
+            await _publisher.Publish(new RutaViajeModificadaNotification(viaje.ViajeId), cancellationToken);
 
         return await _mapper.Map<CargaCombustibleDto>(carga).ConUrlsAsync(_storage, cancellationToken);
     }

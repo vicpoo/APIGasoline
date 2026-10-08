@@ -2,9 +2,7 @@
 
 namespace APIGasoline.Domain.Entities;
 
-/// <summary>
-/// Representa al corporativo al que pueden pertenecer una o varias empresas.
-/// </summary>
+
 public class Corporativo
 {
     public const int NombreMaxLength = 150;
@@ -13,9 +11,7 @@ public class Corporativo
     public string Nombre { get; private set; } = string.Empty;
     public bool Activo { get; private set; } = true;
 
-    /// <summary>
-    /// La asigna la base de datos al insertar (default now()). No se modifica después.
-    /// </summary>
+   
     public DateTime? FechaRegistro { get; private set; }
 
     // Requerido por Entity Framework

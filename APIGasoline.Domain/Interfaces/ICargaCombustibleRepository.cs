@@ -18,6 +18,10 @@ public interface ICargaCombustibleRepository
     Task<bool> ExisteEnFechaAsync(int viajeId, DateTime fechaCarga, int? excludeCargaCombustibleId = null, CancellationToken cancellationToken = default);
 
     Task<bool> ExistsByViajeAsync(int viajeId, CancellationToken cancellationToken = default);
+
+    /// <summary>Total de litros cargados en el viaje (0 si no hubo cargas).</summary>
+    Task<decimal> SumLitrosByViajeAsync(int viajeId, CancellationToken cancellationToken = default);
+
     Task AddAsync(CargaCombustible cargaCombustible, CancellationToken cancellationToken = default);
     void Remove(CargaCombustible cargaCombustible);
 }

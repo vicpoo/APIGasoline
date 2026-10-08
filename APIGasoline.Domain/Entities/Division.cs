@@ -2,9 +2,7 @@
 
 namespace APIGasoline.Domain.Entities;
 
-/// <summary>
-/// Una división pertenece a un corporativo.
-/// </summary>
+
 public class Division
 {
     public const int NombreMaxLength = 100;
@@ -14,9 +12,7 @@ public class Division
     public string Nombre { get; private set; } = string.Empty;
     public bool Activo { get; private set; } = true;
 
-    /// <summary>
-    /// La asigna la base de datos al insertar (default now()). No se modifica después.
-    /// </summary>
+ 
     public DateTime? FechaRegistro { get; private set; }
 
     // Requerido por Entity Framework

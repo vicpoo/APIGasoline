@@ -3,10 +3,6 @@ using APIGasoline.Domain.Exceptions;
 
 namespace APIGasoline.Domain.Entities;
 
-/// <summary>
-/// Bitácora de cambios de estado realizados sobre un carro.
-/// Es inmutable: se crea junto con el cambio de estado y no se edita ni se borra.
-/// </summary>
 public class CambioEstatusCarro
 {
     public const int MotivoMaxLength = 255;
@@ -20,12 +16,8 @@ public class CambioEstatusCarro
     public EstadoCarro EstatusNuevo { get; private set; }
     public string? Motivo { get; private set; }
 
-    /// <summary>
-    /// Si la app la manda (registro offline) se usa esa; si no, la pone la BD (default now()).
-    /// </summary>
     public DateTime? FechaCambio { get; private set; }
 
-    /// <summary>true cuando el cambio se registró sin conexión y se subió después.</summary>
     public bool Sincronizado { get; private set; }
 
     // Requerido por Entity Framework
@@ -33,10 +25,6 @@ public class CambioEstatusCarro
     {
     }
 
-    /// <summary>
-    /// Cambia el estado del carro y devuelve el registro de bitácora correspondiente.
-    /// Es la única forma de cambiar el estado de un carro, así nunca queda un cambio sin registrar.
-    /// </summary>
     public static CambioEstatusCarro Registrar(
         Carro carro,
         int empleadoId,

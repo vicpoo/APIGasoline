@@ -3,10 +3,6 @@ using APIGasoline.Domain.Exceptions;
 
 namespace APIGasoline.Domain.Entities;
 
-/// <summary>
-/// Credenciales de acceso. El login se valida contra esta tabla (email + password_hash).
-/// Un usuario pertenece a una sola empresa a través de su registro en empleado.
-/// </summary>
 public class Usuario
 {
     public const int EmailMaxLength = 150;
@@ -15,15 +11,11 @@ public class Usuario
     public int UsuarioId { get; private set; }
     public string Email { get; private set; } = string.Empty;
 
-    /// <summary>
-    /// Hash de la contraseña (nunca la contraseña en texto plano).
-    /// El hash lo calcula Infrastructure (IPasswordHasher); el dominio solo lo guarda.
-    /// </summary>
+ 
     public string PasswordHash { get; private set; } = string.Empty;
 
     public EstadoUsuario Estado { get; private set; } = EstadoUsuario.Activo;
 
-    /// <summary>La asigna la base de datos al insertar (default now()).</summary>
     public DateTime? FechaRegistro { get; private set; }
 
     // Requerido por Entity Framework

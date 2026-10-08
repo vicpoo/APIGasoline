@@ -2,10 +2,6 @@
 
 namespace APIGasoline.Domain.Entities;
 
-/// <summary>
-/// Rol de autorización. Puede ser global (EmpresaId = null, disponible para todas las empresas)
-/// o exclusivo de una empresa.
-/// </summary>
 public class Rol
 {
     public const int NombreMaxLength = 100;
@@ -13,7 +9,6 @@ public class Rol
 
     public int RolId { get; private set; }
 
-    /// <summary>null = rol global. Con valor = rol exclusivo de esa empresa. No cambia después de crearse.</summary>
     public int? EmpresaId { get; private set; }
 
     public string Nombre { get; private set; } = string.Empty;
@@ -40,9 +35,7 @@ public class Rol
 
     public bool EsGlobal => EmpresaId is null;
 
-    /// <summary>
-    /// Un rol global se puede asignar a cualquiera; uno exclusivo solo a usuarios de su empresa.
-    /// </summary>
+ 
     public bool DisponiblePara(int? empresaId) => EsGlobal || EmpresaId == empresaId;
 
     public void CambiarNombre(string nombre)

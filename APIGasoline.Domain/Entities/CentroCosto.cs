@@ -2,9 +2,7 @@
 
 namespace APIGasoline.Domain.Entities;
 
-/// <summary>
-/// Centro de costo perteneciente a una empresa.
-/// </summary>
+
 public class CentroCosto
 {
     public const int NombreMaxLength = 150;
@@ -16,9 +14,7 @@ public class CentroCosto
     public string Clave { get; private set; } = string.Empty;
     public bool Activo { get; private set; } = true;
 
-    /// <summary>
-    /// La asigna la base de datos al insertar (default now()). No se modifica después.
-    /// </summary>
+
     public DateTime? FechaRegistro { get; private set; }
 
     // Requerido por Entity Framework
