@@ -31,6 +31,8 @@ public class AppDbContext : DbContext
     public DbSet<CargaCombustible> CargasCombustible => Set<CargaCombustible>();
     public DbSet<CambioEstatusCarro> CambiosEstatusCarro => Set<CambioEstatusCarro>();
     public DbSet<Notificacion> Notificaciones => Set<Notificacion>();
+    public DbSet<OutboxMensaje> OutboxMensajes => Set<OutboxMensaje>();
+    public DbSet<DispositivoEmpleado> Dispositivos => Set<DispositivoEmpleado>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -6,6 +6,7 @@ using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
 using MediatR;
+using APIGasoline.Application.Common.Outbox;
 
 namespace APIGasoline.Application.Features.SolicitudesReserva.Commands;
 
@@ -15,11 +16,13 @@ public class CreateSolicitudReservaCommandHandler : IRequestHandler<CreateSolici
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly NotificadorPush _notificador;
 
-    public CreateSolicitudReservaCommandHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    public CreateSolicitudReservaCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, NotificadorPush notificador)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _notificador = notificador;
     }
 
     public async Task<SolicitudReservaDto> Handle(CreateSolicitudReservaCommand request, CancellationToken cancellationToken)
@@ -75,7 +78,7 @@ public class CreateSolicitudReservaCommandHandler : IRequestHandler<CreateSolici
                     solicitud.SolicitudReservaId,
                     $"{solicitante.NombreCompleto} solicitó el carro {carro.Marca} {carro.Modelo} ({carro.Placas})."));
 
-            await _unitOfWork.Notificaciones.AddRangeAsync(notificaciones, cancellationToken);
+            await _notificador.AgregarAsync(notificaciones, cancellationToken);
             await _unitOfWork.CommitTransactionAsync(cancellationToken);
         }
         catch

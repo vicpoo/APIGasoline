@@ -6,6 +6,7 @@ using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
 using MediatR;
+using APIGasoline.Application.Common.Outbox;
 
 namespace APIGasoline.Application.Features.SolicitudesReserva.Commands;
 
@@ -20,12 +21,14 @@ public class AprobarSolicitudReservaCommandHandler : IRequestHandler<AprobarSoli
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly IDateTimeProvider _dateTime;
+    private readonly NotificadorPush _notificador;
 
-    public AprobarSolicitudReservaCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IDateTimeProvider dateTime)
+    public AprobarSolicitudReservaCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IDateTimeProvider dateTime, NotificadorPush notificador)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _dateTime = dateTime;
+        _notificador = notificador;
     }
 
     public async Task<SolicitudReservaDto> Handle(AprobarSolicitudReservaCommand request, CancellationToken cancellationToken)
@@ -63,7 +66,7 @@ public class AprobarSolicitudReservaCommandHandler : IRequestHandler<AprobarSoli
                 ahora,
                 $"Rechazada automáticamente: el carro fue asignado a la solicitud {solicitud.SolicitudReservaId}.");
 
-            await _unitOfWork.Notificaciones.AddAsync(Notificacion.Crear(
+            await _notificador.AgregarAsync(Notificacion.Crear(
                 otra.EmpresaId,
                 otra.EmpleadoSolicitanteId,
                 TipoNotificacion.ResultadoSolicitud,
@@ -71,7 +74,7 @@ public class AprobarSolicitudReservaCommandHandler : IRequestHandler<AprobarSoli
                 $"Tu solicitud del carro {carro.Placas} fue rechazada: el carro se asignó a otra solicitud."), cancellationToken);
         }
 
-        await _unitOfWork.Notificaciones.AddAsync(Notificacion.Crear(
+        await _notificador.AgregarAsync(Notificacion.Crear(
             solicitud.EmpresaId,
             solicitud.EmpleadoSolicitanteId,
             TipoNotificacion.ResultadoSolicitud,

@@ -33,6 +33,8 @@ public class UnitOfWork : IUnitOfWork
         CargasCombustible = new CargaCombustibleRepository(context);
         CambiosEstatusCarro = new CambioEstatusCarroRepository(context);
         Notificaciones = new NotificacionRepository(context);
+        OutboxMensajes = new OutboxMensajeRepository(context);
+        Dispositivos = new DispositivoEmpleadoRepository(context);
     }
 
     public IUsuarioRepository Usuarios { get; }
@@ -53,6 +55,8 @@ public class UnitOfWork : IUnitOfWork
     public ICargaCombustibleRepository CargasCombustible { get; }
     public ICambioEstatusCarroRepository CambiosEstatusCarro { get; }
     public INotificacionRepository Notificaciones { get; }
+    public IOutboxMensajeRepository OutboxMensajes { get; }
+    public IDispositivoEmpleadoRepository Dispositivos { get; }
 
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         => _context.SaveChangesAsync(cancellationToken);

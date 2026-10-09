@@ -312,6 +312,67 @@ namespace APIGasoline.Infrastructure.Migrations
                     b.ToTable("corporativo", (string)null);
                 });
 
+            modelBuilder.Entity("APIGasoline.Domain.Entities.DispositivoEmpleado", b =>
+                {
+                    b.Property<Guid>("DispositivoEmpleadoId")
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("dispositivo_empleado_id");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(true)
+                        .HasColumnName("activo");
+
+                    b.Property<Guid>("EmpleadoId")
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("empleado_id");
+
+                    b.Property<Guid>("EmpresaId")
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("empresa_id");
+
+                    b.Property<DateTime>("FechaRegistro")
+                        .HasColumnType("timestamp")
+                        .HasColumnName("fecha_registro")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime?>("FechaUltimoUso")
+                        .HasColumnType("timestamp")
+                        .HasColumnName("fecha_ultimo_uso");
+
+                    b.Property<string>("Plataforma")
+                        .IsRequired()
+                        .HasColumnType("enum('android','ios','web')")
+                        .HasColumnName("plataforma");
+
+                    b.Property<string>("TokenFcm")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("varchar(512)")
+                        .HasColumnName("token_fcm");
+
+                    b.HasKey("DispositivoEmpleadoId");
+
+                    b.HasIndex("EmpresaId")
+                        .HasDatabaseName("ix_dispositivo_empleado_empresa_id");
+
+                    b.HasIndex("TokenFcm")
+                        .IsUnique()
+                        .HasDatabaseName("uq_dispositivo_empleado_token_fcm");
+
+                    b.HasIndex("EmpleadoId", "Activo")
+                        .HasDatabaseName("ix_dispositivo_empleado_empleado_id_activo");
+
+                    b.HasIndex("EmpresaId", "DispositivoEmpleadoId")
+                        .IsUnique()
+                        .HasDatabaseName("uq_dispositivo_empleado_empresa_id_dispositivo_empleado_id");
+
+                    b.HasIndex("EmpresaId", "EmpleadoId")
+                        .HasDatabaseName("ix_dispositivo_empleado_empresa_id_empleado_id");
+
+                    b.ToTable("dispositivo_empleado", (string)null);
+                });
+
             modelBuilder.Entity("APIGasoline.Domain.Entities.Division", b =>
                 {
                     b.Property<Guid>("DivisionId")
@@ -510,6 +571,79 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasDatabaseName("uq_notificacion_empresa_id_notificacion_id");
 
                     b.ToTable("notificacion", (string)null);
+                });
+
+            modelBuilder.Entity("APIGasoline.Domain.Entities.OutboxMensaje", b =>
+                {
+                    b.Property<Guid>("OutboxMensajeId")
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("outbox_mensaje_id");
+
+                    b.Property<Guid>("AgregadoId")
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("agregado_id");
+
+                    b.Property<Guid>("EmpresaId")
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("empresa_id");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasColumnType("enum('pendiente','procesando','enviado','fallido')")
+                        .HasColumnName("estado")
+                        .HasDefaultValueSql("'pendiente'");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("timestamp")
+                        .HasColumnName("fecha_creacion")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime?>("FechaProcesado")
+                        .HasColumnType("timestamp")
+                        .HasColumnName("fecha_procesado");
+
+                    b.Property<int>("Intentos")
+                        .HasColumnType("int")
+                        .HasDefaultValue(0)
+                        .HasColumnName("intentos");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("json")
+                        .HasColumnName("payload");
+
+                    b.Property<DateTime>("ProximoIntento")
+                        .HasColumnType("timestamp")
+                        .HasColumnName("proximo_intento")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("tipo");
+
+                    b.Property<string>("UltimoError")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("ultimo_error");
+
+                    b.HasKey("OutboxMensajeId");
+
+                    b.HasIndex("AgregadoId")
+                        .HasDatabaseName("ix_outbox_mensaje_agregado_id");
+
+                    b.HasIndex("EmpresaId")
+                        .HasDatabaseName("ix_outbox_mensaje_empresa_id");
+
+                    b.HasIndex("EmpresaId", "OutboxMensajeId")
+                        .IsUnique()
+                        .HasDatabaseName("uq_outbox_mensaje_empresa_id_outbox_mensaje_id");
+
+                    b.HasIndex("Estado", "ProximoIntento")
+                        .HasDatabaseName("ix_outbox_mensaje_estado_proximo_intento");
+
+                    b.ToTable("outbox_mensaje", (string)null);
                 });
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.Privilegio", b =>
@@ -1097,6 +1231,24 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasConstraintName("fk_centro_costo_empresa");
                 });
 
+            modelBuilder.Entity("APIGasoline.Domain.Entities.DispositivoEmpleado", b =>
+                {
+                    b.HasOne("APIGasoline.Domain.Entities.Empresa", null)
+                        .WithMany()
+                        .HasForeignKey("EmpresaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_dispositivo_empleado_empresa");
+
+                    b.HasOne("APIGasoline.Domain.Entities.Empleado", null)
+                        .WithMany()
+                        .HasForeignKey("EmpresaId", "EmpleadoId")
+                        .HasPrincipalKey("EmpresaId", "EmpleadoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_dispositivo_empleado_empleado");
+                });
+
             modelBuilder.Entity("APIGasoline.Domain.Entities.Division", b =>
                 {
                     b.HasOne("APIGasoline.Domain.Entities.Corporativo", null)
@@ -1156,6 +1308,16 @@ namespace APIGasoline.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_notificacion_empleado_destinatario");
+                });
+
+            modelBuilder.Entity("APIGasoline.Domain.Entities.OutboxMensaje", b =>
+                {
+                    b.HasOne("APIGasoline.Domain.Entities.Empresa", null)
+                        .WithMany()
+                        .HasForeignKey("EmpresaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_outbox_mensaje_empresa");
                 });
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.PuntoRuta", b =>

@@ -5,6 +5,7 @@ using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
 using MediatR;
+using APIGasoline.Application.Common.Outbox;
 
 namespace APIGasoline.Application.Features.Notificaciones.Commands;
 
@@ -22,11 +23,13 @@ public class CreateNotificacionCommandHandler : IRequestHandler<CreateNotificaci
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly NotificadorPush _notificador;
 
-    public CreateNotificacionCommandHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    public CreateNotificacionCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, NotificadorPush notificador)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _notificador = notificador;
     }
 
     public async Task<NotificacionDto> Handle(CreateNotificacionCommand request, CancellationToken cancellationToken)
@@ -42,7 +45,7 @@ public class CreateNotificacionCommandHandler : IRequestHandler<CreateNotificaci
             request.ReferenciaId,
             request.Mensaje);
 
-        await _unitOfWork.Notificaciones.AddAsync(notificacion, cancellationToken);
+        await _notificador.AgregarAsync(notificacion, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return _mapper.Map<NotificacionDto>(notificacion);

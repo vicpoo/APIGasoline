@@ -20,6 +20,8 @@ public interface IUnitOfWork : IDisposable
     ICargaCombustibleRepository CargasCombustible { get; }
     ICambioEstatusCarroRepository CambiosEstatusCarro { get; }
     INotificacionRepository Notificaciones { get; }
+    IOutboxMensajeRepository OutboxMensajes { get; }
+    IDispositivoEmpleadoRepository Dispositivos { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task BeginTransactionAsync(CancellationToken cancellationToken = default);

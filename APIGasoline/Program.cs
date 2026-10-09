@@ -2,6 +2,7 @@
 using System.Text.Json.Serialization;
 using System.Text;
 using APIGasoline.Application;
+using APIGasoline.Application.Common.Outbox;
 using APIGasoline.Infrastructure;
 using APIGasoline.Infrastructure.Authentication;
 using APIGasoline.Infrastructure.Storage;
@@ -30,7 +31,10 @@ var jwtSettings = builder.Configuration.GetSection(JwtSettings.SectionName).Get<
 var minioSettings = builder.Configuration.GetSection(MinioSettings.SectionName).Get<MinioSettings>()
     ?? throw new InvalidOperationException("Falta la sección 'Minio' en la configuración.");
 
-builder.Services.AddInfrastructure(connectionString, jwtSettings, minioSettings);
+var outboxSettings = builder.Configuration.GetSection(OutboxSettings.SectionName).Get<OutboxSettings>()
+    ?? new OutboxSettings();
+
+builder.Services.AddInfrastructure(connectionString, jwtSettings, minioSettings, outboxSettings);
 
 // Autenticación con JWT (el token lo emite POST /api/auth/login)
 builder.Services

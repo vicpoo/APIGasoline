@@ -6,6 +6,7 @@ using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
 using MediatR;
+using APIGasoline.Application.Common.Outbox;
 
 namespace APIGasoline.Application.Features.CambiosEstatusCarro.Commands;
 
@@ -28,12 +29,14 @@ public class CambiarEstatusCarroCommandHandler : IRequestHandler<CambiarEstatusC
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly IDateTimeProvider _dateTime;
+    private readonly NotificadorPush _notificador;
 
-    public CambiarEstatusCarroCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IDateTimeProvider dateTime)
+    public CambiarEstatusCarroCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IDateTimeProvider dateTime, NotificadorPush notificador)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _dateTime = dateTime;
+        _notificador = notificador;
     }
 
     public async Task<CambioEstatusCarroDto> Handle(CambiarEstatusCarroCommand request, CancellationToken cancellationToken)
@@ -100,7 +103,7 @@ public class CambiarEstatusCarroCommandHandler : IRequestHandler<CambiarEstatusC
 
             if (reservaVigente is not null && reservaVigente.EmpleadoSolicitanteId != empleado.EmpleadoId)
             {
-                await _unitOfWork.Notificaciones.AddAsync(Notificacion.Crear(
+                await _notificador.AgregarAsync(Notificacion.Crear(
                     carro.EmpresaId,
                     reservaVigente.EmpleadoSolicitanteId,
                     TipoNotificacion.CambioEstatusForzado,

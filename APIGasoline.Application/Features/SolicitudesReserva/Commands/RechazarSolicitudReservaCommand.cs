@@ -6,6 +6,7 @@ using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
 using MediatR;
+using APIGasoline.Application.Common.Outbox;
 
 namespace APIGasoline.Application.Features.SolicitudesReserva.Commands;
 
@@ -16,12 +17,14 @@ public class RechazarSolicitudReservaCommandHandler : IRequestHandler<RechazarSo
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly IDateTimeProvider _dateTime;
+    private readonly NotificadorPush _notificador;
 
-    public RechazarSolicitudReservaCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IDateTimeProvider dateTime)
+    public RechazarSolicitudReservaCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IDateTimeProvider dateTime, NotificadorPush notificador)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _dateTime = dateTime;
+        _notificador = notificador;
     }
 
     public async Task<SolicitudReservaDto> Handle(RechazarSolicitudReservaCommand request, CancellationToken cancellationToken)
@@ -33,7 +36,7 @@ public class RechazarSolicitudReservaCommandHandler : IRequestHandler<RechazarSo
 
         solicitud.Rechazar(request.EmpleadoConfirmadorId, _dateTime.Now, request.Motivo);
 
-        await _unitOfWork.Notificaciones.AddAsync(Notificacion.Crear(
+        await _notificador.AgregarAsync(Notificacion.Crear(
             solicitud.EmpresaId,
             solicitud.EmpleadoSolicitanteId,
             TipoNotificacion.ResultadoSolicitud,
