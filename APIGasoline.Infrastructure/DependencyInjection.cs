@@ -16,7 +16,7 @@ namespace APIGasoline.Infrastructure;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString, JwtSettings jwtSettings, MinioSettings minioSettings, OutboxSettings outboxSettings)
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString, JwtSettings jwtSettings, MinioSettings minioSettings, OutboxSettings outboxSettings, PushSettings pushSettings)
     {
         // Los Guid se guardan como binary(16) en orden RFC 4122 (compatible con UUID_TO_BIN / BIN_TO_UUID).
         // Se fuerza aquí para no depender de que cada cadena de conexión lo traiga.
@@ -43,11 +43,18 @@ public static class DependencyInjection
         services.AddSingleton<IFileStorageService, MinioFileStorageService>();
         services.AddHostedService<MinioBucketInitializer>();
 
-        // Notificaciones push con patrón Outbox. Por ahora el envío es simulado (NoOp);
-        // en el paso de Firebase se cambia solo esta línea por FirebasePushService.
+        // Notificaciones push con patrón Outbox. El proveedor se elige en Push:Proveedor:
+        // "NoOp" (simulado, para desarrollo y pruebas) o "Firebase" (envío real con FCM).
         outboxSettings.Validar();
         services.AddSingleton(outboxSettings);
-        services.AddSingleton<IPushNotificationService, NoOpPushService>();
+
+        pushSettings.Validar();
+        services.AddSingleton(pushSettings);
+
+        if (pushSettings.UsaFirebase)
+            services.AddSingleton<IPushNotificationService, FirebasePushService>();
+        else
+            services.AddSingleton<IPushNotificationService, NoOpPushService>();
         services.AddHostedService<OutboxWorker>();
 
         return services;

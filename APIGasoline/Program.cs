@@ -5,6 +5,7 @@ using APIGasoline.Application;
 using APIGasoline.Application.Common.Outbox;
 using APIGasoline.Infrastructure;
 using APIGasoline.Infrastructure.Authentication;
+using APIGasoline.Infrastructure.Push;
 using APIGasoline.Infrastructure.Storage;
 using APIGasoline.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -34,7 +35,10 @@ var minioSettings = builder.Configuration.GetSection(MinioSettings.SectionName).
 var outboxSettings = builder.Configuration.GetSection(OutboxSettings.SectionName).Get<OutboxSettings>()
     ?? new OutboxSettings();
 
-builder.Services.AddInfrastructure(connectionString, jwtSettings, minioSettings, outboxSettings);
+var pushSettings = builder.Configuration.GetSection(PushSettings.SectionName).Get<PushSettings>()
+    ?? new PushSettings();
+
+builder.Services.AddInfrastructure(connectionString, jwtSettings, minioSettings, outboxSettings, pushSettings);
 
 // Autenticación con JWT (el token lo emite POST /api/auth/login)
 builder.Services

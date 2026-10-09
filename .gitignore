@@ -12,3 +12,7 @@ appsettings.Development.json
 
 # Variables de entorno de Docker (secretos)
 .env
+
+# Credenciales de Firebase (service account): nunca al repositorio
+*firebase-adminsdk*.json
+secrets/
