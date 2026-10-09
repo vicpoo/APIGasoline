@@ -113,5 +113,5 @@ public class EmpleadoTests
     }
 
     private static Empleado ConstruirEmpleado(int empresaId = 1, int usuarioId = 1, string nombre = "Víctor Alejandro Pérez López")
-        => Empleado.Crear(empresaId, usuarioId, nombre);
+        => Empleado.Crear(Id(empresaId), Id(usuarioId), nombre);
 }

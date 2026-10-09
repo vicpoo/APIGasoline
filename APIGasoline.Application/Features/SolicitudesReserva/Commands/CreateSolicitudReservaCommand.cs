@@ -9,7 +9,7 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.SolicitudesReserva.Commands;
 
-public record CreateSolicitudReservaCommand(int EmpresaId, int CarroId, int EmpleadoSolicitanteId) : IRequest<SolicitudReservaDto>;
+public record CreateSolicitudReservaCommand(Guid EmpresaId, Guid CarroId, Guid EmpleadoSolicitanteId) : IRequest<SolicitudReservaDto>;
 
 public class CreateSolicitudReservaCommandHandler : IRequestHandler<CreateSolicitudReservaCommand, SolicitudReservaDto>
 {

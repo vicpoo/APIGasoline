@@ -13,7 +13,7 @@ public class PuntoRutaConfiguration : IEntityTypeConfiguration<PuntoRuta>
         builder.HasKey(p => p.PuntoRutaId);
         builder.Property(p => p.PuntoRutaId)
             .HasColumnName("punto_ruta_id")
-            .ValueGeneratedOnAdd();
+            .ValueGeneratedNever();
 
         builder.Property(p => p.EmpresaId).HasColumnName("empresa_id").IsRequired();
         builder.Property(p => p.ViajeId).HasColumnName("viaje_id").IsRequired();

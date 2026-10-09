@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace APIGasoline.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261005222752_Inicial")]
+    [Migration("20261009162833_Inicial")]
     partial class Inicial
     {
         /// <inheritdoc />
@@ -27,23 +27,20 @@ namespace APIGasoline.Infrastructure.Migrations
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.CambioEstatusCarro", b =>
                 {
-                    b.Property<int>("CambioEstatusCarroId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                    b.Property<Guid>("CambioEstatusCarroId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("cambio_estatus_carro_id");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("CambioEstatusCarroId"));
-
-                    b.Property<int>("CarroId")
-                        .HasColumnType("int")
+                    b.Property<Guid>("CarroId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("carro_id");
 
-                    b.Property<int>("EmpleadoId")
-                        .HasColumnType("int")
+                    b.Property<Guid>("EmpleadoId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("empleado_id");
 
-                    b.Property<int>("EmpresaId")
-                        .HasColumnType("int")
+                    b.Property<Guid>("EmpresaId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("empresa_id");
 
                     b.Property<string>("EstatusAnterior")
@@ -72,8 +69,8 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasDefaultValue(false)
                         .HasColumnName("sincronizado");
 
-                    b.Property<int?>("ViajeAfectadoId")
-                        .HasColumnType("int")
+                    b.Property<Guid?>("ViajeAfectadoId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("viaje_afectado_id");
 
                     b.HasKey("CambioEstatusCarroId");
@@ -99,15 +96,12 @@ namespace APIGasoline.Infrastructure.Migrations
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.CargaCombustible", b =>
                 {
-                    b.Property<int>("CargaCombustibleId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                    b.Property<Guid>("CargaCombustibleId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("carga_combustible_id");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("CargaCombustibleId"));
-
-                    b.Property<int>("EmpresaId")
-                        .HasColumnType("int")
+                    b.Property<Guid>("EmpresaId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("empresa_id");
 
                     b.Property<DateTime>("FechaCarga")
@@ -145,8 +139,8 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasColumnType("decimal(9,6)")
                         .HasColumnName("ubicacion_lng");
 
-                    b.Property<int>("ViajeId")
-                        .HasColumnType("int")
+                    b.Property<Guid>("ViajeId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("viaje_id");
 
                     b.HasKey("CargaCombustibleId");
@@ -166,12 +160,9 @@ namespace APIGasoline.Infrastructure.Migrations
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.Carro", b =>
                 {
-                    b.Property<int>("CarroId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                    b.Property<Guid>("CarroId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("carro_id");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("CarroId"));
 
                     b.Property<int?>("Anio")
                         .HasColumnType("int")
@@ -187,8 +178,8 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasColumnType("varchar(50)")
                         .HasColumnName("color");
 
-                    b.Property<int>("EmpresaId")
-                        .HasColumnType("int")
+                    b.Property<Guid>("EmpresaId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("empresa_id");
 
                     b.Property<string>("Estado")
@@ -249,12 +240,9 @@ namespace APIGasoline.Infrastructure.Migrations
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.CentroCosto", b =>
                 {
-                    b.Property<int>("CentroCostoId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                    b.Property<Guid>("CentroCostoId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("centro_costo_id");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("CentroCostoId"));
 
                     b.Property<bool>("Activo")
                         .HasColumnType("tinyint(1)")
@@ -267,8 +255,8 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasColumnType("varchar(100)")
                         .HasColumnName("clave");
 
-                    b.Property<int>("EmpresaId")
-                        .HasColumnType("int")
+                    b.Property<Guid>("EmpresaId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("empresa_id");
 
                     b.Property<DateTime?>("FechaRegistro")
@@ -301,12 +289,9 @@ namespace APIGasoline.Infrastructure.Migrations
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.Corporativo", b =>
                 {
-                    b.Property<int>("CorporativoId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                    b.Property<Guid>("CorporativoId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("corporativo_id");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("CorporativoId"));
 
                     b.Property<bool>("Activo")
                         .HasColumnType("tinyint(1)")
@@ -332,20 +317,17 @@ namespace APIGasoline.Infrastructure.Migrations
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.Division", b =>
                 {
-                    b.Property<int>("DivisionId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                    b.Property<Guid>("DivisionId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("division_id");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("DivisionId"));
 
                     b.Property<bool>("Activo")
                         .HasColumnType("tinyint(1)")
                         .HasDefaultValue(true)
                         .HasColumnName("activo");
 
-                    b.Property<int>("CorporativoId")
-                        .HasColumnType("int")
+                    b.Property<Guid>("CorporativoId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("corporativo_id");
 
                     b.Property<DateTime?>("FechaRegistro")
@@ -373,20 +355,17 @@ namespace APIGasoline.Infrastructure.Migrations
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.Empleado", b =>
                 {
-                    b.Property<int>("EmpleadoId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                    b.Property<Guid>("EmpleadoId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("empleado_id");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("EmpleadoId"));
 
                     b.Property<bool>("Eliminado")
                         .HasColumnType("tinyint(1)")
                         .HasDefaultValue(false)
                         .HasColumnName("delete");
 
-                    b.Property<int>("EmpresaId")
-                        .HasColumnType("int")
+                    b.Property<Guid>("EmpresaId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("empresa_id");
 
                     b.Property<DateTime?>("FechaAlta")
@@ -411,8 +390,8 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasColumnType("varchar(150)")
                         .HasColumnName("nombre_completo");
 
-                    b.Property<int>("UsuarioId")
-                        .HasColumnType("int")
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("usuario_id");
 
                     b.HasKey("EmpleadoId");
@@ -432,19 +411,16 @@ namespace APIGasoline.Infrastructure.Migrations
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.Empresa", b =>
                 {
-                    b.Property<int>("EmpresaId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                    b.Property<Guid>("EmpresaId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("empresa_id");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("EmpresaId"));
-
-                    b.Property<int?>("CorporativoId")
-                        .HasColumnType("int")
+                    b.Property<Guid?>("CorporativoId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("corporativo_id");
 
-                    b.Property<int?>("DivisionId")
-                        .HasColumnType("int")
+                    b.Property<Guid?>("DivisionId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("division_id");
 
                     b.Property<bool>("Eliminado")
@@ -484,19 +460,16 @@ namespace APIGasoline.Infrastructure.Migrations
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.Notificacion", b =>
                 {
-                    b.Property<int>("NotificacionId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                    b.Property<Guid>("NotificacionId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("notificacion_id");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("NotificacionId"));
-
-                    b.Property<int>("EmpleadoDestinatarioId")
-                        .HasColumnType("int")
+                    b.Property<Guid>("EmpleadoDestinatarioId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("empleado_destinatario_id");
 
-                    b.Property<int>("EmpresaId")
-                        .HasColumnType("int")
+                    b.Property<Guid>("EmpresaId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("empresa_id");
 
                     b.Property<DateTime?>("FechaEnvio")
@@ -515,8 +488,8 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasColumnType("varchar(255)")
                         .HasColumnName("mensaje");
 
-                    b.Property<int?>("ReferenciaId")
-                        .HasColumnType("int")
+                    b.Property<Guid?>("ReferenciaId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("referencia_id");
 
                     b.Property<string>("Tipo")
@@ -544,12 +517,9 @@ namespace APIGasoline.Infrastructure.Migrations
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.Privilegio", b =>
                 {
-                    b.Property<int>("PrivilegioId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                    b.Property<Guid>("PrivilegioId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("privilegio_id");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("PrivilegioId"));
 
                     b.Property<bool>("Activo")
                         .HasColumnType("tinyint(1)")
@@ -578,15 +548,17 @@ namespace APIGasoline.Infrastructure.Migrations
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.PuntoRuta", b =>
                 {
-                    b.Property<int>("PuntoRutaId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                    b.Property<Guid>("PuntoRutaId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("punto_ruta_id");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("PuntoRutaId"));
+                    b.Property<decimal?>("Altitud")
+                        .HasPrecision(7, 2)
+                        .HasColumnType("decimal(7,2)")
+                        .HasColumnName("altitud");
 
-                    b.Property<int>("EmpresaId")
-                        .HasColumnType("int")
+                    b.Property<Guid>("EmpresaId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("empresa_id");
 
                     b.Property<decimal>("Latitud")
@@ -599,6 +571,11 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasColumnType("decimal(9,6)")
                         .HasColumnName("longitud");
 
+                    b.Property<decimal?>("PrecisionMetros")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("decimal(6,2)")
+                        .HasColumnName("precision_metros");
+
                     b.Property<bool>("Sincronizado")
                         .HasColumnType("tinyint(1)")
                         .HasDefaultValue(false)
@@ -608,8 +585,13 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasColumnType("timestamp")
                         .HasColumnName("timestamp_captura");
 
-                    b.Property<int>("ViajeId")
-                        .HasColumnType("int")
+                    b.Property<decimal?>("Velocidad")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("decimal(6,2)")
+                        .HasColumnName("velocidad");
+
+                    b.Property<Guid>("ViajeId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("viaje_id");
 
                     b.HasKey("PuntoRutaId");
@@ -632,12 +614,9 @@ namespace APIGasoline.Infrastructure.Migrations
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.Rol", b =>
                 {
-                    b.Property<int>("RolId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                    b.Property<Guid>("RolId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("rol_id");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("RolId"));
 
                     b.Property<bool>("Activo")
                         .HasColumnType("tinyint(1)")
@@ -649,8 +628,8 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasColumnType("varchar(255)")
                         .HasColumnName("descripcion");
 
-                    b.Property<int?>("EmpresaId")
-                        .HasColumnType("int")
+                    b.Property<Guid?>("EmpresaId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("empresa_id");
 
                     b.Property<string>("Nombre")
@@ -673,19 +652,16 @@ namespace APIGasoline.Infrastructure.Migrations
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.RolPrivilegio", b =>
                 {
-                    b.Property<int>("RolPrivilegioId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                    b.Property<Guid>("RolPrivilegioId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("rol_privilegio_id");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("RolPrivilegioId"));
-
-                    b.Property<int>("PrivilegioId")
-                        .HasColumnType("int")
+                    b.Property<Guid>("PrivilegioId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("privilegio_id");
 
-                    b.Property<int>("RolId")
-                        .HasColumnType("int")
+                    b.Property<Guid>("RolId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("rol_id");
 
                     b.HasKey("RolPrivilegioId");
@@ -703,29 +679,144 @@ namespace APIGasoline.Infrastructure.Migrations
                     b.ToTable("rol_privilegio", (string)null);
                 });
 
+            modelBuilder.Entity("APIGasoline.Domain.Entities.RutaProcesada", b =>
+                {
+                    b.Property<Guid>("RutaProcesadaId")
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("ruta_procesada_id");
+
+                    b.Property<bool>("AlertaKilometraje")
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false)
+                        .HasColumnName("alerta_kilometraje");
+
+                    b.Property<decimal?>("DiferenciaKm")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)")
+                        .HasColumnName("diferencia_km");
+
+                    b.Property<decimal?>("DiferenciaPorcentaje")
+                        .HasPrecision(7, 2)
+                        .HasColumnType("decimal(7,2)")
+                        .HasColumnName("diferencia_porcentaje");
+
+                    b.Property<decimal>("DistanciaGpsKm")
+                        .HasPrecision(10, 3)
+                        .HasColumnType("decimal(10,3)")
+                        .HasDefaultValue(0m)
+                        .HasColumnName("distancia_gps_km");
+
+                    b.Property<decimal?>("DistanciaOdometroKm")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)")
+                        .HasColumnName("distancia_odometro_km");
+
+                    b.Property<Guid>("EmpresaId")
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("empresa_id");
+
+                    b.Property<DateTime>("FechaProceso")
+                        .HasColumnType("timestamp")
+                        .HasColumnName("fecha_proceso")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<decimal>("LitrosCargados")
+                        .HasPrecision(8, 2)
+                        .HasColumnType("decimal(8,2)")
+                        .HasDefaultValue(0m)
+                        .HasColumnName("litros_cargados");
+
+                    b.Property<string>("Polyline")
+                        .HasColumnType("text")
+                        .HasColumnName("polyline");
+
+                    b.Property<int>("PuntosDescartados")
+                        .HasColumnType("int")
+                        .HasDefaultValue(0)
+                        .HasColumnName("puntos_descartados");
+
+                    b.Property<int>("PuntosRecibidos")
+                        .HasColumnType("int")
+                        .HasDefaultValue(0)
+                        .HasColumnName("puntos_recibidos");
+
+                    b.Property<decimal?>("RendimientoKmPorLitro")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("decimal(6,2)")
+                        .HasColumnName("rendimiento_km_por_litro");
+
+                    b.Property<int>("TiempoDetenidoSeg")
+                        .HasColumnType("int")
+                        .HasDefaultValue(0)
+                        .HasColumnName("tiempo_detenido_seg");
+
+                    b.Property<int>("TiempoMovimientoSeg")
+                        .HasColumnType("int")
+                        .HasDefaultValue(0)
+                        .HasColumnName("tiempo_movimiento_seg");
+
+                    b.Property<decimal?>("VelocidadMaximaKmh")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("decimal(6,2)")
+                        .HasColumnName("velocidad_maxima_kmh");
+
+                    b.Property<decimal?>("VelocidadPromedioKmh")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("decimal(6,2)")
+                        .HasColumnName("velocidad_promedio_kmh");
+
+                    b.Property<string>("VersionAlgoritmo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("version_algoritmo");
+
+                    b.Property<Guid>("ViajeId")
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("viaje_id");
+
+                    b.HasKey("RutaProcesadaId");
+
+                    b.HasIndex("EmpresaId")
+                        .HasDatabaseName("ix_ruta_procesada_empresa_id");
+
+                    b.HasIndex("ViajeId")
+                        .IsUnique()
+                        .HasDatabaseName("uq_ruta_procesada_viaje_id");
+
+                    b.HasIndex("EmpresaId", "AlertaKilometraje")
+                        .HasDatabaseName("ix_ruta_procesada_empresa_id_alerta_kilometraje");
+
+                    b.HasIndex("EmpresaId", "RutaProcesadaId")
+                        .IsUnique()
+                        .HasDatabaseName("uq_ruta_procesada_empresa_id_ruta_procesada_id");
+
+                    b.HasIndex("EmpresaId", "ViajeId")
+                        .HasDatabaseName("ix_ruta_procesada_empresa_id_viaje_id");
+
+                    b.ToTable("ruta_procesada", (string)null);
+                });
+
             modelBuilder.Entity("APIGasoline.Domain.Entities.SolicitudReserva", b =>
                 {
-                    b.Property<int>("SolicitudReservaId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                    b.Property<Guid>("SolicitudReservaId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("solicitud_reserva_id");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("SolicitudReservaId"));
-
-                    b.Property<int>("CarroId")
-                        .HasColumnType("int")
+                    b.Property<Guid>("CarroId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("carro_id");
 
-                    b.Property<int?>("EmpleadoConfirmadorId")
-                        .HasColumnType("int")
+                    b.Property<Guid?>("EmpleadoConfirmadorId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("empleado_confirmador_id");
 
-                    b.Property<int>("EmpleadoSolicitanteId")
-                        .HasColumnType("int")
+                    b.Property<Guid>("EmpleadoSolicitanteId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("empleado_solicitante_id");
 
-                    b.Property<int>("EmpresaId")
-                        .HasColumnType("int")
+                    b.Property<Guid>("EmpresaId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("empresa_id");
 
                     b.Property<string>("Estado")
@@ -771,12 +862,9 @@ namespace APIGasoline.Infrastructure.Migrations
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.Usuario", b =>
                 {
-                    b.Property<int>("UsuarioId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("usuario_id");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("UsuarioId"));
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -813,19 +901,16 @@ namespace APIGasoline.Infrastructure.Migrations
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.UsuarioRol", b =>
                 {
-                    b.Property<int>("UsuarioRolId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                    b.Property<Guid>("UsuarioRolId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("usuario_rol_id");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("UsuarioRolId"));
-
-                    b.Property<int>("RolId")
-                        .HasColumnType("int")
+                    b.Property<Guid>("RolId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("rol_id");
 
-                    b.Property<int>("UsuarioId")
-                        .HasColumnType("int")
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("usuario_id");
 
                     b.HasKey("UsuarioRolId");
@@ -845,15 +930,12 @@ namespace APIGasoline.Infrastructure.Migrations
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.Viaje", b =>
                 {
-                    b.Property<int>("ViajeId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                    b.Property<Guid>("ViajeId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("viaje_id");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("ViajeId"));
-
-                    b.Property<int>("CarroId")
-                        .HasColumnType("int")
+                    b.Property<Guid>("CarroId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("carro_id");
 
                     b.Property<decimal?>("DistanciaRecorrida")
@@ -861,12 +943,12 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasColumnType("decimal(10,2)")
                         .HasColumnName("distancia_recorrida");
 
-                    b.Property<int>("EmpleadoOperadorId")
-                        .HasColumnType("int")
+                    b.Property<Guid>("EmpleadoOperadorId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("empleado_operador_id");
 
-                    b.Property<int>("EmpresaId")
-                        .HasColumnType("int")
+                    b.Property<Guid>("EmpresaId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("empresa_id");
 
                     b.Property<string>("Estado")
@@ -903,8 +985,8 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasDefaultValue(false)
                         .HasColumnName("sincronizado");
 
-                    b.Property<int?>("SolicitudReservaId")
-                        .HasColumnType("int")
+                    b.Property<Guid?>("SolicitudReservaId")
+                        .HasColumnType("binary(16)")
                         .HasColumnName("solicitud_reserva_id");
 
                     b.Property<decimal?>("UbicacionFinLat")
@@ -1121,6 +1203,24 @@ namespace APIGasoline.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_rol_privilegio_rol");
+                });
+
+            modelBuilder.Entity("APIGasoline.Domain.Entities.RutaProcesada", b =>
+                {
+                    b.HasOne("APIGasoline.Domain.Entities.Empresa", null)
+                        .WithMany()
+                        .HasForeignKey("EmpresaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_ruta_procesada_empresa");
+
+                    b.HasOne("APIGasoline.Domain.Entities.Viaje", null)
+                        .WithMany()
+                        .HasForeignKey("EmpresaId", "ViajeId")
+                        .HasPrincipalKey("EmpresaId", "ViajeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_ruta_procesada_viaje");
                 });
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.SolicitudReserva", b =>

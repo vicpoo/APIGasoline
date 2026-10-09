@@ -6,7 +6,7 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.UsuarioRoles.Commands;
 
-public record UpdateUsuarioRolCommand(int UsuarioRolId, int UsuarioId, int RolId) : IRequest<UsuarioRolDto>;
+public record UpdateUsuarioRolCommand(Guid UsuarioRolId, Guid UsuarioId, Guid RolId) : IRequest<UsuarioRolDto>;
 
 public class UpdateUsuarioRolCommandHandler : IRequestHandler<UpdateUsuarioRolCommand, UsuarioRolDto>
 {

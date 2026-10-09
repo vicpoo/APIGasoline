@@ -6,7 +6,7 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.CentrosCosto.Queries;
 
-public record GetCentroCostoByIdQuery(int CentroCostoId) : IRequest<CentroCostoDto>;
+public record GetCentroCostoByIdQuery(Guid CentroCostoId) : IRequest<CentroCostoDto>;
 
 public class GetCentroCostoByIdQueryHandler : IRequestHandler<GetCentroCostoByIdQuery, CentroCostoDto>
 {

@@ -8,7 +8,7 @@ namespace APIGasoline.Application.Features.Empresas.Queries;
 /// <summary>
 /// Lista las empresas no eliminadas. Se puede filtrar por corporativo, por división o por ambos.
 /// </summary>
-public record GetEmpresasQuery(int? CorporativoId = null, int? DivisionId = null) : IRequest<IReadOnlyList<EmpresaDto>>;
+public record GetEmpresasQuery(Guid? CorporativoId = null, Guid? DivisionId = null) : IRequest<IReadOnlyList<EmpresaDto>>;
 
 public class GetEmpresasQueryHandler : IRequestHandler<GetEmpresasQuery, IReadOnlyList<EmpresaDto>>
 {

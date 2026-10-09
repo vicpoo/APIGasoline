@@ -15,10 +15,10 @@ public class EmpresaRepository : IEmpresaRepository
 
     // El filtro global (HasQueryFilter) ya excluye las empresas eliminadas.
 
-    public Task<Empresa?> GetByIdAsync(int empresaId, CancellationToken cancellationToken = default)
+    public Task<Empresa?> GetByIdAsync(Guid empresaId, CancellationToken cancellationToken = default)
         => _context.Empresas.FirstOrDefaultAsync(e => e.EmpresaId == empresaId, cancellationToken);
 
-    public async Task<IReadOnlyList<Empresa>> GetAllAsync(int? corporativoId = null, int? divisionId = null, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Empresa>> GetAllAsync(Guid? corporativoId = null, Guid? divisionId = null, CancellationToken cancellationToken = default)
     {
         var query = _context.Empresas.AsNoTracking();
 
@@ -33,15 +33,15 @@ public class EmpresaRepository : IEmpresaRepository
             .ToListAsync(cancellationToken);
     }
 
-    public Task<bool> ExistsAsync(int empresaId, CancellationToken cancellationToken = default)
+    public Task<bool> ExistsAsync(Guid empresaId, CancellationToken cancellationToken = default)
         => _context.Empresas.AnyAsync(e => e.EmpresaId == empresaId, cancellationToken);
 
-    public Task<bool> ExistsByCorporativoAsync(int corporativoId, CancellationToken cancellationToken = default)
+    public Task<bool> ExistsByCorporativoAsync(Guid corporativoId, CancellationToken cancellationToken = default)
         => _context.Empresas
             .IgnoreQueryFilters()
             .AnyAsync(e => e.CorporativoId == corporativoId, cancellationToken);
 
-    public Task<bool> ExistsByDivisionAsync(int divisionId, CancellationToken cancellationToken = default)
+    public Task<bool> ExistsByDivisionAsync(Guid divisionId, CancellationToken cancellationToken = default)
         => _context.Empresas
             .IgnoreQueryFilters()
             .AnyAsync(e => e.DivisionId == divisionId, cancellationToken);

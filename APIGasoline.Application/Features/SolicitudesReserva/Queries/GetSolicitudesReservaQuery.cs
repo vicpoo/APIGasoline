@@ -11,9 +11,9 @@ namespace APIGasoline.Application.Features.SolicitudesReserva.Queries;
 /// Filtros opcionales: empresa, carro, empleado solicitante y estado.
 /// </summary>
 public record GetSolicitudesReservaQuery(
-    int? EmpresaId = null,
-    int? CarroId = null,
-    int? EmpleadoSolicitanteId = null,
+    Guid? EmpresaId = null,
+    Guid? CarroId = null,
+    Guid? EmpleadoSolicitanteId = null,
     EstadoSolicitudReserva? Estado = null) : IRequest<IReadOnlyList<SolicitudReservaDto>>;
 
 public class GetSolicitudesReservaQueryHandler : IRequestHandler<GetSolicitudesReservaQuery, IReadOnlyList<SolicitudReservaDto>>

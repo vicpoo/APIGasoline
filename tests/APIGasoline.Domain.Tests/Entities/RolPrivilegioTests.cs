@@ -11,11 +11,11 @@ public class RolPrivilegioTests
     [Fact]
     public void Reasignar_IdsValidos_CambiaLaAsignacion()
     {
-        var asignacion = RolPrivilegio.Crear(1, 1);
+        var asignacion = RolPrivilegio.Crear(Id(1), Id(1));
 
-        asignacion.Reasignar(1, 2);
+        asignacion.Reasignar(Id(1), Id(2));
 
-        Assert.Equal(2, asignacion.PrivilegioId);
+        Assert.Equal(Id(2), asignacion.PrivilegioId);
     }
 
     [Theory]
@@ -23,6 +23,6 @@ public class RolPrivilegioTests
     [InlineData(1, 0)]
     public void Crear_IdsInvalidos_LanzaDomainException(int rolId, int privilegioId)
     {
-        Assert.Throws<DomainException>(() => RolPrivilegio.Crear(rolId, privilegioId));
+        Assert.Throws<DomainException>(() => RolPrivilegio.Crear(Id(rolId), Id(privilegioId)));
     }
 }

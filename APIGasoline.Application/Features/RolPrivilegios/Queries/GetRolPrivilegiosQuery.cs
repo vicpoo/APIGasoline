@@ -8,7 +8,7 @@ namespace APIGasoline.Application.Features.RolPrivilegios.Queries;
 /// <summary>
 /// Lista las asignaciones. Se puede filtrar por rol, por privilegio o por ambos.
 /// </summary>
-public record GetRolPrivilegiosQuery(int? RolId = null, int? PrivilegioId = null) : IRequest<IReadOnlyList<RolPrivilegioDto>>;
+public record GetRolPrivilegiosQuery(Guid? RolId = null, Guid? PrivilegioId = null) : IRequest<IReadOnlyList<RolPrivilegioDto>>;
 
 public class GetRolPrivilegiosQueryHandler : IRequestHandler<GetRolPrivilegiosQuery, IReadOnlyList<RolPrivilegioDto>>
 {

@@ -13,14 +13,14 @@ public class CambioEstatusCarroRepository : ICambioEstatusCarroRepository
         _context = context;
     }
 
-    public Task<CambioEstatusCarro?> GetByIdAsync(int cambioEstatusCarroId, CancellationToken cancellationToken = default)
+    public Task<CambioEstatusCarro?> GetByIdAsync(Guid cambioEstatusCarroId, CancellationToken cancellationToken = default)
         => _context.CambiosEstatusCarro
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.CambioEstatusCarroId == cambioEstatusCarroId, cancellationToken);
 
     public async Task<IReadOnlyList<CambioEstatusCarro>> GetAllAsync(
-        int? empresaId = null,
-        int? carroId = null,
+        Guid? empresaId = null,
+        Guid? carroId = null,
         DateTime? desde = null,
         DateTime? hasta = null,
         CancellationToken cancellationToken = default)
@@ -45,10 +45,10 @@ public class CambioEstatusCarroRepository : ICambioEstatusCarroRepository
             .ToListAsync(cancellationToken);
     }
 
-    public Task<bool> ExistsByCarroAsync(int carroId, CancellationToken cancellationToken = default)
+    public Task<bool> ExistsByCarroAsync(Guid carroId, CancellationToken cancellationToken = default)
         => _context.CambiosEstatusCarro.AnyAsync(c => c.CarroId == carroId, cancellationToken);
 
-    public Task<bool> ExistsByViajeAsync(int viajeId, CancellationToken cancellationToken = default)
+    public Task<bool> ExistsByViajeAsync(Guid viajeId, CancellationToken cancellationToken = default)
         => _context.CambiosEstatusCarro.AnyAsync(c => c.ViajeAfectadoId == viajeId, cancellationToken);
 
     public async Task AddAsync(CambioEstatusCarro cambio, CancellationToken cancellationToken = default)

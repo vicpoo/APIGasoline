@@ -12,7 +12,7 @@ namespace APIGasoline.Application.Features.Viajes.Commands;
 /// Interrumpe el viaje. Si no se manda fecha de fin, se usa la hora actual.
 /// </summary>
 public record InterrumpirViajeCommand(
-    int ViajeId,
+    Guid ViajeId,
     string Motivo,
     DateTime? FechaFin,
     decimal? UbicacionFinLat,

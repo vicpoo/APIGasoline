@@ -5,16 +5,16 @@ namespace APIGasoline.Domain.Entities;
 
 public class UsuarioRol
 {
-    public int UsuarioRolId { get; private set; }
-    public int UsuarioId { get; private set; }
-    public int RolId { get; private set; }
+    public Guid UsuarioRolId { get; private set; } = Guid.CreateVersion7();
+    public Guid UsuarioId { get; private set; }
+    public Guid RolId { get; private set; }
 
     // Requerido por Entity Framework
     private UsuarioRol()
     {
     }
 
-    public static UsuarioRol Crear(int usuarioId, int rolId)
+    public static UsuarioRol Crear(Guid usuarioId, Guid rolId)
     {
         var usuarioRol = new UsuarioRol();
         usuarioRol.Reasignar(usuarioId, rolId);
@@ -22,13 +22,13 @@ public class UsuarioRol
         return usuarioRol;
     }
 
-    public void Reasignar(int usuarioId, int rolId)
+    public void Reasignar(Guid usuarioId, Guid rolId)
     {
-        if (usuarioId <= 0)
-            throw new DomainException("El id del usuario debe ser mayor a cero.");
+        if (usuarioId == Guid.Empty)
+            throw new DomainException("El id del usuario es obligatorio.");
 
-        if (rolId <= 0)
-            throw new DomainException("El id del rol debe ser mayor a cero.");
+        if (rolId == Guid.Empty)
+            throw new DomainException("El id del rol es obligatorio.");
 
         UsuarioId = usuarioId;
         RolId = rolId;

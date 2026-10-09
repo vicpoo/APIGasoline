@@ -13,9 +13,9 @@ namespace APIGasoline.Application.Features.Notificaciones.Commands;
 /// se generan automáticamente en sus propios flujos.
 /// </summary>
 public record CreateNotificacionCommand(
-    int EmpleadoDestinatarioId,
+    Guid EmpleadoDestinatarioId,
     TipoNotificacion Tipo,
-    int? ReferenciaId,
+    Guid? ReferenciaId,
     string? Mensaje) : IRequest<NotificacionDto>;
 
 public class CreateNotificacionCommandHandler : IRequestHandler<CreateNotificacionCommand, NotificacionDto>

@@ -8,18 +8,18 @@
 /// </summary>
 public static class LlavesArchivo
 {
-    public static string FotoVehiculo(int empresaId, int carroId, string extension, Guid id)
+    public static string FotoVehiculo(Guid empresaId, Guid carroId, string extension, Guid id)
         => $"empresas/{empresaId}/carros/{carroId}/vehiculo-{id:N}{extension}";
 
-    public static string FotoPerfilEmpleado(int empresaId, int empleadoId, string extension, Guid id)
+    public static string FotoPerfilEmpleado(Guid empresaId, Guid empleadoId, string extension, Guid id)
         => $"empresas/{empresaId}/empleados/{empleadoId}/perfil-{id:N}{extension}";
 
-    public static string FotoLicenciaEmpleado(int empresaId, int empleadoId, string extension, Guid id)
+    public static string FotoLicenciaEmpleado(Guid empresaId, Guid empleadoId, string extension, Guid id)
         => $"empresas/{empresaId}/empleados/{empleadoId}/licencia-{id:N}{extension}";
 
     /// <summary>
     /// La carga todavía no tiene id cuando se sube el comprobante, por eso se agrupa por viaje.
     /// </summary>
-    public static string ComprobanteCarga(int empresaId, int viajeId, string extension, Guid id)
+    public static string ComprobanteCarga(Guid empresaId, Guid viajeId, string extension, Guid id)
         => $"empresas/{empresaId}/viajes/{viajeId}/cargas/comprobante-{id:N}{extension}";
 }

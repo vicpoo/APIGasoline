@@ -8,8 +8,8 @@ public class CentroCosto
     public const int NombreMaxLength = 150;
     public const int ClaveMaxLength = 100;
 
-    public int CentroCostoId { get; private set; }
-    public int EmpresaId { get; private set; }
+    public Guid CentroCostoId { get; private set; } = Guid.CreateVersion7();
+    public Guid EmpresaId { get; private set; }
     public string Nombre { get; private set; } = string.Empty;
     public string Clave { get; private set; } = string.Empty;
     public bool Activo { get; private set; } = true;
@@ -22,7 +22,7 @@ public class CentroCosto
     {
     }
 
-    public static CentroCosto Crear(int empresaId, string nombre, string clave, bool activo = true)
+    public static CentroCosto Crear(Guid empresaId, string nombre, string clave, bool activo = true)
     {
         var centroCosto = new CentroCosto();
         centroCosto.CambiarEmpresa(empresaId);
@@ -33,10 +33,10 @@ public class CentroCosto
         return centroCosto;
     }
 
-    public void CambiarEmpresa(int empresaId)
+    public void CambiarEmpresa(Guid empresaId)
     {
-        if (empresaId <= 0)
-            throw new DomainException("El id de la empresa debe ser mayor a cero.");
+        if (empresaId == Guid.Empty)
+            throw new DomainException("El id de la empresa es obligatorio.");
 
         EmpresaId = empresaId;
     }

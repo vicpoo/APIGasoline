@@ -8,7 +8,7 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.Carros.Queries;
 
-public record GetCarroByIdQuery(int CarroId) : IRequest<CarroDto>;
+public record GetCarroByIdQuery(Guid CarroId) : IRequest<CarroDto>;
 
 public class GetCarroByIdQueryHandler : IRequestHandler<GetCarroByIdQuery, CarroDto>
 {

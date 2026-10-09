@@ -14,8 +14,8 @@ public class Carro
     public const decimal CapacidadTanqueMaxima = 9999.99m;      // decimal(6,2)
     public const decimal KilometrajeMaximo = 99999999.99m;      // decimal(10,2)
 
-    public int CarroId { get; private set; }
-    public int EmpresaId { get; private set; }
+    public Guid CarroId { get; private set; } = Guid.CreateVersion7();
+    public Guid EmpresaId { get; private set; }
     public string Marca { get; private set; } = string.Empty;
     public string Modelo { get; private set; } = string.Empty;
     public int? Anio { get; private set; }
@@ -39,7 +39,7 @@ public class Carro
     }
 
     public static Carro Crear(
-        int empresaId,
+        Guid empresaId,
         string marca,
         string modelo,
         int? anio,
@@ -65,10 +65,10 @@ public class Carro
         return carro;
     }
 
-    public void CambiarEmpresa(int empresaId)
+    public void CambiarEmpresa(Guid empresaId)
     {
-        if (empresaId <= 0)
-            throw new DomainException("El id de la empresa debe ser mayor a cero.");
+        if (empresaId == Guid.Empty)
+            throw new DomainException("El id de la empresa es obligatorio.");
 
         EmpresaId = empresaId;
     }

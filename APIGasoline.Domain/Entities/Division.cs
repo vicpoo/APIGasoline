@@ -7,8 +7,8 @@ public class Division
 {
     public const int NombreMaxLength = 100;
 
-    public int DivisionId { get; private set; }
-    public int CorporativoId { get; private set; }
+    public Guid DivisionId { get; private set; } = Guid.CreateVersion7();
+    public Guid CorporativoId { get; private set; }
     public string Nombre { get; private set; } = string.Empty;
     public bool Activo { get; private set; } = true;
 
@@ -20,7 +20,7 @@ public class Division
     {
     }
 
-    public static Division Crear(int corporativoId, string nombre, bool activo = true)
+    public static Division Crear(Guid corporativoId, string nombre, bool activo = true)
     {
         var division = new Division();
         division.CambiarCorporativo(corporativoId);
@@ -30,10 +30,10 @@ public class Division
         return division;
     }
 
-    public void CambiarCorporativo(int corporativoId)
+    public void CambiarCorporativo(Guid corporativoId)
     {
-        if (corporativoId <= 0)
-            throw new DomainException("El id del corporativo debe ser mayor a cero.");
+        if (corporativoId == Guid.Empty)
+            throw new DomainException("El id del corporativo es obligatorio.");
 
         CorporativoId = corporativoId;
     }

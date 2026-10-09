@@ -13,8 +13,8 @@ namespace APIGasoline.Application.Features.Carros.Commands;
 /// Actualiza los datos del carro. La foto NO se cambia aquí: usa SubirFotoVehiculoCommand / EliminarFotoVehiculoCommand.
 /// </summary>
 public record UpdateCarroCommand(
-    int CarroId,
-    int EmpresaId,
+    Guid CarroId,
+    Guid EmpresaId,
     string Marca,
     string Modelo,
     int? Anio,

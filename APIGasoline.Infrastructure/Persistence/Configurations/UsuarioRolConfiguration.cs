@@ -13,7 +13,7 @@ public class UsuarioRolConfiguration : IEntityTypeConfiguration<UsuarioRol>
         builder.HasKey(ur => ur.UsuarioRolId);
         builder.Property(ur => ur.UsuarioRolId)
             .HasColumnName("usuario_rol_id")
-            .ValueGeneratedOnAdd();
+            .ValueGeneratedNever();
 
         builder.Property(ur => ur.UsuarioId)
             .HasColumnName("usuario_id")

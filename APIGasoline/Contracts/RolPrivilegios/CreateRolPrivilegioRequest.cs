@@ -4,9 +4,9 @@ namespace APIGasoline.Contracts.RolPrivilegios;
 
 public class CreateRolPrivilegioRequest
 {
-    [Range(1, int.MaxValue)]
-    public int RolId { get; set; }
+    [GuidNoVacio]
+    public Guid RolId { get; set; }
 
-    [Range(1, int.MaxValue)]
-    public int PrivilegioId { get; set; }
+    [GuidNoVacio]
+    public Guid PrivilegioId { get; set; }
 }

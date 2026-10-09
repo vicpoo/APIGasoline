@@ -12,8 +12,8 @@ namespace APIGasoline.Application.Features.Empleados.Commands;
 /// <see cref="SubirFotoEmpleadoCommand"/>, porque la llave del archivo usa el id del empleado.
 /// </summary>
 public record CreateEmpleadoCommand(
-    int EmpresaId,
-    int UsuarioId,
+    Guid EmpresaId,
+    Guid UsuarioId,
     string NombreCompleto) : IRequest<EmpleadoDto>;
 
 public class CreateEmpleadoCommandHandler : IRequestHandler<CreateEmpleadoCommand, EmpleadoDto>

@@ -10,7 +10,7 @@ namespace APIGasoline.Application.Features.RutasProcesadas.Queries;
 /// Resumen procesado de un viaje. Si el viaje existe pero aún no se procesa
 /// (sigue en curso o falló el proceso), responde 404 con un mensaje claro.
 /// </summary>
-public record GetRutaProcesadaByViajeQuery(int ViajeId) : IRequest<RutaProcesadaDto>;
+public record GetRutaProcesadaByViajeQuery(Guid ViajeId) : IRequest<RutaProcesadaDto>;
 
 public class GetRutaProcesadaByViajeQueryHandler : IRequestHandler<GetRutaProcesadaByViajeQuery, RutaProcesadaDto>
 {

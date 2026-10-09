@@ -23,16 +23,16 @@ public class UsuarioRolesController : ControllerBase
     /// </summary>
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<UsuarioRolDto>>> GetAll(
-        [FromQuery] int? usuarioId,
-        [FromQuery] int? rolId,
+        [FromQuery] Guid? usuarioId,
+        [FromQuery] Guid? rolId,
         CancellationToken cancellationToken)
     {
         var usuarioRoles = await _sender.Send(new GetUsuarioRolesQuery(usuarioId, rolId), cancellationToken);
         return Ok(usuarioRoles);
     }
 
-    [HttpGet("{usuarioRolId:int}")]
-    public async Task<ActionResult<UsuarioRolDto>> GetById(int usuarioRolId, CancellationToken cancellationToken)
+    [HttpGet("{usuarioRolId:guid}")]
+    public async Task<ActionResult<UsuarioRolDto>> GetById(Guid usuarioRolId, CancellationToken cancellationToken)
     {
         var usuarioRol = await _sender.Send(new GetUsuarioRolByIdQuery(usuarioRolId), cancellationToken);
         return Ok(usuarioRol);
@@ -47,8 +47,8 @@ public class UsuarioRolesController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { usuarioRolId = usuarioRol.UsuarioRolId }, usuarioRol);
     }
 
-    [HttpPut("{usuarioRolId:int}")]
-    public async Task<ActionResult<UsuarioRolDto>> Update(int usuarioRolId, UpdateUsuarioRolRequest request, CancellationToken cancellationToken)
+    [HttpPut("{usuarioRolId:guid}")]
+    public async Task<ActionResult<UsuarioRolDto>> Update(Guid usuarioRolId, UpdateUsuarioRolRequest request, CancellationToken cancellationToken)
     {
         var command = new UpdateUsuarioRolCommand(usuarioRolId, request.UsuarioId, request.RolId);
         var usuarioRol = await _sender.Send(command, cancellationToken);
@@ -56,8 +56,8 @@ public class UsuarioRolesController : ControllerBase
         return Ok(usuarioRol);
     }
 
-    [HttpDelete("{usuarioRolId:int}")]
-    public async Task<IActionResult> Delete(int usuarioRolId, CancellationToken cancellationToken)
+    [HttpDelete("{usuarioRolId:guid}")]
+    public async Task<IActionResult> Delete(Guid usuarioRolId, CancellationToken cancellationToken)
     {
         await _sender.Send(new DeleteUsuarioRolCommand(usuarioRolId), cancellationToken);
         return NoContent();

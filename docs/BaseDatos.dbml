@@ -1,0 +1,677 @@
+// ============================================================
+// BASE DE DATOS — APP DE COMBUSTIBLE
+// Versión 3:
+//   🆕 Todos los ID pasan de integer autoincremental a UUID v7 guardado en BINARY(16).
+//   🆕 Patrón Outbox para enviar notificaciones push (outbox_mensaje).
+//   🆕 Dispositivos de los empleados para Firebase Cloud Messaging (dispositivo_empleado).
+//   (v2: procesamiento de rutas GPS estilo Strava — punto_ruta y ruta_procesada)
+//
+// Sobre los UUID:
+//   - La API genera el id (Guid.CreateVersion7()) antes de insertar. MySQL no lo genera.
+//   - v7 es ordenado por tiempo: los índices de InnoDB no se fragmentan como con UUID aleatorios.
+//   - Para leerlos en Workbench:   SELECT BIN_TO_UUID(empresa_id) FROM empresa;
+//   - Para buscar por un UUID:     WHERE empresa_id = UUID_TO_BIN('0192...-....');
+//   - Insert manual (solo pruebas): UUID_TO_BIN(UUID(), 1)
+//
+// Rutas de archivos en MinIO (las columnas foto_* guardan solo la llave):
+//   empresa/{empresaId}/empleado/{empleadoId}/documento/licencia-{guid}.jpg
+//   empresa/{empresaId}/empleado/{empleadoId}/perfil/perfil-{guid}.jpg
+//   empresa/{empresaId}/carro/{carroId}/foto/vehiculo-{guid}.jpg
+//   empresa/{empresaId}/viaje/{viajeId}/carga/{cargaId}/comprobante-{guid}.jpg
+// ============================================================
+
+
+// ============================
+// USUARIO
+// ============================
+
+Table usuario {
+  usuario_id binary(16) [primary key]
+  email varchar(150) [not null, unique]
+  password_hash varchar(255) [not null]
+  estado enum('activo', 'inactivo') [not null, default: 'activo']
+  fecha_registro timestamp [default: `now()`]
+
+  Note: 'Credenciales de acceso. El login se valida contra esta tabla (email + password_hash). Un usuario pertenece a una sola empresa a través de su registro en empleado.'
+}
+
+
+// ============================
+// ROL
+// ============================
+
+Table rol {
+  rol_id binary(16) [primary key]
+  empresa_id binary(16) [note: 'NULL = rol global (disponible para todas las empresas). Con valor = rol exclusivo de esa empresa.']
+  nombre varchar(100) [not null]
+  descripcion varchar(255)
+  activo boolean [not null, default: true]
+
+  indexes {
+    empresa_id
+    (empresa_id, nombre) [unique]
+  }
+
+  Note: 'Rol de autorización. Puede ser global (empresa_id NULL) o exclusivo de una empresa.'
+}
+
+
+// ============================
+// PRIVILEGIO
+// ============================
+
+Table privilegio {
+  privilegio_id binary(16) [primary key]
+  nombre varchar(100) [not null, unique]
+  descripcion varchar(255)
+  activo boolean [not null, default: true]
+
+  Note: 'Acción que puede ejecutar un rol dentro del sistema.'
+}
+
+
+// ============================
+// USUARIO - ROL
+// ============================
+
+Table usuario_rol {
+  usuario_rol_id binary(16) [primary key]
+  usuario_id binary(16) [not null]
+  rol_id binary(16) [not null]
+
+  indexes {
+    usuario_id
+    rol_id
+    (usuario_id, rol_id) [unique]
+  }
+
+  Note: 'Relación N:M entre usuarios y roles. Un usuario solo puede recibir roles globales o roles de su propia empresa.'
+}
+
+
+// ============================
+// ROL - PRIVILEGIO
+// ============================
+
+Table rol_privilegio {
+  rol_privilegio_id binary(16) [primary key]
+  rol_id binary(16) [not null]
+  privilegio_id binary(16) [not null]
+
+  indexes {
+    rol_id
+    privilegio_id
+    (rol_id, privilegio_id) [unique]
+  }
+
+  Note: 'Relación N:M entre roles y privilegios. Un rol puede tener varios privilegios y un privilegio puede pertenecer a varios roles.'
+}
+
+
+// ============================================================
+// CORPORATIVO
+// ============================================================
+
+Table corporativo {
+  corporativo_id binary(16) [primary key]
+  nombre varchar(150) [not null]
+  activo boolean [not null, default: true]
+  fecha_registro timestamp [default: `now()`]
+
+  Note: 'Representa al corporativo al que pueden pertenecer una o varias empresas.'
+}
+
+
+// ============================================================
+// DIVISIÓN
+// ============================================================
+
+Table division {
+  division_id binary(16) [primary key]
+  corporativo_id binary(16) [not null]
+  nombre varchar(100) [not null]
+  activo boolean [not null, default: true]
+  fecha_registro timestamp [default: `now()`]
+
+  indexes {
+    corporativo_id
+    (corporativo_id, division_id) [unique]
+  }
+
+  Note: 'Una división pertenece a un corporativo.'
+}
+
+
+// ============================================================
+// EMPRESA — TENANT
+// ============================================================
+
+Table empresa {
+  empresa_id binary(16) [primary key]
+  corporativo_id binary(16)
+  division_id binary(16)
+  nombre varchar(150) [not null]
+  eliminado boolean [not null, default: false]
+  fecha_registro timestamp [default: `now()`]
+
+  indexes {
+    corporativo_id
+    division_id
+    (corporativo_id, empresa_id) [unique]
+  }
+
+  Note: 'Representa un tenant. Una empresa puede pertenecer a un corporativo y opcionalmente a una división.'
+}
+
+
+// ============================================================
+// CENTRO DE COSTO
+// ============================================================
+
+Table centro_costo {
+  centro_costo_id binary(16) [primary key]
+  empresa_id binary(16) [not null]
+  nombre varchar(150) [not null]
+  clave varchar(100) [not null]
+  activo boolean [not null, default: true]
+  fecha_registro timestamp [default: `now()`]
+
+  indexes {
+    empresa_id
+    (empresa_id, centro_costo_id) [unique]
+    (empresa_id, clave) [unique]
+  }
+
+  Note: 'Centro de costo perteneciente a una empresa.'
+}
+
+
+// ============================================================
+// EMPLEADO
+// ============================================================
+
+Table empleado {
+  empleado_id binary(16) [primary key]
+  empresa_id binary(16) [not null]
+  usuario_id binary(16) [not null, unique]
+  nombre_completo varchar(150) [not null]
+  foto_perfil varchar(255) [note: 'Llave en MinIO: empresa/{empresaId}/empleado/{empleadoId}/perfil/perfil-{guid}.jpg']
+  foto_licencia varchar(255) [note: 'Llave en MinIO: empresa/{empresaId}/empleado/{empleadoId}/documento/licencia-{guid}.jpg']
+  eliminado boolean [not null, default: false]
+  fecha_alta timestamp [default: `now()`]
+
+  indexes {
+    empresa_id
+    (empresa_id, empleado_id) [unique]
+  }
+
+  Note: 'Datos del empleado ligados a un usuario. Un usuario pertenece a una sola empresa (usuario_id es único).'
+}
+
+
+// ============================================================
+// 🆕 NUEVO — DISPOSITIVO DEL EMPLEADO (Firebase Cloud Messaging)
+// ============================================================
+
+Table dispositivo_empleado {
+  dispositivo_empleado_id binary(16) [primary key]
+  empresa_id binary(16) [not null]
+  empleado_id binary(16) [not null]
+  token_fcm varchar(512) [not null, unique, note: 'Token de registro que entrega Firebase al celular. Si el empleado inicia sesión en otro celular se registra otro token.']
+  plataforma enum('android', 'ios', 'web') [not null]
+  activo boolean [not null, default: true, note: 'Se desactiva cuando Firebase responde que el token ya no es válido (app desinstalada) o al cerrar sesión.']
+  fecha_registro timestamp [default: `now()`]
+  fecha_ultimo_uso timestamp [note: 'Se actualiza cada vez que la app vuelve a registrar el mismo token.']
+
+  indexes {
+    empresa_id
+    (empresa_id, dispositivo_empleado_id) [unique]
+    (empresa_id, empleado_id, activo)
+  }
+
+  Note: 'Celulares de un empleado a los que se envían notificaciones push. Un empleado puede tener varios.'
+}
+
+
+// ============================================================
+// CARRO
+// ============================================================
+
+Table carro {
+  carro_id binary(16) [primary key]
+  empresa_id binary(16) [not null]
+  marca varchar(80) [not null]
+  modelo varchar(80) [not null]
+  anio integer
+  color varchar(50)
+  placas varchar(20) [not null, unique]
+  foto_vehiculo varchar(255) [note: 'Llave en MinIO: empresa/{empresaId}/carro/{carroId}/foto/vehiculo-{guid}.jpg']
+  capacidad_tanque decimal(6,2)
+  kilometraje_actual decimal(10,2) [not null, default: 0]
+  estado enum(
+    'disponible',
+    'ocupado',
+    'en_mantenimiento'
+  ) [not null, default: 'disponible']
+  fecha_alta timestamp [default: `now()`]
+
+  indexes {
+    empresa_id
+    (empresa_id, carro_id) [unique]
+  }
+
+  Note: 'Vehículo perteneciente a una empresa.'
+}
+
+
+// ============================================================
+// SOLICITUD DE RESERVA
+// ============================================================
+
+Table solicitud_reserva {
+  solicitud_reserva_id binary(16) [primary key]
+  empresa_id binary(16) [not null]
+  carro_id binary(16) [not null]
+  empleado_solicitante_id binary(16) [not null]
+  fecha_solicitud timestamp [default: `now()`]
+  estado enum(
+    'pendiente',
+    'aprobada',
+    'rechazada',
+    'cancelada'
+  ) [not null, default: 'pendiente']
+  empleado_confirmador_id binary(16)
+  fecha_resolucion timestamp
+  motivo_resolucion varchar(255)
+
+  indexes {
+    empresa_id
+    (empresa_id, solicitud_reserva_id) [unique]
+  }
+
+  Note: 'Solicitud de un empleado para utilizar un carro de su empresa.'
+}
+
+
+// ============================================================
+// VIAJE
+// ============================================================
+
+Table viaje {
+  viaje_id binary(16) [primary key]
+  empresa_id binary(16) [not null]
+  carro_id binary(16) [not null]
+  solicitud_reserva_id binary(16)
+  empleado_operador_id binary(16) [not null]
+
+  fecha_inicio timestamp [not null]
+  ubicacion_inicio_lat decimal(9,6)
+  ubicacion_inicio_lng decimal(9,6)
+  kilometraje_inicial decimal(10,2) [not null]
+
+  fecha_fin timestamp
+  ubicacion_fin_lat decimal(9,6)
+  ubicacion_fin_lng decimal(9,6)
+  kilometraje_final decimal(10,2)
+  distancia_recorrida decimal(10,2) [note: 'Según el odómetro (kilometraje_final - kilometraje_inicial). La distancia según el GPS está en ruta_procesada.']
+
+  estado enum(
+    'en_curso',
+    'finalizado',
+    'interrumpido'
+  ) [not null, default: 'en_curso']
+
+  motivo_interrupcion varchar(255)
+  sincronizado boolean [not null, default: false]
+
+  indexes {
+    empresa_id
+    (empresa_id, viaje_id) [unique]
+  }
+
+  Note: 'Registra un viaje realizado con un carro. Una reserva aprobada puede tener varios viajes. Con UUID la app puede generar el id offline y sincronizar después sin choques.'
+}
+
+
+// ============================================================
+// PUNTO DE RUTA
+// ============================================================
+
+Table punto_ruta {
+  punto_ruta_id binary(16) [primary key]
+  empresa_id binary(16) [not null]
+  viaje_id binary(16) [not null]
+  latitud decimal(9,6) [not null]
+  longitud decimal(9,6) [not null]
+  precision_metros decimal(6,2) [note: 'Radio de error reportado por el GPS del teléfono. Los puntos con precisión mayor a 50 m se descartan al procesar la ruta.']
+  altitud decimal(7,2) [note: 'Metros sobre el nivel del mar reportados por el GPS (sin corregir).']
+  velocidad decimal(6,2) [note: 'Velocidad instantánea reportada por el GPS, en m/s.']
+  timestamp_captura timestamp [not null]
+  sincronizado boolean [not null, default: false]
+
+  indexes {
+    empresa_id
+    (empresa_id, punto_ruta_id) [unique]
+    (empresa_id, viaje_id)
+    (viaje_id, timestamp_captura)
+  }
+
+  Note: 'Punto GPS CRUDO capturado durante un viaje. Es la fuente de verdad: nunca se modifica. El resumen calculado se guarda en ruta_procesada. Es la tabla con más filas: por eso los UUID van en BINARY(16) y son v7 (ordenados).'
+}
+
+
+// ============================================================
+// RUTA PROCESADA
+// ============================================================
+
+Table ruta_procesada {
+  ruta_procesada_id binary(16) [primary key]
+  empresa_id binary(16) [not null]
+  viaje_id binary(16) [not null, unique, note: 'Un viaje tiene como máximo una ruta procesada (1:1). Al recalcular se actualiza la misma fila.']
+
+  // --- Limpieza ---
+  puntos_recibidos integer [not null, default: 0, note: 'Puntos crudos del viaje.']
+  puntos_descartados integer [not null, default: 0, note: 'Puntos con mala precisión, saltos imposibles o duplicados.']
+
+  // --- Distancia y tiempos según el GPS ---
+  distancia_gps_km decimal(10,3) [not null, default: 0]
+  tiempo_movimiento_seg integer [not null, default: 0, note: 'Tiempo a más de 3 km/h.']
+  tiempo_detenido_seg integer [not null, default: 0]
+  velocidad_promedio_kmh decimal(6,2) [note: 'Promedio en movimiento (distancia / tiempo en movimiento).']
+  velocidad_maxima_kmh decimal(6,2)
+
+  // --- GPS contra odómetro ---
+  distancia_odometro_km decimal(10,2) [note: 'kilometraje_final - kilometraje_inicial del viaje. NULL si el viaje se cerró sin kilometraje.']
+  diferencia_km decimal(10,2) [note: 'distancia_odometro_km - distancia_gps_km. Positivo = se declararon más km de los recorridos.']
+  diferencia_porcentaje decimal(7,2)
+  alerta_kilometraje boolean [not null, default: false, note: 'true si la diferencia es mayor al 10 % y a 2 km.']
+
+  // --- Combustible ---
+  litros_cargados decimal(8,2) [not null, default: 0, note: 'Suma de las cargas de combustible del viaje.']
+  rendimiento_km_por_litro decimal(6,2) [note: 'distancia_gps_km / litros_cargados. NULL si no hubo cargas.']
+
+  // --- Mapa ---
+  polyline text [note: 'Ruta simplificada (Douglas-Peucker) y codificada en formato Google Polyline.']
+
+  // --- Control de versiones del algoritmo ---
+  version_algoritmo varchar(20) [not null, note: 'Versión del algoritmo con la que se calculó. Permite reprocesar viajes viejos al mejorarlo.']
+  fecha_proceso timestamp [not null, default: `now()`]
+
+  indexes {
+    empresa_id
+    (empresa_id, ruta_procesada_id) [unique]
+    (empresa_id, viaje_id)
+    (empresa_id, alerta_kilometraje)
+  }
+
+  Note: 'Resumen calculado en el servidor a partir de los puntos crudos de punto_ruta y las cargas del viaje. Se genera al finalizar, interrumpir o sincronizar un viaje, al llegar puntos o cargas a un viaje cerrado, y se puede recalcular.'
+}
+
+
+// ============================================================
+// CARGA DE COMBUSTIBLE
+// ============================================================
+
+Table carga_combustible {
+  carga_combustible_id binary(16) [primary key]
+  empresa_id binary(16) [not null]
+  viaje_id binary(16) [not null]
+  litros decimal(8,2) [not null]
+  monto decimal(10,2)
+  foto_comprobante varchar(255) [not null, note: 'Llave en MinIO: empresa/{empresaId}/viaje/{viajeId}/carga/{cargaId}/comprobante-{guid}.jpg (el id de la carga ya se conoce antes de insertar).']
+  fecha_carga timestamp [not null]
+
+  ubicacion_lat decimal(9,6)
+  ubicacion_lng decimal(9,6)
+
+  sincronizado boolean [not null, default: false]
+
+  indexes {
+    empresa_id
+    (empresa_id, carga_combustible_id) [unique]
+    (empresa_id, viaje_id)
+  }
+
+  Note: 'Registra una carga de combustible, incluyendo litros, monto, comprobante y ubicación geográfica.'
+}
+
+
+// ============================================================
+// CAMBIO DE ESTATUS DEL CARRO
+// ============================================================
+
+Table cambio_estatus_carro {
+  cambio_estatus_carro_id binary(16) [primary key]
+  empresa_id binary(16) [not null]
+  carro_id binary(16) [not null]
+  empleado_id binary(16) [not null]
+  viaje_afectado_id binary(16)
+
+  estatus_anterior enum(
+    'disponible',
+    'ocupado',
+    'en_mantenimiento'
+  ) [not null]
+
+  estatus_nuevo enum(
+    'disponible',
+    'ocupado',
+    'en_mantenimiento'
+  ) [not null]
+
+  motivo varchar(255)
+  fecha_cambio timestamp [default: `now()`]
+  sincronizado boolean [not null, default: false]
+
+  indexes {
+    empresa_id
+    (empresa_id, cambio_estatus_carro_id) [unique]
+    (empresa_id, carro_id)
+  }
+
+  Note: 'Bitácora de cambios de estado realizados sobre un carro.'
+}
+
+
+// ============================================================
+// NOTIFICACIÓN
+// ============================================================
+
+Table notificacion {
+  notificacion_id binary(16) [primary key]
+  empresa_id binary(16) [not null]
+  empleado_destinatario_id binary(16) [not null]
+
+  tipo enum(
+    'nueva_solicitud',
+    'resultado_solicitud',
+    'cambio_estatus_forzado'
+  ) [not null]
+
+  referencia_id binary(16) [note: 'Id del registro relacionado (solicitud_reserva o carro). Sin FK porque puede apuntar a distintas tablas según el tipo.']
+  mensaje varchar(255)
+  leida boolean [not null, default: false]
+  fecha_envio timestamp [default: `now()`, note: 'Fecha en que se creó la notificación en la bandeja. El estado del push está en outbox_mensaje.']
+
+  indexes {
+    empresa_id
+    (empresa_id, notificacion_id) [unique]
+    (empresa_id, empleado_destinatario_id)
+    (empleado_destinatario_id, leida)
+  }
+
+  Note: 'Bandeja e historial de notificaciones dirigidas a empleados. Se crean en la API (no hay trigger); el envío push se hace con el patrón Outbox.'
+}
+
+
+// ============================================================
+// 🆕 NUEVO — OUTBOX (envío confiable de notificaciones push)
+// ============================================================
+
+Table outbox_mensaje {
+  outbox_mensaje_id binary(16) [primary key]
+  empresa_id binary(16) [note: 'Empresa dueña del mensaje (para filtrar y depurar).']
+  tipo varchar(100) [not null, note: 'Qué hay que hacer con el mensaje. Ej: notificacion.push']
+  agregado_id binary(16) [not null, note: 'Id del registro que originó el mensaje. Ej: notificacion_id.']
+  payload json [not null, note: 'Datos para el envío: destinatario, título, cuerpo y datos extra para la app.']
+
+  estado enum(
+    'pendiente',
+    'procesando',
+    'enviado',
+    'fallido'
+  ) [not null, default: 'pendiente']
+
+  intentos integer [not null, default: 0]
+  ultimo_error varchar(1000)
+
+  fecha_creacion timestamp [not null, default: `now()`]
+  fecha_disponible timestamp [not null, default: `now()`, note: 'No se procesa antes de esta fecha. Al fallar se recorre (reintento con espera creciente).']
+  fecha_procesado timestamp
+
+  indexes {
+    (estado, fecha_disponible) [note: 'El worker busca: estado = pendiente AND fecha_disponible <= now()']
+    empresa_id
+    agregado_id
+  }
+
+  Note: 'Patrón Outbox. El mensaje se guarda en la MISMA transacción que la notificación: o se guardan los dos o ninguno. Un proceso en segundo plano (OutboxProcessor) lo lee y lo envía a Firebase Cloud Messaging. Sin FK a propósito: es una cola técnica y no debe bloquear borrados de negocio.'
+}
+
+
+// ============================================================
+// RELACIONES — SEGURIDAD
+// ============================================================
+
+// Usuario N:M Rol mediante tabla intermedia
+Ref: usuario_rol.usuario_id > usuario.usuario_id
+Ref: usuario_rol.rol_id > rol.rol_id
+
+// Rol N:M Privilegio mediante tabla intermedia
+Ref: rol_privilegio.rol_id > rol.rol_id
+Ref: rol_privilegio.privilegio_id > privilegio.privilegio_id
+
+// Un rol puede ser global (sin empresa) o exclusivo de una empresa
+Ref: rol.empresa_id > empresa.empresa_id
+
+
+// ============================================================
+// RELACIONES — CORPORATIVO / DIVISIÓN
+// ============================================================
+
+Ref: division.corporativo_id > corporativo.corporativo_id
+
+Ref: empresa.corporativo_id > corporativo.corporativo_id
+
+// Una empresa puede pertenecer o no a una división.
+Ref: empresa.(corporativo_id, division_id) > division.(corporativo_id, division_id)
+
+
+// ============================================================
+// RELACIONES — EMPRESA / TENANT
+// ============================================================
+
+Ref: empleado.empresa_id > empresa.empresa_id
+
+Ref: centro_costo.empresa_id > empresa.empresa_id
+
+Ref: carro.empresa_id > empresa.empresa_id
+
+Ref: solicitud_reserva.empresa_id > empresa.empresa_id
+
+Ref: viaje.empresa_id > empresa.empresa_id
+
+Ref: punto_ruta.empresa_id > empresa.empresa_id
+
+Ref: ruta_procesada.empresa_id > empresa.empresa_id
+
+Ref: carga_combustible.empresa_id > empresa.empresa_id
+
+Ref: cambio_estatus_carro.empresa_id > empresa.empresa_id
+
+Ref: notificacion.empresa_id > empresa.empresa_id
+
+// 🆕 NUEVO
+Ref: dispositivo_empleado.empresa_id > empresa.empresa_id
+
+
+// ============================================================
+// RELACIONES — EMPLEADO / USUARIO
+// ============================================================
+
+// 1:1 — un usuario tiene un solo empleado (una sola empresa)
+Ref: empleado.usuario_id - usuario.usuario_id
+
+
+// ============================================================
+// 🆕 NUEVO — RELACIONES — DISPOSITIVOS
+// ============================================================
+
+// Un empleado puede tener varios celulares. Si se borra el empleado se borran sus tokens.
+Ref: dispositivo_empleado.(empresa_id, empleado_id) > empleado.(empresa_id, empleado_id) [delete: cascade]
+
+
+// ============================================================
+// RELACIONES — SOLICITUD DE RESERVA
+// ============================================================
+
+Ref: solicitud_reserva.(empresa_id, carro_id) > carro.(empresa_id, carro_id)
+
+Ref: solicitud_reserva.(empresa_id, empleado_solicitante_id) > empleado.(empresa_id, empleado_id)
+
+Ref: solicitud_reserva.(empresa_id, empleado_confirmador_id) > empleado.(empresa_id, empleado_id)
+
+
+// ============================================================
+// RELACIONES — VIAJE
+// ============================================================
+
+Ref: viaje.(empresa_id, carro_id) > carro.(empresa_id, carro_id)
+
+Ref: viaje.(empresa_id, solicitud_reserva_id) > solicitud_reserva.(empresa_id, solicitud_reserva_id)
+
+Ref: viaje.(empresa_id, empleado_operador_id) > empleado.(empresa_id, empleado_id)
+
+
+// ============================================================
+// RELACIONES — PUNTOS DE RUTA
+// ============================================================
+
+// Al borrar el viaje se borran sus puntos.
+Ref: punto_ruta.(empresa_id, viaje_id) > viaje.(empresa_id, viaje_id) [delete: cascade]
+
+
+// ============================================================
+// RELACIONES — RUTA PROCESADA
+// ============================================================
+
+// 1:1 — un viaje tiene como máximo una ruta procesada.
+// Al borrar el viaje se borra también su ruta procesada.
+Ref: ruta_procesada.(empresa_id, viaje_id) - viaje.(empresa_id, viaje_id) [delete: cascade]
+
+
+// ============================================================
+// RELACIONES — COMBUSTIBLE
+// ============================================================
+
+Ref: carga_combustible.(empresa_id, viaje_id) > viaje.(empresa_id, viaje_id)
+
+
+// ============================================================
+// RELACIONES — CAMBIOS DE ESTATUS
+// ============================================================
+
+Ref: cambio_estatus_carro.(empresa_id, carro_id) > carro.(empresa_id, carro_id)
+
+Ref: cambio_estatus_carro.(empresa_id, empleado_id) > empleado.(empresa_id, empleado_id)
+
+Ref: cambio_estatus_carro.(empresa_id, viaje_afectado_id) > viaje.(empresa_id, viaje_id)
+
+
+// ============================================================
+// RELACIONES — NOTIFICACIONES
+// ============================================================
+
+Ref: notificacion.(empresa_id, empleado_destinatario_id) > empleado.(empresa_id, empleado_id)
+
+// outbox_mensaje no tiene relaciones a propósito (ver su nota).

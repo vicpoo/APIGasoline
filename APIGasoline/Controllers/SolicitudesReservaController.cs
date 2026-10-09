@@ -25,9 +25,9 @@ public class SolicitudesReservaController : ControllerBase
     /// </summary>
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<SolicitudReservaDto>>> GetAll(
-        [FromQuery] int? empresaId,
-        [FromQuery] int? carroId,
-        [FromQuery] int? empleadoSolicitanteId,
+        [FromQuery] Guid? empresaId,
+        [FromQuery] Guid? carroId,
+        [FromQuery] Guid? empleadoSolicitanteId,
         [FromQuery] EstadoSolicitudReserva? estado,
         CancellationToken cancellationToken)
     {
@@ -37,8 +37,8 @@ public class SolicitudesReservaController : ControllerBase
         return Ok(solicitudes);
     }
 
-    [HttpGet("{solicitudReservaId:int}")]
-    public async Task<ActionResult<SolicitudReservaDto>> GetById(int solicitudReservaId, CancellationToken cancellationToken)
+    [HttpGet("{solicitudReservaId:guid}")]
+    public async Task<ActionResult<SolicitudReservaDto>> GetById(Guid solicitudReservaId, CancellationToken cancellationToken)
     {
         var solicitud = await _sender.Send(new GetSolicitudReservaByIdQuery(solicitudReservaId), cancellationToken);
         return Ok(solicitud);
@@ -56,15 +56,15 @@ public class SolicitudesReservaController : ControllerBase
     /// <summary>
     /// Aprueba la solicitud, ocupa el carro y rechaza las demás pendientes de ese carro.
     /// </summary>
-    [HttpPost("{solicitudReservaId:int}/aprobar")]
-    public async Task<ActionResult<SolicitudReservaDto>> Aprobar(int solicitudReservaId, AprobarSolicitudReservaRequest request, CancellationToken cancellationToken)
+    [HttpPost("{solicitudReservaId:guid}/aprobar")]
+    public async Task<ActionResult<SolicitudReservaDto>> Aprobar(Guid solicitudReservaId, AprobarSolicitudReservaRequest request, CancellationToken cancellationToken)
     {
         var command = new AprobarSolicitudReservaCommand(solicitudReservaId, request.EmpleadoConfirmadorId, request.Motivo);
         return Ok(await _sender.Send(command, cancellationToken));
     }
 
-    [HttpPost("{solicitudReservaId:int}/rechazar")]
-    public async Task<ActionResult<SolicitudReservaDto>> Rechazar(int solicitudReservaId, RechazarSolicitudReservaRequest request, CancellationToken cancellationToken)
+    [HttpPost("{solicitudReservaId:guid}/rechazar")]
+    public async Task<ActionResult<SolicitudReservaDto>> Rechazar(Guid solicitudReservaId, RechazarSolicitudReservaRequest request, CancellationToken cancellationToken)
     {
         var command = new RechazarSolicitudReservaCommand(solicitudReservaId, request.EmpleadoConfirmadorId, request.Motivo);
         return Ok(await _sender.Send(command, cancellationToken));
@@ -73,15 +73,15 @@ public class SolicitudesReservaController : ControllerBase
     /// <summary>
     /// Cancela una solicitud pendiente o aprobada (si estaba aprobada, libera el carro).
     /// </summary>
-    [HttpPost("{solicitudReservaId:int}/cancelar")]
-    public async Task<ActionResult<SolicitudReservaDto>> Cancelar(int solicitudReservaId, CancelarSolicitudReservaRequest request, CancellationToken cancellationToken)
+    [HttpPost("{solicitudReservaId:guid}/cancelar")]
+    public async Task<ActionResult<SolicitudReservaDto>> Cancelar(Guid solicitudReservaId, CancelarSolicitudReservaRequest request, CancellationToken cancellationToken)
     {
         var command = new CancelarSolicitudReservaCommand(solicitudReservaId, request.Motivo);
         return Ok(await _sender.Send(command, cancellationToken));
     }
 
-    [HttpDelete("{solicitudReservaId:int}")]
-    public async Task<IActionResult> Delete(int solicitudReservaId, CancellationToken cancellationToken)
+    [HttpDelete("{solicitudReservaId:guid}")]
+    public async Task<IActionResult> Delete(Guid solicitudReservaId, CancellationToken cancellationToken)
     {
         await _sender.Send(new DeleteSolicitudReservaCommand(solicitudReservaId), cancellationToken);
         return NoContent();

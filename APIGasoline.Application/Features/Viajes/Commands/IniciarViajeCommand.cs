@@ -11,10 +11,10 @@ namespace APIGasoline.Application.Features.Viajes.Commands;
 /// Inicia un viaje en línea (botón "Iniciar viaje" de la app).
 /// </summary>
 public record IniciarViajeCommand(
-    int EmpresaId,
-    int CarroId,
-    int? SolicitudReservaId,
-    int EmpleadoOperadorId,
+    Guid EmpresaId,
+    Guid CarroId,
+    Guid? SolicitudReservaId,
+    Guid EmpleadoOperadorId,
     DateTime FechaInicio,
     decimal? UbicacionInicioLat,
     decimal? UbicacionInicioLng,

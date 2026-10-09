@@ -4,7 +4,7 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.Privilegios.Commands;
 
-public record DeletePrivilegioCommand(int PrivilegioId) : IRequest;
+public record DeletePrivilegioCommand(Guid PrivilegioId) : IRequest;
 
 public class DeletePrivilegioCommandHandler : IRequestHandler<DeletePrivilegioCommand>
 {

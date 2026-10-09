@@ -8,7 +8,7 @@ internal static class SolicitudReservaValidator
     /// <summary>
     /// El confirmador debe existir (no eliminado) y pertenecer a la misma empresa de la solicitud.
     /// </summary>
-    public static async Task ValidarConfirmadorAsync(IUnitOfWork unitOfWork, int empresaId, int empleadoConfirmadorId, CancellationToken cancellationToken)
+    public static async Task ValidarConfirmadorAsync(IUnitOfWork unitOfWork, Guid empresaId, Guid empleadoConfirmadorId, CancellationToken cancellationToken)
     {
         var confirmador = await unitOfWork.Empleados.GetByIdAsync(empleadoConfirmadorId, cancellationToken)
             ?? throw new NotFoundException($"No existe un empleado con el id {empleadoConfirmadorId}.");

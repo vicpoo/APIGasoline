@@ -13,10 +13,10 @@ public class CentroCostoRepository : ICentroCostoRepository
         _context = context;
     }
 
-    public Task<CentroCosto?> GetByIdAsync(int centroCostoId, CancellationToken cancellationToken = default)
+    public Task<CentroCosto?> GetByIdAsync(Guid centroCostoId, CancellationToken cancellationToken = default)
         => _context.CentrosCosto.FirstOrDefaultAsync(cc => cc.CentroCostoId == centroCostoId, cancellationToken);
 
-    public async Task<IReadOnlyList<CentroCosto>> GetAllAsync(int? empresaId = null, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<CentroCosto>> GetAllAsync(Guid? empresaId = null, CancellationToken cancellationToken = default)
     {
         var query = _context.CentrosCosto.AsNoTracking();
 
@@ -28,10 +28,10 @@ public class CentroCostoRepository : ICentroCostoRepository
             .ToListAsync(cancellationToken);
     }
 
-    public Task<bool> ExistsAsync(int centroCostoId, CancellationToken cancellationToken = default)
+    public Task<bool> ExistsAsync(Guid centroCostoId, CancellationToken cancellationToken = default)
         => _context.CentrosCosto.AnyAsync(cc => cc.CentroCostoId == centroCostoId, cancellationToken);
 
-    public Task<bool> ClaveExistsAsync(int empresaId, string clave, int? excludeCentroCostoId = null, CancellationToken cancellationToken = default)
+    public Task<bool> ClaveExistsAsync(Guid empresaId, string clave, Guid? excludeCentroCostoId = null, CancellationToken cancellationToken = default)
         => _context.CentrosCosto.AnyAsync(
             cc => cc.EmpresaId == empresaId
                   && cc.Clave == clave

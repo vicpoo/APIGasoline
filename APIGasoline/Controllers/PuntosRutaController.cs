@@ -23,8 +23,8 @@ public class PuntosRutaController : ControllerBase
     /// <summary>
     /// Ruta del viaje en orden de captura (para dibujarla en el mapa).
     /// </summary>
-    [HttpGet("api/viajes/{viajeId:int}/puntos-ruta")]
-    public async Task<ActionResult<IReadOnlyList<PuntoRutaDto>>> GetByViaje(int viajeId, CancellationToken cancellationToken)
+    [HttpGet("api/viajes/{viajeId:guid}/puntos-ruta")]
+    public async Task<ActionResult<IReadOnlyList<PuntoRutaDto>>> GetByViaje(Guid viajeId, CancellationToken cancellationToken)
     {
         var puntos = await _sender.Send(new GetPuntosRutaByViajeQuery(viajeId), cancellationToken);
         return Ok(puntos);
@@ -33,9 +33,9 @@ public class PuntosRutaController : ControllerBase
     /// <summary>
     /// Registra un lote de puntos GPS (máximo 1000). Se puede reenviar sin duplicar.
     /// </summary>
-    [HttpPost("api/viajes/{viajeId:int}/puntos-ruta")]
+    [HttpPost("api/viajes/{viajeId:guid}/puntos-ruta")]
     public async Task<ActionResult<LotePuntosRutaResultadoDto>> RegistrarLote(
-        int viajeId,
+        Guid viajeId,
         RegistrarLotePuntosRutaRequest request,
         CancellationToken cancellationToken)
     {
@@ -47,15 +47,15 @@ public class PuntosRutaController : ControllerBase
         return Ok(resultado);
     }
 
-    [HttpGet("api/puntos-ruta/{puntoRutaId:int}")]
-    public async Task<ActionResult<PuntoRutaDto>> GetById(int puntoRutaId, CancellationToken cancellationToken)
+    [HttpGet("api/puntos-ruta/{puntoRutaId:guid}")]
+    public async Task<ActionResult<PuntoRutaDto>> GetById(Guid puntoRutaId, CancellationToken cancellationToken)
     {
         var punto = await _sender.Send(new GetPuntoRutaByIdQuery(puntoRutaId), cancellationToken);
         return Ok(punto);
     }
 
-    [HttpDelete("api/puntos-ruta/{puntoRutaId:int}")]
-    public async Task<IActionResult> Delete(int puntoRutaId, CancellationToken cancellationToken)
+    [HttpDelete("api/puntos-ruta/{puntoRutaId:guid}")]
+    public async Task<IActionResult> Delete(Guid puntoRutaId, CancellationToken cancellationToken)
     {
         await _sender.Send(new DeletePuntoRutaCommand(puntoRutaId), cancellationToken);
         return NoContent();

@@ -12,16 +12,16 @@ public class EmpresaTests
     [Fact]
     public void Crear_ConCorporativoYDivision_SeAsignaLaOrganizacion()
     {
-        var empresa = Empresa.Crear("Gasolinera Tuxtla Centro", 1, 1);
+        var empresa = Empresa.Crear("Gasolinera Tuxtla Centro", Id(1), Id(1));
 
-        Assert.Equal(1, empresa.CorporativoId);
-        Assert.Equal(1, empresa.DivisionId);
+        Assert.Equal(Id(1), empresa.CorporativoId);
+        Assert.Equal(Id(1), empresa.DivisionId);
     }
 
     [Fact]
     public void Crear_SoloConCorporativo_SeAcepta()
     {
-        var empresa = Empresa.Crear("Transportes del Sur", 1, null);
+        var empresa = Empresa.Crear("Transportes del Sur", Id(1), null);
 
         Assert.Null(empresa.DivisionId);
     }
@@ -37,7 +37,7 @@ public class EmpresaTests
     [Fact]
     public void Crear_DivisionSinCorporativo_LanzaDomainException()
     {
-        Assert.Throws<DomainException>(() => Empresa.Crear("Empresa X", null, 1));
+        Assert.Throws<DomainException>(() => Empresa.Crear("Empresa X", null, Id(1)));
     }
 
     [Theory]
@@ -45,7 +45,7 @@ public class EmpresaTests
     [InlineData(1, 0)]
     public void Crear_IdsDeOrganizacionInvalidos_LanzaDomainException(int? corporativoId, int? divisionId)
     {
-        Assert.Throws<DomainException>(() => Empresa.Crear("Empresa X", corporativoId, divisionId));
+        Assert.Throws<DomainException>(() => Empresa.Crear("Empresa X", Id(corporativoId), Id(divisionId)));
     }
 
     [Theory]

@@ -22,14 +22,14 @@ public class DivisionesController : ControllerBase
     /// Lista las divisiones. Filtro opcional: ?corporativoId=1
     /// </summary>
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<DivisionDto>>> GetAll([FromQuery] int? corporativoId, CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyList<DivisionDto>>> GetAll([FromQuery] Guid? corporativoId, CancellationToken cancellationToken)
     {
         var divisiones = await _sender.Send(new GetDivisionesQuery(corporativoId), cancellationToken);
         return Ok(divisiones);
     }
 
-    [HttpGet("{divisionId:int}")]
-    public async Task<ActionResult<DivisionDto>> GetById(int divisionId, CancellationToken cancellationToken)
+    [HttpGet("{divisionId:guid}")]
+    public async Task<ActionResult<DivisionDto>> GetById(Guid divisionId, CancellationToken cancellationToken)
     {
         var division = await _sender.Send(new GetDivisionByIdQuery(divisionId), cancellationToken);
         return Ok(division);
@@ -44,8 +44,8 @@ public class DivisionesController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { divisionId = division.DivisionId }, division);
     }
 
-    [HttpPut("{divisionId:int}")]
-    public async Task<ActionResult<DivisionDto>> Update(int divisionId, UpdateDivisionRequest request, CancellationToken cancellationToken)
+    [HttpPut("{divisionId:guid}")]
+    public async Task<ActionResult<DivisionDto>> Update(Guid divisionId, UpdateDivisionRequest request, CancellationToken cancellationToken)
     {
         var command = new UpdateDivisionCommand(divisionId, request.CorporativoId, request.Nombre, request.Activo);
         var division = await _sender.Send(command, cancellationToken);
@@ -53,8 +53,8 @@ public class DivisionesController : ControllerBase
         return Ok(division);
     }
 
-    [HttpDelete("{divisionId:int}")]
-    public async Task<IActionResult> Delete(int divisionId, CancellationToken cancellationToken)
+    [HttpDelete("{divisionId:guid}")]
+    public async Task<IActionResult> Delete(Guid divisionId, CancellationToken cancellationToken)
     {
         await _sender.Send(new DeleteDivisionCommand(divisionId), cancellationToken);
         return NoContent();

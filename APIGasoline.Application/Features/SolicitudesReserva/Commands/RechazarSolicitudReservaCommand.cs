@@ -9,7 +9,7 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.SolicitudesReserva.Commands;
 
-public record RechazarSolicitudReservaCommand(int SolicitudReservaId, int EmpleadoConfirmadorId, string Motivo) : IRequest<SolicitudReservaDto>;
+public record RechazarSolicitudReservaCommand(Guid SolicitudReservaId, Guid EmpleadoConfirmadorId, string Motivo) : IRequest<SolicitudReservaDto>;
 
 public class RechazarSolicitudReservaCommandHandler : IRequestHandler<RechazarSolicitudReservaCommand, SolicitudReservaDto>
 {

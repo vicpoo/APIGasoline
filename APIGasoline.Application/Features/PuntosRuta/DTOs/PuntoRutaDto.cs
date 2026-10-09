@@ -1,9 +1,9 @@
 ﻿namespace APIGasoline.Application.Features.PuntosRuta.DTOs;
 
 public record PuntoRutaDto(
-    int PuntoRutaId,
-    int EmpresaId,
-    int ViajeId,
+    Guid PuntoRutaId,
+    Guid EmpresaId,
+    Guid ViajeId,
     decimal Latitud,
     decimal Longitud,
     DateTime TimestampCaptura,

@@ -3,12 +3,12 @@
 namespace APIGasoline.Application.Features.SolicitudesReserva.DTOs;
 
 public record SolicitudReservaDto(
-    int SolicitudReservaId,
-    int EmpresaId,
-    int CarroId,
-    int EmpleadoSolicitanteId,
+    Guid SolicitudReservaId,
+    Guid EmpresaId,
+    Guid CarroId,
+    Guid EmpleadoSolicitanteId,
     DateTime? FechaSolicitud,
     EstadoSolicitudReserva Estado,
-    int? EmpleadoConfirmadorId,
+    Guid? EmpleadoConfirmadorId,
     DateTime? FechaResolucion,
     string? MotivoResolucion);

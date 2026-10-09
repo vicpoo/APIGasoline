@@ -8,7 +8,7 @@ public class Privilegio
     public const int NombreMaxLength = 100;
     public const int DescripcionMaxLength = 255;
 
-    public int PrivilegioId { get; private set; }
+    public Guid PrivilegioId { get; private set; } = Guid.CreateVersion7();
     public string Nombre { get; private set; } = string.Empty;
     public string? Descripcion { get; private set; }
     public bool Activo { get; private set; } = true;

@@ -7,7 +7,7 @@ namespace APIGasoline.Application.Features.SolicitudesReserva.Commands;
 /// <summary>
 /// Borra físicamente la solicitud. No se permite si está aprobada (el carro está en uso).
 /// </summary>
-public record DeleteSolicitudReservaCommand(int SolicitudReservaId) : IRequest;
+public record DeleteSolicitudReservaCommand(Guid SolicitudReservaId) : IRequest;
 
 public class DeleteSolicitudReservaCommandHandler : IRequestHandler<DeleteSolicitudReservaCommand>
 {

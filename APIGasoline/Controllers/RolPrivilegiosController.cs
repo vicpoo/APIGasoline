@@ -23,16 +23,16 @@ public class RolPrivilegiosController : ControllerBase
     /// </summary>
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<RolPrivilegioDto>>> GetAll(
-        [FromQuery] int? rolId,
-        [FromQuery] int? privilegioId,
+        [FromQuery] Guid? rolId,
+        [FromQuery] Guid? privilegioId,
         CancellationToken cancellationToken)
     {
         var rolPrivilegios = await _sender.Send(new GetRolPrivilegiosQuery(rolId, privilegioId), cancellationToken);
         return Ok(rolPrivilegios);
     }
 
-    [HttpGet("{rolPrivilegioId:int}")]
-    public async Task<ActionResult<RolPrivilegioDto>> GetById(int rolPrivilegioId, CancellationToken cancellationToken)
+    [HttpGet("{rolPrivilegioId:guid}")]
+    public async Task<ActionResult<RolPrivilegioDto>> GetById(Guid rolPrivilegioId, CancellationToken cancellationToken)
     {
         var rolPrivilegio = await _sender.Send(new GetRolPrivilegioByIdQuery(rolPrivilegioId), cancellationToken);
         return Ok(rolPrivilegio);
@@ -47,8 +47,8 @@ public class RolPrivilegiosController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { rolPrivilegioId = rolPrivilegio.RolPrivilegioId }, rolPrivilegio);
     }
 
-    [HttpPut("{rolPrivilegioId:int}")]
-    public async Task<ActionResult<RolPrivilegioDto>> Update(int rolPrivilegioId, UpdateRolPrivilegioRequest request, CancellationToken cancellationToken)
+    [HttpPut("{rolPrivilegioId:guid}")]
+    public async Task<ActionResult<RolPrivilegioDto>> Update(Guid rolPrivilegioId, UpdateRolPrivilegioRequest request, CancellationToken cancellationToken)
     {
         var command = new UpdateRolPrivilegioCommand(rolPrivilegioId, request.RolId, request.PrivilegioId);
         var rolPrivilegio = await _sender.Send(command, cancellationToken);
@@ -56,8 +56,8 @@ public class RolPrivilegiosController : ControllerBase
         return Ok(rolPrivilegio);
     }
 
-    [HttpDelete("{rolPrivilegioId:int}")]
-    public async Task<IActionResult> Delete(int rolPrivilegioId, CancellationToken cancellationToken)
+    [HttpDelete("{rolPrivilegioId:guid}")]
+    public async Task<IActionResult> Delete(Guid rolPrivilegioId, CancellationToken cancellationToken)
     {
         await _sender.Send(new DeleteRolPrivilegioCommand(rolPrivilegioId), cancellationToken);
         return NoContent();

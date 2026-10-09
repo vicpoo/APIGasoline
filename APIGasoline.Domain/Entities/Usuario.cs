@@ -8,7 +8,7 @@ public class Usuario
     public const int EmailMaxLength = 150;
     public const int PasswordHashMaxLength = 255;
 
-    public int UsuarioId { get; private set; }
+    public Guid UsuarioId { get; private set; } = Guid.CreateVersion7();
     public string Email { get; private set; } = string.Empty;
 
  

@@ -3,11 +3,11 @@
 namespace APIGasoline.Application.Features.Viajes.DTOs;
 
 public record ViajeDto(
-    int ViajeId,
-    int EmpresaId,
-    int CarroId,
-    int? SolicitudReservaId,
-    int EmpleadoOperadorId,
+    Guid ViajeId,
+    Guid EmpresaId,
+    Guid CarroId,
+    Guid? SolicitudReservaId,
+    Guid EmpleadoOperadorId,
     DateTime FechaInicio,
     decimal? UbicacionInicioLat,
     decimal? UbicacionInicioLng,

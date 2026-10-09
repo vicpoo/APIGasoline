@@ -5,21 +5,21 @@ namespace APIGasoline.Domain.Interfaces;
 
 public interface IViajeRepository
 {
-    Task<Viaje?> GetByIdAsync(int viajeId, CancellationToken cancellationToken = default);
+    Task<Viaje?> GetByIdAsync(Guid viajeId, CancellationToken cancellationToken = default);
 
     /// <summary>Ordenados del más reciente al más antiguo.</summary>
     Task<IReadOnlyList<Viaje>> GetAllAsync(
-        int? empresaId = null,
-        int? carroId = null,
-        int? empleadoOperadorId = null,
-        int? solicitudReservaId = null,
+        Guid? empresaId = null,
+        Guid? carroId = null,
+        Guid? empleadoOperadorId = null,
+        Guid? solicitudReservaId = null,
         EstadoViaje? estado = null,
         CancellationToken cancellationToken = default);
 
-    Task<bool> ExisteEnCursoPorCarroAsync(int carroId, CancellationToken cancellationToken = default);
-    Task<bool> ExisteEnCursoPorSolicitudAsync(int solicitudReservaId, CancellationToken cancellationToken = default);
-    Task<bool> ExistsByCarroAsync(int carroId, CancellationToken cancellationToken = default);
-    Task<bool> ExistsBySolicitudAsync(int solicitudReservaId, CancellationToken cancellationToken = default);
+    Task<bool> ExisteEnCursoPorCarroAsync(Guid carroId, CancellationToken cancellationToken = default);
+    Task<bool> ExisteEnCursoPorSolicitudAsync(Guid solicitudReservaId, CancellationToken cancellationToken = default);
+    Task<bool> ExistsByCarroAsync(Guid carroId, CancellationToken cancellationToken = default);
+    Task<bool> ExistsBySolicitudAsync(Guid solicitudReservaId, CancellationToken cancellationToken = default);
     Task AddAsync(Viaje viaje, CancellationToken cancellationToken = default);
     void Remove(Viaje viaje);
 }

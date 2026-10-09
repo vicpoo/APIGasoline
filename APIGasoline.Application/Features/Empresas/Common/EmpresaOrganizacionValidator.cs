@@ -9,7 +9,7 @@ namespace APIGasoline.Application.Features.Empresas.Common;
 /// </summary>
 internal static class EmpresaOrganizacionValidator
 {
-    public static async Task ValidarAsync(IUnitOfWork unitOfWork, int? corporativoId, int? divisionId, CancellationToken cancellationToken)
+    public static async Task ValidarAsync(IUnitOfWork unitOfWork, Guid? corporativoId, Guid? divisionId, CancellationToken cancellationToken)
     {
         if (corporativoId is not null
             && !await unitOfWork.Corporativos.ExistsAsync(corporativoId.Value, cancellationToken))

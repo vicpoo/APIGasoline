@@ -1,9 +1,9 @@
 ﻿namespace APIGasoline.Application.Features.CargasCombustible.DTOs;
 
 public record CargaCombustibleDto(
-    int CargaCombustibleId,
-    int EmpresaId,
-    int ViajeId,
+    Guid CargaCombustibleId,
+    Guid EmpresaId,
+    Guid ViajeId,
     decimal Litros,
     decimal? Monto,
     decimal? PrecioPorLitro,

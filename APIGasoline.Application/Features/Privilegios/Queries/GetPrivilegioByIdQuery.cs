@@ -6,7 +6,7 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.Privilegios.Queries;
 
-public record GetPrivilegioByIdQuery(int PrivilegioId) : IRequest<PrivilegioDto>;
+public record GetPrivilegioByIdQuery(Guid PrivilegioId) : IRequest<PrivilegioDto>;
 
 public class GetPrivilegioByIdQueryHandler : IRequestHandler<GetPrivilegioByIdQuery, PrivilegioDto>
 {

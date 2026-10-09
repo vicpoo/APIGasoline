@@ -41,7 +41,7 @@ public class AuthController : ControllerBase
     {
         var sub = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
 
-        if (!int.TryParse(sub, out var usuarioId))
+        if (!Guid.TryParse(sub, out var usuarioId))
             return Unauthorized();
 
         var perfil = await _sender.Send(new GetPerfilQuery(usuarioId), cancellationToken);

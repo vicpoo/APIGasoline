@@ -13,9 +13,9 @@ namespace APIGasoline.Application.Features.Empleados.Commands;
 /// Actualiza los datos del empleado. Las fotos NO se cambian aquí: usa SubirFotoEmpleadoCommand / EliminarFotoEmpleadoCommand.
 /// </summary>
 public record UpdateEmpleadoCommand(
-    int EmpleadoId,
-    int EmpresaId,
-    int UsuarioId,
+    Guid EmpleadoId,
+    Guid EmpresaId,
+    Guid UsuarioId,
     string NombreCompleto) : IRequest<EmpleadoDto>;
 
 public class UpdateEmpleadoCommandHandler : IRequestHandler<UpdateEmpleadoCommand, EmpleadoDto>

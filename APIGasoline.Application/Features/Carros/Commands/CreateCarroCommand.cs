@@ -14,7 +14,7 @@ namespace APIGasoline.Application.Features.Carros.Commands;
 /// (PUT /api/carros/{id}/foto), porque la llave del archivo usa el id del carro.
 /// </summary>
 public record CreateCarroCommand(
-    int EmpresaId,
+    Guid EmpresaId,
     string Marca,
     string Modelo,
     int? Anio,

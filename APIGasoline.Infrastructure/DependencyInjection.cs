@@ -7,6 +7,7 @@ using APIGasoline.Infrastructure.Services;
 using APIGasoline.Infrastructure.Storage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using MySqlConnector;
 
 namespace APIGasoline.Infrastructure;
 
@@ -14,8 +15,15 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString, JwtSettings jwtSettings, MinioSettings minioSettings)
     {
+        // Los Guid se guardan como binary(16) en orden RFC 4122 (compatible con UUID_TO_BIN / BIN_TO_UUID).
+        // Se fuerza aquí para no depender de que cada cadena de conexión lo traiga.
+        var cadenaConexion = new MySqlConnectionStringBuilder(connectionString)
+        {
+            GuidFormat = MySqlGuidFormat.Binary16
+        }.ConnectionString;
+
         services.AddDbContext<AppDbContext>(options =>
-            options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 36))));
+            options.UseMySql(cadenaConexion, new MySqlServerVersion(new Version(8, 0, 36))));
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddSingleton<IDateTimeProvider, DateTimeProvider>();

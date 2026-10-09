@@ -9,11 +9,11 @@ public class Viaje
     public const int MotivoMaxLength = 255;
     public const decimal KilometrajeMaximo = 99999999.99m; // decimal(10,2)
 
-    public int ViajeId { get; private set; }
-    public int EmpresaId { get; private set; }
-    public int CarroId { get; private set; }
-    public int? SolicitudReservaId { get; private set; }
-    public int EmpleadoOperadorId { get; private set; }
+    public Guid ViajeId { get; private set; } = Guid.CreateVersion7();
+    public Guid EmpresaId { get; private set; }
+    public Guid CarroId { get; private set; }
+    public Guid? SolicitudReservaId { get; private set; }
+    public Guid EmpleadoOperadorId { get; private set; }
 
     public DateTime FechaInicio { get; private set; }
     public decimal? UbicacionInicioLat { get; private set; }
@@ -41,26 +41,26 @@ public class Viaje
     }
 
     public static Viaje Iniciar(
-        int empresaId,
-        int carroId,
-        int? solicitudReservaId,
-        int empleadoOperadorId,
+        Guid empresaId,
+        Guid carroId,
+        Guid? solicitudReservaId,
+        Guid empleadoOperadorId,
         DateTime fechaInicio,
         decimal? lat,
         decimal? lng,
         decimal kilometrajeInicial)
     {
-        if (empresaId <= 0)
-            throw new DomainException("El id de la empresa debe ser mayor a cero.");
+        if (empresaId == Guid.Empty)
+            throw new DomainException("El id de la empresa es obligatorio.");
 
-        if (carroId <= 0)
-            throw new DomainException("El id del carro debe ser mayor a cero.");
+        if (carroId == Guid.Empty)
+            throw new DomainException("El id del carro es obligatorio.");
 
-        if (solicitudReservaId is <= 0)
-            throw new DomainException("El id de la solicitud de reserva debe ser mayor a cero.");
+        if (solicitudReservaId == Guid.Empty)
+            throw new DomainException("El id de la solicitud de reserva es obligatorio.");
 
-        if (empleadoOperadorId <= 0)
-            throw new DomainException("El id del empleado operador debe ser mayor a cero.");
+        if (empleadoOperadorId == Guid.Empty)
+            throw new DomainException("El id del empleado operador es obligatorio.");
 
         if (fechaInicio == default)
             throw new DomainException("La fecha de inicio es obligatoria.");

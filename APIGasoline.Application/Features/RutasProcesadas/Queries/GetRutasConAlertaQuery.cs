@@ -8,7 +8,7 @@ namespace APIGasoline.Application.Features.RutasProcesadas.Queries;
 /// <summary>
 /// Viajes cuyo kilometraje declarado no cuadra con el GPS (posible fraude o error de captura).
 /// </summary>
-public record GetRutasConAlertaQuery(int? EmpresaId = null) : IRequest<IReadOnlyList<RutaProcesadaDto>>;
+public record GetRutasConAlertaQuery(Guid? EmpresaId = null) : IRequest<IReadOnlyList<RutaProcesadaDto>>;
 
 public class GetRutasConAlertaQueryHandler : IRequestHandler<GetRutasConAlertaQuery, IReadOnlyList<RutaProcesadaDto>>
 {

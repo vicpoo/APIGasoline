@@ -6,7 +6,7 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.PuntosRuta.Queries;
 
-public record GetPuntoRutaByIdQuery(int PuntoRutaId) : IRequest<PuntoRutaDto>;
+public record GetPuntoRutaByIdQuery(Guid PuntoRutaId) : IRequest<PuntoRutaDto>;
 
 public class GetPuntoRutaByIdQueryHandler : IRequestHandler<GetPuntoRutaByIdQuery, PuntoRutaDto>
 {

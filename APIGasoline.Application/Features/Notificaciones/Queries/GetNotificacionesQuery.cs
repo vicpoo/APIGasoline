@@ -10,8 +10,8 @@ namespace APIGasoline.Application.Features.Notificaciones.Queries;
 /// Bandeja de la más reciente a la más antigua.
 /// </summary>
 public record GetNotificacionesQuery(
-    int? EmpresaId = null,
-    int? EmpleadoDestinatarioId = null,
+    Guid? EmpresaId = null,
+    Guid? EmpleadoDestinatarioId = null,
     bool SoloNoLeidas = false,
     TipoNotificacion? Tipo = null) : IRequest<IReadOnlyList<NotificacionDto>>;
 

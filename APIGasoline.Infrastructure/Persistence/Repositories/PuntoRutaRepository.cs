@@ -13,10 +13,10 @@ public class PuntoRutaRepository : IPuntoRutaRepository
         _context = context;
     }
 
-    public Task<PuntoRuta?> GetByIdAsync(int puntoRutaId, CancellationToken cancellationToken = default)
+    public Task<PuntoRuta?> GetByIdAsync(Guid puntoRutaId, CancellationToken cancellationToken = default)
         => _context.PuntosRuta.FirstOrDefaultAsync(p => p.PuntoRutaId == puntoRutaId, cancellationToken);
 
-    public async Task<IReadOnlyList<PuntoRuta>> GetByViajeAsync(int viajeId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<PuntoRuta>> GetByViajeAsync(Guid viajeId, CancellationToken cancellationToken = default)
         => await _context.PuntosRuta
             .AsNoTracking()
             .Where(p => p.ViajeId == viajeId)
@@ -24,7 +24,7 @@ public class PuntoRutaRepository : IPuntoRutaRepository
             .ThenBy(p => p.PuntoRutaId)
             .ToListAsync(cancellationToken);
 
-    public async Task<HashSet<DateTime>> GetTimestampsByViajeAsync(int viajeId, CancellationToken cancellationToken = default)
+    public async Task<HashSet<DateTime>> GetTimestampsByViajeAsync(Guid viajeId, CancellationToken cancellationToken = default)
     {
         var timestamps = await _context.PuntosRuta
             .AsNoTracking()

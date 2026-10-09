@@ -3,11 +3,11 @@
 namespace APIGasoline.Application.Features.CambiosEstatusCarro.DTOs;
 
 public record CambioEstatusCarroDto(
-    int CambioEstatusCarroId,
-    int EmpresaId,
-    int CarroId,
-    int EmpleadoId,
-    int? ViajeAfectadoId,
+    Guid CambioEstatusCarroId,
+    Guid EmpresaId,
+    Guid CarroId,
+    Guid EmpleadoId,
+    Guid? ViajeAfectadoId,
     EstadoCarro EstatusAnterior,
     EstadoCarro EstatusNuevo,
     string? Motivo,

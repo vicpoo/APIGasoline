@@ -12,7 +12,7 @@ namespace APIGasoline.Application.Features.SolicitudesReserva.Commands;
 /// <summary>
 /// Cancela una solicitud pendiente o aprobada. Si estaba aprobada, libera el carro.
 /// </summary>
-public record CancelarSolicitudReservaCommand(int SolicitudReservaId, string? Motivo) : IRequest<SolicitudReservaDto>;
+public record CancelarSolicitudReservaCommand(Guid SolicitudReservaId, string? Motivo) : IRequest<SolicitudReservaDto>;
 
 public class CancelarSolicitudReservaCommandHandler : IRequestHandler<CancelarSolicitudReservaCommand, SolicitudReservaDto>
 {

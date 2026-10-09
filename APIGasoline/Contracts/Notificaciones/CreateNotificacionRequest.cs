@@ -5,14 +5,14 @@ namespace APIGasoline.Contracts.Notificaciones;
 
 public class CreateNotificacionRequest
 {
-    [Range(1, int.MaxValue)]
-    public int EmpleadoDestinatarioId { get; set; }
+    [GuidNoVacio]
+    public Guid EmpleadoDestinatarioId { get; set; }
 
     [Required]
     public TipoNotificacion? Tipo { get; set; }
 
-    [Range(1, int.MaxValue)]
-    public int? ReferenciaId { get; set; }
+    [GuidNoVacio]
+    public Guid? ReferenciaId { get; set; }
 
     [StringLength(255)]
     public string? Mensaje { get; set; }

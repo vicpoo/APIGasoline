@@ -13,7 +13,7 @@ public class UsuarioRepository : IUsuarioRepository
         _context = context;
     }
 
-    public Task<Usuario?> GetByIdAsync(int usuarioId, CancellationToken cancellationToken = default)
+    public Task<Usuario?> GetByIdAsync(Guid usuarioId, CancellationToken cancellationToken = default)
         => _context.Usuarios.FirstOrDefaultAsync(u => u.UsuarioId == usuarioId, cancellationToken);
 
     public Task<Usuario?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
@@ -25,10 +25,10 @@ public class UsuarioRepository : IUsuarioRepository
             .OrderBy(u => u.UsuarioId)
             .ToListAsync(cancellationToken);
 
-    public Task<bool> ExistsAsync(int usuarioId, CancellationToken cancellationToken = default)
+    public Task<bool> ExistsAsync(Guid usuarioId, CancellationToken cancellationToken = default)
         => _context.Usuarios.AnyAsync(u => u.UsuarioId == usuarioId, cancellationToken);
 
-    public Task<bool> EmailExistsAsync(string email, int? excludeUsuarioId = null, CancellationToken cancellationToken = default)
+    public Task<bool> EmailExistsAsync(string email, Guid? excludeUsuarioId = null, CancellationToken cancellationToken = default)
         => _context.Usuarios.AnyAsync(
             u => u.Email == email && (excludeUsuarioId == null || u.UsuarioId != excludeUsuarioId),
             cancellationToken);

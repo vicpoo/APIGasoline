@@ -13,7 +13,7 @@ public class RolConfiguration : IEntityTypeConfiguration<Rol>
         builder.HasKey(r => r.RolId);
         builder.Property(r => r.RolId)
             .HasColumnName("rol_id")
-            .ValueGeneratedOnAdd();
+            .ValueGeneratedNever();
 
         // NULL = rol global; con valor = rol exclusivo de esa empresa
         builder.Property(r => r.EmpresaId)

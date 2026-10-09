@@ -13,7 +13,7 @@ public class RolPrivilegioConfiguration : IEntityTypeConfiguration<RolPrivilegio
         builder.HasKey(rp => rp.RolPrivilegioId);
         builder.Property(rp => rp.RolPrivilegioId)
             .HasColumnName("rol_privilegio_id")
-            .ValueGeneratedOnAdd();
+            .ValueGeneratedNever();
 
         builder.Property(rp => rp.RolId)
             .HasColumnName("rol_id")

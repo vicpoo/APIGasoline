@@ -4,7 +4,7 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.Divisiones.Commands;
 
-public record DeleteDivisionCommand(int DivisionId) : IRequest;
+public record DeleteDivisionCommand(Guid DivisionId) : IRequest;
 
 public class DeleteDivisionCommandHandler : IRequestHandler<DeleteDivisionCommand>
 {

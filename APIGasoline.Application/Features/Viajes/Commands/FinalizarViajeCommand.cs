@@ -11,7 +11,7 @@ namespace APIGasoline.Application.Features.Viajes.Commands;
 /// Finaliza el viaje, calcula la distancia y actualiza el kilometraje del carro.
 /// </summary>
 public record FinalizarViajeCommand(
-    int ViajeId,
+    Guid ViajeId,
     DateTime FechaFin,
     decimal? UbicacionFinLat,
     decimal? UbicacionFinLng,

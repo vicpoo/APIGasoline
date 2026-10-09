@@ -1,9 +1,9 @@
 ﻿namespace APIGasoline.Application.Features.Empleados.DTOs;
 
 public record EmpleadoDto(
-    int EmpleadoId,
-    int EmpresaId,
-    int UsuarioId,
+    Guid EmpleadoId,
+    Guid EmpresaId,
+    Guid UsuarioId,
     string NombreCompleto,
     /// <summary>Llaves de los archivos en el almacenamiento (lo que se guarda en BD).</summary>
     string? FotoPerfil,

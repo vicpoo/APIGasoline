@@ -8,7 +8,7 @@ namespace APIGasoline.Application.Features.Carros.Commands;
 /// <summary>
 /// Quita la foto del vehículo: limpia la llave en BD y después elimina el archivo.
 /// </summary>
-public record EliminarFotoVehiculoCommand(int CarroId) : IRequest;
+public record EliminarFotoVehiculoCommand(Guid CarroId) : IRequest;
 
 public class EliminarFotoVehiculoCommandHandler : IRequestHandler<EliminarFotoVehiculoCommand>
 {

@@ -13,7 +13,7 @@ public class CargaCombustibleConfiguration : IEntityTypeConfiguration<CargaCombu
         builder.HasKey(c => c.CargaCombustibleId);
         builder.Property(c => c.CargaCombustibleId)
             .HasColumnName("carga_combustible_id")
-            .ValueGeneratedOnAdd();
+            .ValueGeneratedNever();
 
         builder.Property(c => c.EmpresaId).HasColumnName("empresa_id").IsRequired();
         builder.Property(c => c.ViajeId).HasColumnName("viaje_id").IsRequired();

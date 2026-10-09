@@ -25,8 +25,8 @@ public class NotificacionesController : ControllerBase
     /// </summary>
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<NotificacionDto>>> GetAll(
-        [FromQuery] int? empresaId,
-        [FromQuery] int? empleadoDestinatarioId,
+        [FromQuery] Guid? empresaId,
+        [FromQuery] Guid? empleadoDestinatarioId,
         [FromQuery] bool soloNoLeidas,
         [FromQuery] TipoNotificacion? tipo,
         CancellationToken cancellationToken)
@@ -37,8 +37,8 @@ public class NotificacionesController : ControllerBase
         return Ok(notificaciones);
     }
 
-    [HttpGet("{notificacionId:int}")]
-    public async Task<ActionResult<NotificacionDto>> GetById(int notificacionId, CancellationToken cancellationToken)
+    [HttpGet("{notificacionId:guid}")]
+    public async Task<ActionResult<NotificacionDto>> GetById(Guid notificacionId, CancellationToken cancellationToken)
     {
         var notificacion = await _sender.Send(new GetNotificacionByIdQuery(notificacionId), cancellationToken);
         return Ok(notificacion);
@@ -47,8 +47,8 @@ public class NotificacionesController : ControllerBase
     /// <summary>
     /// Número de no leídas de un empleado (badge de la campana).
     /// </summary>
-    [HttpGet("no-leidas/{empleadoDestinatarioId:int}")]
-    public async Task<ActionResult<object>> ContarNoLeidas(int empleadoDestinatarioId, CancellationToken cancellationToken)
+    [HttpGet("no-leidas/{empleadoDestinatarioId:guid}")]
+    public async Task<ActionResult<object>> ContarNoLeidas(Guid empleadoDestinatarioId, CancellationToken cancellationToken)
     {
         var total = await _sender.Send(new ContarNotificacionesNoLeidasQuery(empleadoDestinatarioId), cancellationToken);
         return Ok(new { empleadoDestinatarioId, noLeidas = total });
@@ -71,21 +71,21 @@ public class NotificacionesController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { notificacionId = notificacion.NotificacionId }, notificacion);
     }
 
-    [HttpPost("{notificacionId:int}/marcar-leida")]
-    public async Task<ActionResult<NotificacionDto>> MarcarLeida(int notificacionId, CancellationToken cancellationToken)
+    [HttpPost("{notificacionId:guid}/marcar-leida")]
+    public async Task<ActionResult<NotificacionDto>> MarcarLeida(Guid notificacionId, CancellationToken cancellationToken)
     {
         return Ok(await _sender.Send(new MarcarNotificacionLeidaCommand(notificacionId), cancellationToken));
     }
 
-    [HttpPost("marcar-todas-leidas/{empleadoDestinatarioId:int}")]
-    public async Task<ActionResult<object>> MarcarTodasLeidas(int empleadoDestinatarioId, CancellationToken cancellationToken)
+    [HttpPost("marcar-todas-leidas/{empleadoDestinatarioId:guid}")]
+    public async Task<ActionResult<object>> MarcarTodasLeidas(Guid empleadoDestinatarioId, CancellationToken cancellationToken)
     {
         var marcadas = await _sender.Send(new MarcarTodasNotificacionesLeidasCommand(empleadoDestinatarioId), cancellationToken);
         return Ok(new { empleadoDestinatarioId, marcadas });
     }
 
-    [HttpDelete("{notificacionId:int}")]
-    public async Task<IActionResult> Delete(int notificacionId, CancellationToken cancellationToken)
+    [HttpDelete("{notificacionId:guid}")]
+    public async Task<IActionResult> Delete(Guid notificacionId, CancellationToken cancellationToken)
     {
         await _sender.Send(new DeleteNotificacionCommand(notificacionId), cancellationToken);
         return NoContent();

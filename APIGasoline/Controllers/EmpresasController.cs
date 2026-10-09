@@ -23,16 +23,16 @@ public class EmpresasController : ControllerBase
     /// </summary>
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<EmpresaDto>>> GetAll(
-        [FromQuery] int? corporativoId,
-        [FromQuery] int? divisionId,
+        [FromQuery] Guid? corporativoId,
+        [FromQuery] Guid? divisionId,
         CancellationToken cancellationToken)
     {
         var empresas = await _sender.Send(new GetEmpresasQuery(corporativoId, divisionId), cancellationToken);
         return Ok(empresas);
     }
 
-    [HttpGet("{empresaId:int}")]
-    public async Task<ActionResult<EmpresaDto>> GetById(int empresaId, CancellationToken cancellationToken)
+    [HttpGet("{empresaId:guid}")]
+    public async Task<ActionResult<EmpresaDto>> GetById(Guid empresaId, CancellationToken cancellationToken)
     {
         var empresa = await _sender.Send(new GetEmpresaByIdQuery(empresaId), cancellationToken);
         return Ok(empresa);
@@ -47,8 +47,8 @@ public class EmpresasController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { empresaId = empresa.EmpresaId }, empresa);
     }
 
-    [HttpPut("{empresaId:int}")]
-    public async Task<ActionResult<EmpresaDto>> Update(int empresaId, UpdateEmpresaRequest request, CancellationToken cancellationToken)
+    [HttpPut("{empresaId:guid}")]
+    public async Task<ActionResult<EmpresaDto>> Update(Guid empresaId, UpdateEmpresaRequest request, CancellationToken cancellationToken)
     {
         var command = new UpdateEmpresaCommand(empresaId, request.Nombre, request.CorporativoId, request.DivisionId);
         var empresa = await _sender.Send(command, cancellationToken);
@@ -59,8 +59,8 @@ public class EmpresasController : ControllerBase
     /// <summary>
     /// Soft delete: la empresa queda marcada como eliminada.
     /// </summary>
-    [HttpDelete("{empresaId:int}")]
-    public async Task<IActionResult> Delete(int empresaId, CancellationToken cancellationToken)
+    [HttpDelete("{empresaId:guid}")]
+    public async Task<IActionResult> Delete(Guid empresaId, CancellationToken cancellationToken)
     {
         await _sender.Send(new DeleteEmpresaCommand(empresaId), cancellationToken);
         return NoContent();

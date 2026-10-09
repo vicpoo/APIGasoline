@@ -14,14 +14,14 @@ public class ViajeRepository : IViajeRepository
         _context = context;
     }
 
-    public Task<Viaje?> GetByIdAsync(int viajeId, CancellationToken cancellationToken = default)
+    public Task<Viaje?> GetByIdAsync(Guid viajeId, CancellationToken cancellationToken = default)
         => _context.Viajes.FirstOrDefaultAsync(v => v.ViajeId == viajeId, cancellationToken);
 
     public async Task<IReadOnlyList<Viaje>> GetAllAsync(
-        int? empresaId = null,
-        int? carroId = null,
-        int? empleadoOperadorId = null,
-        int? solicitudReservaId = null,
+        Guid? empresaId = null,
+        Guid? carroId = null,
+        Guid? empleadoOperadorId = null,
+        Guid? solicitudReservaId = null,
         EstadoViaje? estado = null,
         CancellationToken cancellationToken = default)
     {
@@ -48,16 +48,16 @@ public class ViajeRepository : IViajeRepository
             .ToListAsync(cancellationToken);
     }
 
-    public Task<bool> ExisteEnCursoPorCarroAsync(int carroId, CancellationToken cancellationToken = default)
+    public Task<bool> ExisteEnCursoPorCarroAsync(Guid carroId, CancellationToken cancellationToken = default)
         => _context.Viajes.AnyAsync(v => v.CarroId == carroId && v.Estado == EstadoViaje.EnCurso, cancellationToken);
 
-    public Task<bool> ExisteEnCursoPorSolicitudAsync(int solicitudReservaId, CancellationToken cancellationToken = default)
+    public Task<bool> ExisteEnCursoPorSolicitudAsync(Guid solicitudReservaId, CancellationToken cancellationToken = default)
         => _context.Viajes.AnyAsync(v => v.SolicitudReservaId == solicitudReservaId && v.Estado == EstadoViaje.EnCurso, cancellationToken);
 
-    public Task<bool> ExistsByCarroAsync(int carroId, CancellationToken cancellationToken = default)
+    public Task<bool> ExistsByCarroAsync(Guid carroId, CancellationToken cancellationToken = default)
         => _context.Viajes.AnyAsync(v => v.CarroId == carroId, cancellationToken);
 
-    public Task<bool> ExistsBySolicitudAsync(int solicitudReservaId, CancellationToken cancellationToken = default)
+    public Task<bool> ExistsBySolicitudAsync(Guid solicitudReservaId, CancellationToken cancellationToken = default)
         => _context.Viajes.AnyAsync(v => v.SolicitudReservaId == solicitudReservaId, cancellationToken);
 
     public async Task AddAsync(Viaje viaje, CancellationToken cancellationToken = default)

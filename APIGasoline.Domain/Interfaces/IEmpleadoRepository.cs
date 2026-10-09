@@ -7,18 +7,18 @@ namespace APIGasoline.Domain.Interfaces;
 /// </summary>
 public interface IEmpleadoRepository
 {
-    Task<Empleado?> GetByIdAsync(int empleadoId, CancellationToken cancellationToken = default);
-    Task<Empleado?> GetByUsuarioIdAsync(int usuarioId, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<Empleado>> GetAllAsync(int? empresaId = null, CancellationToken cancellationToken = default);
-    Task<bool> ExistsAsync(int empleadoId, CancellationToken cancellationToken = default);
+    Task<Empleado?> GetByIdAsync(Guid empleadoId, CancellationToken cancellationToken = default);
+    Task<Empleado?> GetByUsuarioIdAsync(Guid usuarioId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Empleado>> GetAllAsync(Guid? empresaId = null, CancellationToken cancellationToken = default);
+    Task<bool> ExistsAsync(Guid empleadoId, CancellationToken cancellationToken = default);
 
     /// <summary>Incluye eliminados: el usuario_id es único en toda la tabla.</summary>
-    Task<bool> UsuarioAsignadoAsync(int usuarioId, int? excludeEmpleadoId = null, CancellationToken cancellationToken = default);
+    Task<bool> UsuarioAsignadoAsync(Guid usuarioId, Guid? excludeEmpleadoId = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Empleados (no eliminados) de la empresa cuyo usuario tiene el rol indicado y activo.
     /// </summary>
-    Task<IReadOnlyList<int>> GetIdsConRolAsync(int empresaId, string nombreRol, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Guid>> GetIdsConRolAsync(Guid empresaId, string nombreRol, CancellationToken cancellationToken = default);
 
     Task AddAsync(Empleado empleado, CancellationToken cancellationToken = default);
 }

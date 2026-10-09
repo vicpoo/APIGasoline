@@ -10,7 +10,7 @@ namespace APIGasoline.Application.Features.Empleados.Queries;
 /// <summary>
 /// Lista los empleados no eliminados. Se puede filtrar por empresa.
 /// </summary>
-public record GetEmpleadosQuery(int? EmpresaId = null) : IRequest<IReadOnlyList<EmpleadoDto>>;
+public record GetEmpleadosQuery(Guid? EmpresaId = null) : IRequest<IReadOnlyList<EmpleadoDto>>;
 
 public class GetEmpleadosQueryHandler : IRequestHandler<GetEmpleadosQuery, IReadOnlyList<EmpleadoDto>>
 {

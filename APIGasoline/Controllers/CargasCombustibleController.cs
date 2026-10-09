@@ -25,8 +25,8 @@ public class CargasCombustibleController : ControllerBase
     /// </summary>
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<CargaCombustibleDto>>> GetAll(
-        [FromQuery] int? empresaId,
-        [FromQuery] int? viajeId,
+        [FromQuery] Guid? empresaId,
+        [FromQuery] Guid? viajeId,
         [FromQuery] DateTime? desde,
         [FromQuery] DateTime? hasta,
         CancellationToken cancellationToken)
@@ -35,8 +35,8 @@ public class CargasCombustibleController : ControllerBase
         return Ok(cargas);
     }
 
-    [HttpGet("{cargaCombustibleId:int}")]
-    public async Task<ActionResult<CargaCombustibleDto>> GetById(int cargaCombustibleId, CancellationToken cancellationToken)
+    [HttpGet("{cargaCombustibleId:guid}")]
+    public async Task<ActionResult<CargaCombustibleDto>> GetById(Guid cargaCombustibleId, CancellationToken cancellationToken)
     {
         var carga = await _sender.Send(new GetCargaCombustibleByIdQuery(cargaCombustibleId), cancellationToken);
         return Ok(carga);
@@ -73,11 +73,11 @@ public class CargasCombustibleController : ControllerBase
     /// Corrige una carga. Se envía como multipart/form-data; "fotoComprobante" es opcional
     /// (si no se manda, se conserva el comprobante actual).
     /// </summary>
-    [HttpPut("{cargaCombustibleId:int}")]
+    [HttpPut("{cargaCombustibleId:guid}")]
     [Consumes("multipart/form-data")]
     [RequestSizeLimit(FormFileExtensions.LimiteCuerpoBytes)]
     [RequestFormLimits(MultipartBodyLengthLimit = FormFileExtensions.LimiteCuerpoBytes)]
-    public async Task<ActionResult<CargaCombustibleDto>> Update(int cargaCombustibleId, [FromForm] UpdateCargaCombustibleRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<CargaCombustibleDto>> Update(Guid cargaCombustibleId, [FromForm] UpdateCargaCombustibleRequest request, CancellationToken cancellationToken)
     {
         await using var contenido = request.FotoComprobante?.OpenReadStream();
 
@@ -93,8 +93,8 @@ public class CargasCombustibleController : ControllerBase
         return Ok(await _sender.Send(command, cancellationToken));
     }
 
-    [HttpDelete("{cargaCombustibleId:int}")]
-    public async Task<IActionResult> Delete(int cargaCombustibleId, CancellationToken cancellationToken)
+    [HttpDelete("{cargaCombustibleId:guid}")]
+    public async Task<IActionResult> Delete(Guid cargaCombustibleId, CancellationToken cancellationToken)
     {
         await _sender.Send(new DeleteCargaCombustibleCommand(cargaCombustibleId), cancellationToken);
         return NoContent();

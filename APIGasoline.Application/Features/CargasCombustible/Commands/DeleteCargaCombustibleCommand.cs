@@ -6,7 +6,7 @@ using APIGasoline.Application.Features.RutasProcesadas.Notifications;
 
 namespace APIGasoline.Application.Features.CargasCombustible.Commands;
 
-public record DeleteCargaCombustibleCommand(int CargaCombustibleId) : IRequest;
+public record DeleteCargaCombustibleCommand(Guid CargaCombustibleId) : IRequest;
 
 public class DeleteCargaCombustibleCommandHandler : IRequestHandler<DeleteCargaCombustibleCommand>
 {

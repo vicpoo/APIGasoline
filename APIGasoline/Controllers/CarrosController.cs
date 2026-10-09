@@ -26,7 +26,7 @@ public class CarrosController : ControllerBase
     /// </summary>
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<CarroDto>>> GetAll(
-        [FromQuery] int? empresaId,
+        [FromQuery] Guid? empresaId,
         [FromQuery] EstadoCarro? estado,
         CancellationToken cancellationToken)
     {
@@ -34,8 +34,8 @@ public class CarrosController : ControllerBase
         return Ok(carros);
     }
 
-    [HttpGet("{carroId:int}")]
-    public async Task<ActionResult<CarroDto>> GetById(int carroId, CancellationToken cancellationToken)
+    [HttpGet("{carroId:guid}")]
+    public async Task<ActionResult<CarroDto>> GetById(Guid carroId, CancellationToken cancellationToken)
     {
         var carro = await _sender.Send(new GetCarroByIdQuery(carroId), cancellationToken);
         return Ok(carro);
@@ -60,8 +60,8 @@ public class CarrosController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { carroId = carro.CarroId }, carro);
     }
 
-    [HttpPut("{carroId:int}")]
-    public async Task<ActionResult<CarroDto>> Update(int carroId, UpdateCarroRequest request, CancellationToken cancellationToken)
+    [HttpPut("{carroId:guid}")]
+    public async Task<ActionResult<CarroDto>> Update(Guid carroId, UpdateCarroRequest request, CancellationToken cancellationToken)
     {
         var command = new UpdateCarroCommand(
             carroId,
@@ -82,11 +82,11 @@ public class CarrosController : ControllerBase
     /// <summary>
     /// Sube o reemplaza la foto del vehículo (multipart/form-data, campo "archivo": jpg, png o webp, máx. 5 MB).
     /// </summary>
-    [HttpPut("{carroId:int}/foto")]
+    [HttpPut("{carroId:guid}/foto")]
     [Consumes("multipart/form-data")]
     [RequestSizeLimit(FormFileExtensions.LimiteCuerpoBytes)]
     [RequestFormLimits(MultipartBodyLengthLimit = FormFileExtensions.LimiteCuerpoBytes)]
-    public async Task<ActionResult<CarroDto>> SubirFoto(int carroId, [FromForm] SubirArchivoRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<CarroDto>> SubirFoto(Guid carroId, [FromForm] SubirArchivoRequest request, CancellationToken cancellationToken)
     {
         await using var contenido = request.Archivo!.OpenReadStream();
 
@@ -97,15 +97,15 @@ public class CarrosController : ControllerBase
         return Ok(carro);
     }
 
-    [HttpDelete("{carroId:int}/foto")]
-    public async Task<IActionResult> EliminarFoto(int carroId, CancellationToken cancellationToken)
+    [HttpDelete("{carroId:guid}/foto")]
+    public async Task<IActionResult> EliminarFoto(Guid carroId, CancellationToken cancellationToken)
     {
         await _sender.Send(new EliminarFotoVehiculoCommand(carroId), cancellationToken);
         return NoContent();
     }
 
-    [HttpDelete("{carroId:int}")]
-    public async Task<IActionResult> Delete(int carroId, CancellationToken cancellationToken)
+    [HttpDelete("{carroId:guid}")]
+    public async Task<IActionResult> Delete(Guid carroId, CancellationToken cancellationToken)
     {
         await _sender.Send(new DeleteCarroCommand(carroId), cancellationToken);
         return NoContent();

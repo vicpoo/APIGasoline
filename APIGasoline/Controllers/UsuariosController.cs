@@ -26,8 +26,8 @@ public class UsuariosController : ControllerBase
         return Ok(usuarios);
     }
 
-    [HttpGet("{usuarioId:int}")]
-    public async Task<ActionResult<UsuarioDto>> GetById(int usuarioId, CancellationToken cancellationToken)
+    [HttpGet("{usuarioId:guid}")]
+    public async Task<ActionResult<UsuarioDto>> GetById(Guid usuarioId, CancellationToken cancellationToken)
     {
         var usuario = await _sender.Send(new GetUsuarioByIdQuery(usuarioId), cancellationToken);
         return Ok(usuario);
@@ -42,8 +42,8 @@ public class UsuariosController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { usuarioId = usuario.UsuarioId }, usuario);
     }
 
-    [HttpPut("{usuarioId:int}")]
-    public async Task<ActionResult<UsuarioDto>> Update(int usuarioId, UpdateUsuarioRequest request, CancellationToken cancellationToken)
+    [HttpPut("{usuarioId:guid}")]
+    public async Task<ActionResult<UsuarioDto>> Update(Guid usuarioId, UpdateUsuarioRequest request, CancellationToken cancellationToken)
     {
         var command = new UpdateUsuarioCommand(usuarioId, request.Email, request.Estado);
         var usuario = await _sender.Send(command, cancellationToken);
@@ -54,15 +54,15 @@ public class UsuariosController : ControllerBase
     /// <summary>
     /// Cambia la contraseña verificando la actual.
     /// </summary>
-    [HttpPost("{usuarioId:int}/cambiar-password")]
-    public async Task<IActionResult> CambiarPassword(int usuarioId, CambiarPasswordRequest request, CancellationToken cancellationToken)
+    [HttpPost("{usuarioId:guid}/cambiar-password")]
+    public async Task<IActionResult> CambiarPassword(Guid usuarioId, CambiarPasswordRequest request, CancellationToken cancellationToken)
     {
         await _sender.Send(new CambiarPasswordCommand(usuarioId, request.PasswordActual, request.PasswordNueva), cancellationToken);
         return NoContent();
     }
 
-    [HttpDelete("{usuarioId:int}")]
-    public async Task<IActionResult> Delete(int usuarioId, CancellationToken cancellationToken)
+    [HttpDelete("{usuarioId:guid}")]
+    public async Task<IActionResult> Delete(Guid usuarioId, CancellationToken cancellationToken)
     {
         await _sender.Send(new DeleteUsuarioCommand(usuarioId), cancellationToken);
         return NoContent();

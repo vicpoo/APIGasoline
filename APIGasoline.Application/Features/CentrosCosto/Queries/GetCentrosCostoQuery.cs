@@ -8,7 +8,7 @@ namespace APIGasoline.Application.Features.CentrosCosto.Queries;
 /// <summary>
 /// Lista los centros de costo. Se puede filtrar por empresa.
 /// </summary>
-public record GetCentrosCostoQuery(int? EmpresaId = null) : IRequest<IReadOnlyList<CentroCostoDto>>;
+public record GetCentrosCostoQuery(Guid? EmpresaId = null) : IRequest<IReadOnlyList<CentroCostoDto>>;
 
 public class GetCentrosCostoQueryHandler : IRequestHandler<GetCentrosCostoQuery, IReadOnlyList<CentroCostoDto>>
 {

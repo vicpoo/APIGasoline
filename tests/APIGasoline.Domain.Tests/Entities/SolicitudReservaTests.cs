@@ -10,8 +10,8 @@ namespace APIGasoline.Domain.Tests.Entities;
 /// </summary>
 public class SolicitudReservaTests
 {
-    private const int Solicitante = 1;
-    private const int Confirmador = 2;
+    private static readonly Guid Solicitante = Id(1);
+    private static readonly Guid Confirmador = Id(2);
     private static readonly DateTime Fecha = new(2026, 10, 5, 9, 0, 0, DateTimeKind.Utc);
 
     // --- Crear ---
@@ -32,7 +32,7 @@ public class SolicitudReservaTests
     [InlineData(1, 1, 0)]
     public void Crear_IdsInvalidos_LanzaDomainException(int empresaId, int carroId, int solicitanteId)
     {
-        Assert.Throws<DomainException>(() => SolicitudReserva.Crear(empresaId, carroId, solicitanteId));
+        Assert.Throws<DomainException>(() => SolicitudReserva.Crear(Id(empresaId), Id(carroId), Id(solicitanteId)));
     }
 
     // --- Aprobar ---
@@ -74,7 +74,7 @@ public class SolicitudReservaTests
     {
         var solicitud = ConstruirSolicitud();
 
-        Assert.Throws<DomainException>(() => solicitud.Aprobar(0, Fecha));
+        Assert.Throws<DomainException>(() => solicitud.Aprobar(Guid.Empty, Fecha));
     }
 
     [Fact]
@@ -176,6 +176,6 @@ public class SolicitudReservaTests
         Assert.Throws<DomainException>(() => solicitud.Cancelar(Fecha));
     }
 
-    private static SolicitudReserva ConstruirSolicitud(int empresaId = 1, int carroId = 1, int solicitanteId = Solicitante)
-        => SolicitudReserva.Crear(empresaId, carroId, solicitanteId);
+    private static SolicitudReserva ConstruirSolicitud(int empresaId = 1, int carroId = 1)
+        => SolicitudReserva.Crear(Id(empresaId), Id(carroId), Solicitante);
 }

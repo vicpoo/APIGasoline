@@ -7,7 +7,7 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.UsuarioRoles.Commands;
 
-public record CreateUsuarioRolCommand(int UsuarioId, int RolId) : IRequest<UsuarioRolDto>;
+public record CreateUsuarioRolCommand(Guid UsuarioId, Guid RolId) : IRequest<UsuarioRolDto>;
 
 public class CreateUsuarioRolCommandHandler : IRequestHandler<CreateUsuarioRolCommand, UsuarioRolDto>
 {

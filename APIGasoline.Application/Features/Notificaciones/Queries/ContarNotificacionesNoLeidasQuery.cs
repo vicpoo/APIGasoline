@@ -6,7 +6,7 @@ namespace APIGasoline.Application.Features.Notificaciones.Queries;
 /// <summary>
 /// Número para el "badge" de la campana en la app.
 /// </summary>
-public record ContarNotificacionesNoLeidasQuery(int EmpleadoDestinatarioId) : IRequest<int>;
+public record ContarNotificacionesNoLeidasQuery(Guid EmpleadoDestinatarioId) : IRequest<int>;
 
 public class ContarNotificacionesNoLeidasQueryHandler : IRequestHandler<ContarNotificacionesNoLeidasQuery, int>
 {

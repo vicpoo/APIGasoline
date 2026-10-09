@@ -7,9 +7,9 @@ public class Empresa
 {
     public const int NombreMaxLength = 150;
 
-    public Guid EmpresaId { get; private set; }
-    public int? CorporativoId { get; private set; }
-    public int? DivisionId { get; private set; }
+    public Guid EmpresaId { get; private set; } = Guid.CreateVersion7();
+    public Guid? CorporativoId { get; private set; }
+    public Guid? DivisionId { get; private set; }
     public string Nombre { get; private set; } = string.Empty;
 
 
@@ -22,7 +22,7 @@ public class Empresa
     {
     }
 
-    public static Empresa Crear(string nombre, int? corporativoId, int? divisionId)
+    public static Empresa Crear(string nombre, Guid? corporativoId, Guid? divisionId)
     {
         var empresa = new Empresa();
         empresa.CambiarNombre(nombre);
@@ -45,13 +45,13 @@ public class Empresa
     }
 
 
-    public void AsignarOrganizacion(int? corporativoId, int? divisionId)
+    public void AsignarOrganizacion(Guid? corporativoId, Guid? divisionId)
     {
-        if (corporativoId is <= 0)
-            throw new DomainException("El id del corporativo debe ser mayor a cero.");
+        if (corporativoId == Guid.Empty)
+            throw new DomainException("El id del corporativo es obligatorio.");
 
-        if (divisionId is <= 0)
-            throw new DomainException("El id de la división debe ser mayor a cero.");
+        if (divisionId == Guid.Empty)
+            throw new DomainException("El id de la división es obligatorio.");
 
         if (divisionId is not null && corporativoId is null)
             throw new DomainException("Para asignar una división también debe indicarse el corporativo.");

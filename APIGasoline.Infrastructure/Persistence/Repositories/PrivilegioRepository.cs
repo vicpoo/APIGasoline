@@ -13,7 +13,7 @@ public class PrivilegioRepository : IPrivilegioRepository
         _context = context;
     }
 
-    public Task<Privilegio?> GetByIdAsync(int privilegioId, CancellationToken cancellationToken = default)
+    public Task<Privilegio?> GetByIdAsync(Guid privilegioId, CancellationToken cancellationToken = default)
         => _context.Privilegios.FirstOrDefaultAsync(p => p.PrivilegioId == privilegioId, cancellationToken);
 
     public async Task<IReadOnlyList<Privilegio>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -22,15 +22,15 @@ public class PrivilegioRepository : IPrivilegioRepository
             .OrderBy(p => p.PrivilegioId)
             .ToListAsync(cancellationToken);
 
-    public Task<bool> ExistsAsync(int privilegioId, CancellationToken cancellationToken = default)
+    public Task<bool> ExistsAsync(Guid privilegioId, CancellationToken cancellationToken = default)
         => _context.Privilegios.AnyAsync(p => p.PrivilegioId == privilegioId, cancellationToken);
 
-    public Task<bool> NombreExistsAsync(string nombre, int? excludePrivilegioId = null, CancellationToken cancellationToken = default)
+    public Task<bool> NombreExistsAsync(string nombre, Guid? excludePrivilegioId = null, CancellationToken cancellationToken = default)
         => _context.Privilegios.AnyAsync(
             p => p.Nombre == nombre && (excludePrivilegioId == null || p.PrivilegioId != excludePrivilegioId),
             cancellationToken);
 
-    public async Task<IReadOnlyList<string>> GetNombresActivosByRolesAsync(IReadOnlyList<int> rolIds, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<string>> GetNombresActivosByRolesAsync(IReadOnlyList<Guid> rolIds, CancellationToken cancellationToken = default)
     {
         if (rolIds.Count == 0)
             return Array.Empty<string>();

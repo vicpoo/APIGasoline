@@ -7,9 +7,9 @@ public class Rol
     public const int NombreMaxLength = 100;
     public const int DescripcionMaxLength = 255;
 
-    public int RolId { get; private set; }
+    public Guid RolId { get; private set; } = Guid.CreateVersion7();
 
-    public int? EmpresaId { get; private set; }
+    public Guid? EmpresaId { get; private set; }
 
     public string Nombre { get; private set; } = string.Empty;
     public string? Descripcion { get; private set; }
@@ -20,10 +20,10 @@ public class Rol
     {
     }
 
-    public static Rol Crear(string nombre, string? descripcion, bool activo = true, int? empresaId = null)
+    public static Rol Crear(string nombre, string? descripcion, bool activo = true, Guid? empresaId = null)
     {
-        if (empresaId is <= 0)
-            throw new DomainException("El id de la empresa debe ser mayor a cero.");
+        if (empresaId == Guid.Empty)
+            throw new DomainException("El id de la empresa es obligatorio.");
 
         var rol = new Rol { EmpresaId = empresaId };
         rol.CambiarNombre(nombre);
@@ -36,7 +36,7 @@ public class Rol
     public bool EsGlobal => EmpresaId is null;
 
  
-    public bool DisponiblePara(int? empresaId) => EsGlobal || EmpresaId == empresaId;
+    public bool DisponiblePara(Guid? empresaId) => EsGlobal || EmpresaId == empresaId;
 
     public void CambiarNombre(string nombre)
     {

@@ -13,12 +13,12 @@ public class CargaCombustibleRepository : ICargaCombustibleRepository
         _context = context;
     }
 
-    public Task<CargaCombustible?> GetByIdAsync(int cargaCombustibleId, CancellationToken cancellationToken = default)
+    public Task<CargaCombustible?> GetByIdAsync(Guid cargaCombustibleId, CancellationToken cancellationToken = default)
         => _context.CargasCombustible.FirstOrDefaultAsync(c => c.CargaCombustibleId == cargaCombustibleId, cancellationToken);
 
     public async Task<IReadOnlyList<CargaCombustible>> GetAllAsync(
-        int? empresaId = null,
-        int? viajeId = null,
+        Guid? empresaId = null,
+        Guid? viajeId = null,
         DateTime? desde = null,
         DateTime? hasta = null,
         CancellationToken cancellationToken = default)
@@ -43,17 +43,17 @@ public class CargaCombustibleRepository : ICargaCombustibleRepository
             .ToListAsync(cancellationToken);
     }
 
-    public Task<bool> ExisteEnFechaAsync(int viajeId, DateTime fechaCarga, int? excludeCargaCombustibleId = null, CancellationToken cancellationToken = default)
+    public Task<bool> ExisteEnFechaAsync(Guid viajeId, DateTime fechaCarga, Guid? excludeCargaCombustibleId = null, CancellationToken cancellationToken = default)
         => _context.CargasCombustible.AnyAsync(
             c => c.ViajeId == viajeId
                  && c.FechaCarga == fechaCarga
                  && (excludeCargaCombustibleId == null || c.CargaCombustibleId != excludeCargaCombustibleId),
             cancellationToken);
 
-    public Task<bool> ExistsByViajeAsync(int viajeId, CancellationToken cancellationToken = default)
+    public Task<bool> ExistsByViajeAsync(Guid viajeId, CancellationToken cancellationToken = default)
         => _context.CargasCombustible.AnyAsync(c => c.ViajeId == viajeId, cancellationToken);
 
-    public async Task<decimal> SumLitrosByViajeAsync(int viajeId, CancellationToken cancellationToken = default)
+    public async Task<decimal> SumLitrosByViajeAsync(Guid viajeId, CancellationToken cancellationToken = default)
         => await _context.CargasCombustible
             .Where(c => c.ViajeId == viajeId)
             .SumAsync(c => (decimal?)c.Litros, cancellationToken) ?? 0m;

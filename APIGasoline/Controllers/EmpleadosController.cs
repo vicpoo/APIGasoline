@@ -25,14 +25,14 @@ public class EmpleadosController : ControllerBase
     /// Lista los empleados no eliminados. Filtro opcional: ?empresaId=1
     /// </summary>
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<EmpleadoDto>>> GetAll([FromQuery] int? empresaId, CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyList<EmpleadoDto>>> GetAll([FromQuery] Guid? empresaId, CancellationToken cancellationToken)
     {
         var empleados = await _sender.Send(new GetEmpleadosQuery(empresaId), cancellationToken);
         return Ok(empleados);
     }
 
-    [HttpGet("{empleadoId:int}")]
-    public async Task<ActionResult<EmpleadoDto>> GetById(int empleadoId, CancellationToken cancellationToken)
+    [HttpGet("{empleadoId:guid}")]
+    public async Task<ActionResult<EmpleadoDto>> GetById(Guid empleadoId, CancellationToken cancellationToken)
     {
         var empleado = await _sender.Send(new GetEmpleadoByIdQuery(empleadoId), cancellationToken);
         return Ok(empleado);
@@ -41,8 +41,8 @@ public class EmpleadosController : ControllerBase
     /// <summary>
     /// Obtiene el empleado ligado a un usuario del servicio de seguridad.
     /// </summary>
-    [HttpGet("por-usuario/{usuarioId:int}")]
-    public async Task<ActionResult<EmpleadoDto>> GetByUsuarioId(int usuarioId, CancellationToken cancellationToken)
+    [HttpGet("por-usuario/{usuarioId:guid}")]
+    public async Task<ActionResult<EmpleadoDto>> GetByUsuarioId(Guid usuarioId, CancellationToken cancellationToken)
     {
         var empleado = await _sender.Send(new GetEmpleadoByUsuarioIdQuery(usuarioId), cancellationToken);
         return Ok(empleado);
@@ -57,8 +57,8 @@ public class EmpleadosController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { empleadoId = empleado.EmpleadoId }, empleado);
     }
 
-    [HttpPut("{empleadoId:int}")]
-    public async Task<ActionResult<EmpleadoDto>> Update(int empleadoId, UpdateEmpleadoRequest request, CancellationToken cancellationToken)
+    [HttpPut("{empleadoId:guid}")]
+    public async Task<ActionResult<EmpleadoDto>> Update(Guid empleadoId, UpdateEmpleadoRequest request, CancellationToken cancellationToken)
     {
         var command = new UpdateEmpleadoCommand(empleadoId, request.EmpresaId, request.UsuarioId, request.NombreCompleto);
         var empleado = await _sender.Send(command, cancellationToken);
@@ -69,39 +69,39 @@ public class EmpleadosController : ControllerBase
     /// <summary>
     /// Sube o reemplaza la foto de perfil (multipart/form-data, campo "archivo": jpg, png o webp, máx. 5 MB).
     /// </summary>
-    [HttpPut("{empleadoId:int}/foto-perfil")]
+    [HttpPut("{empleadoId:guid}/foto-perfil")]
     [Consumes("multipart/form-data")]
     [RequestSizeLimit(FormFileExtensions.LimiteCuerpoBytes)]
     [RequestFormLimits(MultipartBodyLengthLimit = FormFileExtensions.LimiteCuerpoBytes)]
-    public Task<ActionResult<EmpleadoDto>> SubirFotoPerfil(int empleadoId, [FromForm] SubirArchivoRequest request, CancellationToken cancellationToken)
+    public Task<ActionResult<EmpleadoDto>> SubirFotoPerfil(Guid empleadoId, [FromForm] SubirArchivoRequest request, CancellationToken cancellationToken)
         => SubirArchivoAsync(empleadoId, TipoFotoEmpleado.Perfil, request, cancellationToken);
 
     /// <summary>
     /// Sube o reemplaza la licencia (multipart/form-data, campo "archivo": jpg, png, webp o pdf, máx. 5 MB).
     /// </summary>
-    [HttpPut("{empleadoId:int}/foto-licencia")]
+    [HttpPut("{empleadoId:guid}/foto-licencia")]
     [Consumes("multipart/form-data")]
     [RequestSizeLimit(FormFileExtensions.LimiteCuerpoBytes)]
     [RequestFormLimits(MultipartBodyLengthLimit = FormFileExtensions.LimiteCuerpoBytes)]
-    public Task<ActionResult<EmpleadoDto>> SubirFotoLicencia(int empleadoId, [FromForm] SubirArchivoRequest request, CancellationToken cancellationToken)
+    public Task<ActionResult<EmpleadoDto>> SubirFotoLicencia(Guid empleadoId, [FromForm] SubirArchivoRequest request, CancellationToken cancellationToken)
         => SubirArchivoAsync(empleadoId, TipoFotoEmpleado.Licencia, request, cancellationToken);
 
-    [HttpDelete("{empleadoId:int}/foto-perfil")]
-    public async Task<IActionResult> EliminarFotoPerfil(int empleadoId, CancellationToken cancellationToken)
+    [HttpDelete("{empleadoId:guid}/foto-perfil")]
+    public async Task<IActionResult> EliminarFotoPerfil(Guid empleadoId, CancellationToken cancellationToken)
     {
         await _sender.Send(new EliminarFotoEmpleadoCommand(empleadoId, TipoFotoEmpleado.Perfil), cancellationToken);
         return NoContent();
     }
 
-    [HttpDelete("{empleadoId:int}/foto-licencia")]
-    public async Task<IActionResult> EliminarFotoLicencia(int empleadoId, CancellationToken cancellationToken)
+    [HttpDelete("{empleadoId:guid}/foto-licencia")]
+    public async Task<IActionResult> EliminarFotoLicencia(Guid empleadoId, CancellationToken cancellationToken)
     {
         await _sender.Send(new EliminarFotoEmpleadoCommand(empleadoId, TipoFotoEmpleado.Licencia), cancellationToken);
         return NoContent();
     }
 
     private async Task<ActionResult<EmpleadoDto>> SubirArchivoAsync(
-        int empleadoId,
+        Guid empleadoId,
         TipoFotoEmpleado tipo,
         SubirArchivoRequest request,
         CancellationToken cancellationToken)
@@ -118,8 +118,8 @@ public class EmpleadosController : ControllerBase
     /// <summary>
     /// Soft delete: el empleado queda marcado como eliminado.
     /// </summary>
-    [HttpDelete("{empleadoId:int}")]
-    public async Task<IActionResult> Delete(int empleadoId, CancellationToken cancellationToken)
+    [HttpDelete("{empleadoId:guid}")]
+    public async Task<IActionResult> Delete(Guid empleadoId, CancellationToken cancellationToken)
     {
         await _sender.Send(new DeleteEmpleadoCommand(empleadoId), cancellationToken);
         return NoContent();

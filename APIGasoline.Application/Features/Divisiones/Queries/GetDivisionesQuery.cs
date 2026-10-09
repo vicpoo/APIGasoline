@@ -8,7 +8,7 @@ namespace APIGasoline.Application.Features.Divisiones.Queries;
 /// <summary>
 /// Lista las divisiones. Se puede filtrar por corporativo.
 /// </summary>
-public record GetDivisionesQuery(int? CorporativoId = null) : IRequest<IReadOnlyList<DivisionDto>>;
+public record GetDivisionesQuery(Guid? CorporativoId = null) : IRequest<IReadOnlyList<DivisionDto>>;
 
 public class GetDivisionesQueryHandler : IRequestHandler<GetDivisionesQuery, IReadOnlyList<DivisionDto>>
 {

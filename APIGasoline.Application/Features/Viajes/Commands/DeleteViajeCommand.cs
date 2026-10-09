@@ -7,7 +7,7 @@ namespace APIGasoline.Application.Features.Viajes.Commands;
 /// <summary>
 /// Borra físicamente el viaje. No se permite mientras está en curso.
 /// </summary>
-public record DeleteViajeCommand(int ViajeId) : IRequest;
+public record DeleteViajeCommand(Guid ViajeId) : IRequest;
 
 public class DeleteViajeCommandHandler : IRequestHandler<DeleteViajeCommand>
 {

@@ -14,7 +14,7 @@ public class NotificacionConfiguration : IEntityTypeConfiguration<Notificacion>
         builder.HasKey(n => n.NotificacionId);
         builder.Property(n => n.NotificacionId)
             .HasColumnName("notificacion_id")
-            .ValueGeneratedOnAdd();
+            .ValueGeneratedNever();
 
         builder.Property(n => n.EmpresaId).HasColumnName("empresa_id").IsRequired();
         builder.Property(n => n.EmpleadoDestinatarioId).HasColumnName("empleado_destinatario_id").IsRequired();

@@ -4,7 +4,7 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.Roles.Commands;
 
-public record DeleteRolCommand(int RolId) : IRequest;
+public record DeleteRolCommand(Guid RolId) : IRequest;
 
 public class DeleteRolCommandHandler : IRequestHandler<DeleteRolCommand>
 {

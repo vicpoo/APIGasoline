@@ -8,16 +8,16 @@ public class SolicitudReserva
 {
     public const int MotivoMaxLength = 255;
 
-    public int SolicitudReservaId { get; private set; }
-    public int EmpresaId { get; private set; }
-    public int CarroId { get; private set; }
-    public int EmpleadoSolicitanteId { get; private set; }
+    public Guid SolicitudReservaId { get; private set; } = Guid.CreateVersion7();
+    public Guid EmpresaId { get; private set; }
+    public Guid CarroId { get; private set; }
+    public Guid EmpleadoSolicitanteId { get; private set; }
 
     /// La asigna la base de datos al insertar (default now()).
     public DateTime? FechaSolicitud { get; private set; }
 
     public EstadoSolicitudReserva Estado { get; private set; } = EstadoSolicitudReserva.Pendiente;
-    public int? EmpleadoConfirmadorId { get; private set; }
+    public Guid? EmpleadoConfirmadorId { get; private set; }
     public DateTime? FechaResolucion { get; private set; }
     public string? MotivoResolucion { get; private set; }
 
@@ -26,16 +26,16 @@ public class SolicitudReserva
     {
     }
 
-    public static SolicitudReserva Crear(int empresaId, int carroId, int empleadoSolicitanteId)
+    public static SolicitudReserva Crear(Guid empresaId, Guid carroId, Guid empleadoSolicitanteId)
     {
-        if (empresaId <= 0)
-            throw new DomainException("El id de la empresa debe ser mayor a cero.");
+        if (empresaId == Guid.Empty)
+            throw new DomainException("El id de la empresa es obligatorio.");
 
-        if (carroId <= 0)
-            throw new DomainException("El id del carro debe ser mayor a cero.");
+        if (carroId == Guid.Empty)
+            throw new DomainException("El id del carro es obligatorio.");
 
-        if (empleadoSolicitanteId <= 0)
-            throw new DomainException("El id del empleado solicitante debe ser mayor a cero.");
+        if (empleadoSolicitanteId == Guid.Empty)
+            throw new DomainException("El id del empleado solicitante es obligatorio.");
 
         return new SolicitudReserva
         {
@@ -49,7 +49,7 @@ public class SolicitudReserva
     public bool EstaPendiente => Estado == EstadoSolicitudReserva.Pendiente;
     public bool EstaAprobada => Estado == EstadoSolicitudReserva.Aprobada;
 
-    public void Aprobar(int empleadoConfirmadorId, DateTime fecha, string? motivo = null)
+    public void Aprobar(Guid empleadoConfirmadorId, DateTime fecha, string? motivo = null)
     {
         ValidarResolucion(empleadoConfirmadorId, "aprobar");
 
@@ -59,7 +59,7 @@ public class SolicitudReserva
         MotivoResolucion = NormalizarMotivo(motivo);
     }
 
-    public void Rechazar(int empleadoConfirmadorId, DateTime fecha, string motivo)
+    public void Rechazar(Guid empleadoConfirmadorId, DateTime fecha, string motivo)
     {
         ValidarResolucion(empleadoConfirmadorId, "rechazar");
 
@@ -84,13 +84,13 @@ public class SolicitudReserva
         MotivoResolucion = NormalizarMotivo(motivo);
     }
 
-    private void ValidarResolucion(int empleadoConfirmadorId, string accion)
+    private void ValidarResolucion(Guid empleadoConfirmadorId, string accion)
     {
         if (!EstaPendiente)
             throw new DomainException($"Solo se puede {accion} una solicitud pendiente (estado actual: {Estado}).");
 
-        if (empleadoConfirmadorId <= 0)
-            throw new DomainException("El id del empleado confirmador debe ser mayor a cero.");
+        if (empleadoConfirmadorId == Guid.Empty)
+            throw new DomainException("El id del empleado confirmador es obligatorio.");
 
         if (empleadoConfirmadorId == EmpleadoSolicitanteId)
             throw new DomainException($"Un empleado no puede {accion} su propia solicitud.");

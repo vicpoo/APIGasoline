@@ -6,7 +6,7 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.SolicitudesReserva.Queries;
 
-public record GetSolicitudReservaByIdQuery(int SolicitudReservaId) : IRequest<SolicitudReservaDto>;
+public record GetSolicitudReservaByIdQuery(Guid SolicitudReservaId) : IRequest<SolicitudReservaDto>;
 
 public class GetSolicitudReservaByIdQueryHandler : IRequestHandler<GetSolicitudReservaByIdQuery, SolicitudReservaDto>
 {

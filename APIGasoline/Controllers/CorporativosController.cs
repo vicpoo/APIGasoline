@@ -25,8 +25,8 @@ public class CorporativosController : ControllerBase
         return Ok(corporativos);
     }
 
-    [HttpGet("{corporativoId:int}")]
-    public async Task<ActionResult<CorporativoDto>> GetById(int corporativoId, CancellationToken cancellationToken)
+    [HttpGet("{corporativoId:guid}")]
+    public async Task<ActionResult<CorporativoDto>> GetById(Guid corporativoId, CancellationToken cancellationToken)
     {
         var corporativo = await _sender.Send(new GetCorporativoByIdQuery(corporativoId), cancellationToken);
         return Ok(corporativo);
@@ -41,8 +41,8 @@ public class CorporativosController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { corporativoId = corporativo.CorporativoId }, corporativo);
     }
 
-    [HttpPut("{corporativoId:int}")]
-    public async Task<ActionResult<CorporativoDto>> Update(int corporativoId, UpdateCorporativoRequest request, CancellationToken cancellationToken)
+    [HttpPut("{corporativoId:guid}")]
+    public async Task<ActionResult<CorporativoDto>> Update(Guid corporativoId, UpdateCorporativoRequest request, CancellationToken cancellationToken)
     {
         var command = new UpdateCorporativoCommand(corporativoId, request.Nombre, request.Activo);
         var corporativo = await _sender.Send(command, cancellationToken);
@@ -50,8 +50,8 @@ public class CorporativosController : ControllerBase
         return Ok(corporativo);
     }
 
-    [HttpDelete("{corporativoId:int}")]
-    public async Task<IActionResult> Delete(int corporativoId, CancellationToken cancellationToken)
+    [HttpDelete("{corporativoId:guid}")]
+    public async Task<IActionResult> Delete(Guid corporativoId, CancellationToken cancellationToken)
     {
         await _sender.Send(new DeleteCorporativoCommand(corporativoId), cancellationToken);
         return NoContent();

@@ -14,7 +14,7 @@ public class SolicitudReservaConfiguration : IEntityTypeConfiguration<SolicitudR
         builder.HasKey(s => s.SolicitudReservaId);
         builder.Property(s => s.SolicitudReservaId)
             .HasColumnName("solicitud_reserva_id")
-            .ValueGeneratedOnAdd();
+            .ValueGeneratedNever();
 
         builder.Property(s => s.EmpresaId)
             .HasColumnName("empresa_id")

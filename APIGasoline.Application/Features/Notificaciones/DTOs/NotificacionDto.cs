@@ -3,11 +3,11 @@
 namespace APIGasoline.Application.Features.Notificaciones.DTOs;
 
 public record NotificacionDto(
-    int NotificacionId,
-    int EmpresaId,
-    int EmpleadoDestinatarioId,
+    Guid NotificacionId,
+    Guid EmpresaId,
+    Guid EmpleadoDestinatarioId,
     TipoNotificacion Tipo,
-    int? ReferenciaId,
+    Guid? ReferenciaId,
     string? Mensaje,
     bool Leida,
     DateTime? FechaEnvio);

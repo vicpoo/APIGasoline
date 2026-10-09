@@ -1,3 +1,3 @@
 ﻿namespace APIGasoline.Application.Features.CentrosCosto.DTOs;
 
-public record CentroCostoDto(int CentroCostoId, int EmpresaId, string Nombre, string Clave, bool Activo, DateTime? FechaRegistro);
+public record CentroCostoDto(Guid CentroCostoId, Guid EmpresaId, string Nombre, string Clave, bool Activo, DateTime? FechaRegistro);

@@ -9,7 +9,7 @@ namespace APIGasoline.Application.Features.PuntosRuta.Queries;
 /// <summary>
 /// Puntos del viaje en orden de captura, listos para dibujar la ruta en el mapa.
 /// </summary>
-public record GetPuntosRutaByViajeQuery(int ViajeId) : IRequest<IReadOnlyList<PuntoRutaDto>>;
+public record GetPuntosRutaByViajeQuery(Guid ViajeId) : IRequest<IReadOnlyList<PuntoRutaDto>>;
 
 public class GetPuntosRutaByViajeQueryHandler : IRequestHandler<GetPuntosRutaByViajeQuery, IReadOnlyList<PuntoRutaDto>>
 {

@@ -6,7 +6,7 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.Privilegios.Commands;
 
-public record UpdatePrivilegioCommand(int PrivilegioId, string Nombre, string? Descripcion, bool Activo) : IRequest<PrivilegioDto>;
+public record UpdatePrivilegioCommand(Guid PrivilegioId, string Nombre, string? Descripcion, bool Activo) : IRequest<PrivilegioDto>;
 
 public class UpdatePrivilegioCommandHandler : IRequestHandler<UpdatePrivilegioCommand, PrivilegioDto>
 {

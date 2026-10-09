@@ -4,7 +4,7 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.CentrosCosto.Commands;
 
-public record DeleteCentroCostoCommand(int CentroCostoId) : IRequest;
+public record DeleteCentroCostoCommand(Guid CentroCostoId) : IRequest;
 
 public class DeleteCentroCostoCommandHandler : IRequestHandler<DeleteCentroCostoCommand>
 {

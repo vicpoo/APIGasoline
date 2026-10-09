@@ -18,10 +18,10 @@ public class RutaProcesadaTests
     {
         var resultado = ResultadoDePrueba();
 
-        var ruta = RutaProcesada.Crear(1, 7, resultado, FechaProceso);
+        var ruta = RutaProcesada.Crear(Id(1), Id(7), resultado, FechaProceso);
 
-        Assert.Equal(1, ruta.EmpresaId);
-        Assert.Equal(7, ruta.ViajeId);
+        Assert.Equal(Id(1), ruta.EmpresaId);
+        Assert.Equal(Id(7), ruta.ViajeId);
         Assert.Equal(resultado.PuntosRecibidos, ruta.PuntosRecibidos);
         Assert.Equal(resultado.PuntosDescartados, ruta.PuntosDescartados);
         Assert.Equal(resultado.DistanciaGpsKm, ruta.DistanciaGpsKm);
@@ -43,22 +43,21 @@ public class RutaProcesadaTests
     [Theory]
     [InlineData(0, 7)]
     [InlineData(1, 0)]
-    [InlineData(-1, 7)]
     public void Crear_IdsInvalidos_LanzaDomainException(int empresaId, int viajeId)
     {
-        Assert.Throws<DomainException>(() => RutaProcesada.Crear(empresaId, viajeId, ResultadoDePrueba(), FechaProceso));
+        Assert.Throws<DomainException>(() => RutaProcesada.Crear(Id(empresaId), Id(viajeId), ResultadoDePrueba(), FechaProceso));
     }
 
     [Fact]
     public void Crear_SinFechaDeProceso_LanzaDomainException()
     {
-        Assert.Throws<DomainException>(() => RutaProcesada.Crear(1, 7, ResultadoDePrueba(), default));
+        Assert.Throws<DomainException>(() => RutaProcesada.Crear(Id(1), Id(7), ResultadoDePrueba(), default));
     }
 
     [Fact]
     public void Crear_ResultadoNulo_LanzaArgumentNullException()
     {
-        Assert.Throws<ArgumentNullException>(() => RutaProcesada.Crear(1, 7, null!, FechaProceso));
+        Assert.Throws<ArgumentNullException>(() => RutaProcesada.Crear(Id(1), Id(7), null!, FechaProceso));
     }
 
     [Theory]
@@ -68,7 +67,7 @@ public class RutaProcesadaTests
     {
         var resultado = ResultadoDePrueba() with { VersionAlgoritmo = version };
 
-        Assert.Throws<DomainException>(() => RutaProcesada.Crear(1, 7, resultado, FechaProceso));
+        Assert.Throws<DomainException>(() => RutaProcesada.Crear(Id(1), Id(7), resultado, FechaProceso));
     }
 
     [Fact]
@@ -76,7 +75,7 @@ public class RutaProcesadaTests
     {
         var resultado = ProcesadorRuta.Procesar(Array.Empty<PuntoGps>(), 1000m, null, 0m);
 
-        var ruta = RutaProcesada.Crear(1, 7, resultado, FechaProceso);
+        var ruta = RutaProcesada.Crear(Id(1), Id(7), resultado, FechaProceso);
 
         Assert.Null(ruta.Polyline);
         Assert.Equal(0m, ruta.DistanciaGpsKm);
@@ -86,14 +85,14 @@ public class RutaProcesadaTests
     [Fact]
     public void Actualizar_NuevoResultado_ReemplazaMetricasYConservaIds()
     {
-        var ruta = RutaProcesada.Crear(1, 7, ResultadoDePrueba(), FechaProceso);
+        var ruta = RutaProcesada.Crear(Id(1), Id(7), ResultadoDePrueba(), FechaProceso);
         var nuevo = ProcesadorRuta.Procesar(RutaDePrueba.LineaRecta(5), 1000m, 1010m, 0m);
         var nuevaFecha = FechaProceso.AddHours(1);
 
         ruta.Actualizar(nuevo, nuevaFecha);
 
-        Assert.Equal(1, ruta.EmpresaId);
-        Assert.Equal(7, ruta.ViajeId);
+        Assert.Equal(Id(1), ruta.EmpresaId);
+        Assert.Equal(Id(7), ruta.ViajeId);
         Assert.Equal(5, ruta.PuntosRecibidos);
         Assert.Equal(nuevo.DistanciaGpsKm, ruta.DistanciaGpsKm);
         Assert.True(ruta.AlertaKilometraje);
@@ -104,7 +103,7 @@ public class RutaProcesadaTests
     [Fact]
     public void Actualizar_ResultadoInvalido_NoModificaLaRuta()
     {
-        var ruta = RutaProcesada.Crear(1, 7, ResultadoDePrueba(), FechaProceso);
+        var ruta = RutaProcesada.Crear(Id(1), Id(7), ResultadoDePrueba(), FechaProceso);
         var distanciaOriginal = ruta.DistanciaGpsKm;
 
         Assert.Throws<DomainException>(() => ruta.Actualizar(ResultadoDePrueba(), default));

@@ -18,7 +18,7 @@ namespace APIGasoline.Application.Features.PuntosRuta.Commands;
 /// - Todo el lote se guarda en un solo SaveChanges (si un punto es inválido, no se guarda ninguno).
 /// </summary>
 public record RegistrarLotePuntosRutaCommand(
-    int ViajeId,
+    Guid ViajeId,
     bool Sincronizado,
     IReadOnlyList<PuntoRutaNuevoDto> Puntos) : IRequest<LotePuntosRutaResultadoDto>;
 

@@ -8,9 +8,9 @@ public class Empleado
     public const int NombreCompletoMaxLength = 150;
     public const int FotoMaxLength = 255;
 
-    public int EmpleadoId { get; private set; }
-    public int EmpresaId { get; private set; }
-    public int UsuarioId { get; private set; }
+    public Guid EmpleadoId { get; private set; } = Guid.CreateVersion7();
+    public Guid EmpresaId { get; private set; }
+    public Guid UsuarioId { get; private set; }
     public string NombreCompleto { get; private set; } = string.Empty;
 
     public string? FotoPerfil { get; private set; }
@@ -27,7 +27,7 @@ public class Empleado
     {
     }
 
-    public static Empleado Crear(int empresaId, int usuarioId, string nombreCompleto, string? fotoPerfil = null, string? fotoLicencia = null)
+    public static Empleado Crear(Guid empresaId, Guid usuarioId, string nombreCompleto, string? fotoPerfil = null, string? fotoLicencia = null)
     {
         var empleado = new Empleado();
         empleado.CambiarEmpresa(empresaId);
@@ -39,18 +39,18 @@ public class Empleado
         return empleado;
     }
 
-    public void CambiarEmpresa(int empresaId)
+    public void CambiarEmpresa(Guid empresaId)
     {
-        if (empresaId <= 0)
-            throw new DomainException("El id de la empresa debe ser mayor a cero.");
+        if (empresaId == Guid.Empty)
+            throw new DomainException("El id de la empresa es obligatorio.");
 
         EmpresaId = empresaId;
     }
 
-    public void CambiarUsuario(int usuarioId)
+    public void CambiarUsuario(Guid usuarioId)
     {
-        if (usuarioId <= 0)
-            throw new DomainException("El id del usuario debe ser mayor a cero.");
+        if (usuarioId == Guid.Empty)
+            throw new DomainException("El id del usuario es obligatorio.");
 
         UsuarioId = usuarioId;
     }

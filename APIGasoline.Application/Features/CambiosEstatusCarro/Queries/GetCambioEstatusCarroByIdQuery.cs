@@ -6,7 +6,7 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.CambiosEstatusCarro.Queries;
 
-public record GetCambioEstatusCarroByIdQuery(int CambioEstatusCarroId) : IRequest<CambioEstatusCarroDto>;
+public record GetCambioEstatusCarroByIdQuery(Guid CambioEstatusCarroId) : IRequest<CambioEstatusCarroDto>;
 
 public class GetCambioEstatusCarroByIdQueryHandler : IRequestHandler<GetCambioEstatusCarroByIdQuery, CambioEstatusCarroDto>
 {

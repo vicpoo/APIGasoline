@@ -25,8 +25,8 @@ public class PrivilegiosController : ControllerBase
         return Ok(privilegios);
     }
 
-    [HttpGet("{privilegioId:int}")]
-    public async Task<ActionResult<PrivilegioDto>> GetById(int privilegioId, CancellationToken cancellationToken)
+    [HttpGet("{privilegioId:guid}")]
+    public async Task<ActionResult<PrivilegioDto>> GetById(Guid privilegioId, CancellationToken cancellationToken)
     {
         var privilegio = await _sender.Send(new GetPrivilegioByIdQuery(privilegioId), cancellationToken);
         return Ok(privilegio);
@@ -41,8 +41,8 @@ public class PrivilegiosController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { privilegioId = privilegio.PrivilegioId }, privilegio);
     }
 
-    [HttpPut("{privilegioId:int}")]
-    public async Task<ActionResult<PrivilegioDto>> Update(int privilegioId, UpdatePrivilegioRequest request, CancellationToken cancellationToken)
+    [HttpPut("{privilegioId:guid}")]
+    public async Task<ActionResult<PrivilegioDto>> Update(Guid privilegioId, UpdatePrivilegioRequest request, CancellationToken cancellationToken)
     {
         var command = new UpdatePrivilegioCommand(privilegioId, request.Nombre, request.Descripcion, request.Activo);
         var privilegio = await _sender.Send(command, cancellationToken);
@@ -50,8 +50,8 @@ public class PrivilegiosController : ControllerBase
         return Ok(privilegio);
     }
 
-    [HttpDelete("{privilegioId:int}")]
-    public async Task<IActionResult> Delete(int privilegioId, CancellationToken cancellationToken)
+    [HttpDelete("{privilegioId:guid}")]
+    public async Task<IActionResult> Delete(Guid privilegioId, CancellationToken cancellationToken)
     {
         await _sender.Send(new DeletePrivilegioCommand(privilegioId), cancellationToken);
         return NoContent();

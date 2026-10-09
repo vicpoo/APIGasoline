@@ -14,13 +14,13 @@ public class SolicitudReservaRepository : ISolicitudReservaRepository
         _context = context;
     }
 
-    public Task<SolicitudReserva?> GetByIdAsync(int solicitudReservaId, CancellationToken cancellationToken = default)
+    public Task<SolicitudReserva?> GetByIdAsync(Guid solicitudReservaId, CancellationToken cancellationToken = default)
         => _context.SolicitudesReserva.FirstOrDefaultAsync(s => s.SolicitudReservaId == solicitudReservaId, cancellationToken);
 
     public async Task<IReadOnlyList<SolicitudReserva>> GetAllAsync(
-        int? empresaId = null,
-        int? carroId = null,
-        int? empleadoSolicitanteId = null,
+        Guid? empresaId = null,
+        Guid? carroId = null,
+        Guid? empleadoSolicitanteId = null,
         EstadoSolicitudReserva? estado = null,
         CancellationToken cancellationToken = default)
     {
@@ -45,24 +45,24 @@ public class SolicitudReservaRepository : ISolicitudReservaRepository
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyList<SolicitudReserva>> GetPendientesByCarroAsync(int carroId, int excludeSolicitudReservaId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<SolicitudReserva>> GetPendientesByCarroAsync(Guid carroId, Guid excludeSolicitudReservaId, CancellationToken cancellationToken = default)
         => await _context.SolicitudesReserva
             .Where(s => s.CarroId == carroId
                         && s.Estado == EstadoSolicitudReserva.Pendiente
                         && s.SolicitudReservaId != excludeSolicitudReservaId)
             .ToListAsync(cancellationToken);
 
-    public Task<bool> ExistePendienteAsync(int empleadoSolicitanteId, int carroId, CancellationToken cancellationToken = default)
+    public Task<bool> ExistePendienteAsync(Guid empleadoSolicitanteId, Guid carroId, CancellationToken cancellationToken = default)
         => _context.SolicitudesReserva.AnyAsync(
             s => s.EmpleadoSolicitanteId == empleadoSolicitanteId
                  && s.CarroId == carroId
                  && s.Estado == EstadoSolicitudReserva.Pendiente,
             cancellationToken);
 
-    public Task<bool> ExistsByCarroAsync(int carroId, CancellationToken cancellationToken = default)
+    public Task<bool> ExistsByCarroAsync(Guid carroId, CancellationToken cancellationToken = default)
         => _context.SolicitudesReserva.AnyAsync(s => s.CarroId == carroId, cancellationToken);
 
-    public Task<SolicitudReserva?> GetAprobadaByCarroAsync(int carroId, CancellationToken cancellationToken = default)
+    public Task<SolicitudReserva?> GetAprobadaByCarroAsync(Guid carroId, CancellationToken cancellationToken = default)
         => _context.SolicitudesReserva
             .Where(s => s.CarroId == carroId && s.Estado == EstadoSolicitudReserva.Aprobada)
             .OrderByDescending(s => s.FechaResolucion)

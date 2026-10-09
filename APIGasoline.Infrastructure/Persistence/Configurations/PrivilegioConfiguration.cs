@@ -13,7 +13,7 @@ public class PrivilegioConfiguration : IEntityTypeConfiguration<Privilegio>
         builder.HasKey(p => p.PrivilegioId);
         builder.Property(p => p.PrivilegioId)
             .HasColumnName("privilegio_id")
-            .ValueGeneratedOnAdd();
+            .ValueGeneratedNever();
 
         builder.Property(p => p.Nombre)
             .HasColumnName("nombre")

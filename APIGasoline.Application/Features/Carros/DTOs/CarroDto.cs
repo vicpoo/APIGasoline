@@ -3,8 +3,8 @@
 namespace APIGasoline.Application.Features.Carros.DTOs;
 
 public record CarroDto(
-    int CarroId,
-    int EmpresaId,
+    Guid CarroId,
+    Guid EmpresaId,
     string Marca,
     string Modelo,
     int? Anio,

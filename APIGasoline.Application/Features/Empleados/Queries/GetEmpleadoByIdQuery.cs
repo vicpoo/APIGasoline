@@ -8,7 +8,7 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.Empleados.Queries;
 
-public record GetEmpleadoByIdQuery(int EmpleadoId) : IRequest<EmpleadoDto>;
+public record GetEmpleadoByIdQuery(Guid EmpleadoId) : IRequest<EmpleadoDto>;
 
 public class GetEmpleadoByIdQueryHandler : IRequestHandler<GetEmpleadoByIdQuery, EmpleadoDto>
 {

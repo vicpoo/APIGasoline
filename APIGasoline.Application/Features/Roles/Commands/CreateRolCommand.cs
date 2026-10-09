@@ -8,7 +8,7 @@ using MediatR;
 namespace APIGasoline.Application.Features.Roles.Commands;
 
 /// <summary>EmpresaId null = rol global; con valor = rol exclusivo de esa empresa.</summary>
-public record CreateRolCommand(int? EmpresaId, string Nombre, string? Descripcion, bool Activo) : IRequest<RolDto>;
+public record CreateRolCommand(Guid? EmpresaId, string Nombre, string? Descripcion, bool Activo) : IRequest<RolDto>;
 
 public class CreateRolCommandHandler : IRequestHandler<CreateRolCommand, RolDto>
 {

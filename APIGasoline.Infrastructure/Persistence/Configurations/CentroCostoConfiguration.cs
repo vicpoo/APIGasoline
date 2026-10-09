@@ -13,7 +13,7 @@ public class CentroCostoConfiguration : IEntityTypeConfiguration<CentroCosto>
         builder.HasKey(cc => cc.CentroCostoId);
         builder.Property(cc => cc.CentroCostoId)
             .HasColumnName("centro_costo_id")
-            .ValueGeneratedOnAdd();
+            .ValueGeneratedNever();
 
         builder.Property(cc => cc.EmpresaId)
             .HasColumnName("empresa_id")

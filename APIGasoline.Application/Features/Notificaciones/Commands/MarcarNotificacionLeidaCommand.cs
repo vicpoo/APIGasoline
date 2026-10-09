@@ -6,7 +6,7 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.Notificaciones.Commands;
 
-public record MarcarNotificacionLeidaCommand(int NotificacionId) : IRequest<NotificacionDto>;
+public record MarcarNotificacionLeidaCommand(Guid NotificacionId) : IRequest<NotificacionDto>;
 
 public class MarcarNotificacionLeidaCommandHandler : IRequestHandler<MarcarNotificacionLeidaCommand, NotificacionDto>
 {

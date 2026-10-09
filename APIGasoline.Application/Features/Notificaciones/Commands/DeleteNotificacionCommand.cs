@@ -4,7 +4,7 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.Notificaciones.Commands;
 
-public record DeleteNotificacionCommand(int NotificacionId) : IRequest;
+public record DeleteNotificacionCommand(Guid NotificacionId) : IRequest;
 
 public class DeleteNotificacionCommandHandler : IRequestHandler<DeleteNotificacionCommand>
 {

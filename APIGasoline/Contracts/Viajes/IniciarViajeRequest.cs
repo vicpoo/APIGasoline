@@ -4,17 +4,17 @@ namespace APIGasoline.Contracts.Viajes;
 
 public class IniciarViajeRequest
 {
-    [Range(1, int.MaxValue)]
-    public int EmpresaId { get; set; }
+    [GuidNoVacio]
+    public Guid EmpresaId { get; set; }
 
-    [Range(1, int.MaxValue)]
-    public int CarroId { get; set; }
+    [GuidNoVacio]
+    public Guid CarroId { get; set; }
 
-    [Range(1, int.MaxValue)]
-    public int? SolicitudReservaId { get; set; }
+    [GuidNoVacio]
+    public Guid? SolicitudReservaId { get; set; }
 
-    [Range(1, int.MaxValue)]
-    public int EmpleadoOperadorId { get; set; }
+    [GuidNoVacio]
+    public Guid EmpleadoOperadorId { get; set; }
 
     [Required]
     public DateTime? FechaInicio { get; set; }

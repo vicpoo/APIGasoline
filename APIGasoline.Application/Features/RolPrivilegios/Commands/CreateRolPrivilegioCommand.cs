@@ -7,7 +7,7 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.RolPrivilegios.Commands;
 
-public record CreateRolPrivilegioCommand(int RolId, int PrivilegioId) : IRequest<RolPrivilegioDto>;
+public record CreateRolPrivilegioCommand(Guid RolId, Guid PrivilegioId) : IRequest<RolPrivilegioDto>;
 
 public class CreateRolPrivilegioCommandHandler : IRequestHandler<CreateRolPrivilegioCommand, RolPrivilegioDto>
 {

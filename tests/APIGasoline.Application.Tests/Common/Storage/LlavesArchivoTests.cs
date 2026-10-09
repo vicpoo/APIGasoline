@@ -8,45 +8,45 @@ namespace APIGasoline.Application.Tests.Common.Storage;
 /// </summary>
 public class LlavesArchivoTests
 {
-    private static readonly Guid Id = new("11111111-1111-1111-1111-111111111111");
+    private static readonly Guid Archivo = new("11111111-1111-1111-1111-111111111111");
 
     [Fact]
     public void FotoVehiculo_GeneraLlaveDelCarro()
     {
-        var llave = LlavesArchivo.FotoVehiculo(1, 7, ".jpg", Id);
+        var llave = LlavesArchivo.FotoVehiculo(Id(1), Id(7), ".jpg", Archivo);
 
-        Assert.Equal("empresas/1/carros/7/vehiculo-11111111111111111111111111111111.jpg", llave);
+        Assert.Equal($"empresas/{Id(1)}/carros/{Id(7)}/vehiculo-11111111111111111111111111111111.jpg", llave);
     }
 
     [Fact]
     public void FotoPerfilEmpleado_GeneraLlaveDelEmpleado()
     {
-        var llave = LlavesArchivo.FotoPerfilEmpleado(1, 3, ".png", Id);
+        var llave = LlavesArchivo.FotoPerfilEmpleado(Id(1), Id(3), ".png", Archivo);
 
-        Assert.Equal("empresas/1/empleados/3/perfil-11111111111111111111111111111111.png", llave);
+        Assert.Equal($"empresas/{Id(1)}/empleados/{Id(3)}/perfil-11111111111111111111111111111111.png", llave);
     }
 
     [Fact]
     public void FotoLicenciaEmpleado_GeneraLlaveDelEmpleado()
     {
-        var llave = LlavesArchivo.FotoLicenciaEmpleado(1, 3, ".pdf", Id);
+        var llave = LlavesArchivo.FotoLicenciaEmpleado(Id(1), Id(3), ".pdf", Archivo);
 
-        Assert.Equal("empresas/1/empleados/3/licencia-11111111111111111111111111111111.pdf", llave);
+        Assert.Equal($"empresas/{Id(1)}/empleados/{Id(3)}/licencia-11111111111111111111111111111111.pdf", llave);
     }
 
     [Fact]
     public void ComprobanteCarga_SeAgrupaPorViaje()
     {
-        var llave = LlavesArchivo.ComprobanteCarga(1, 12, ".jpg", Id);
+        var llave = LlavesArchivo.ComprobanteCarga(Id(1), Id(12), ".jpg", Archivo);
 
-        Assert.Equal("empresas/1/viajes/12/cargas/comprobante-11111111111111111111111111111111.jpg", llave);
+        Assert.Equal($"empresas/{Id(1)}/viajes/{Id(12)}/cargas/comprobante-11111111111111111111111111111111.jpg", llave);
     }
 
     [Fact]
     public void FotoVehiculo_IdsDistintos_GeneranLlavesDistintas()
     {
-        var primera = LlavesArchivo.FotoVehiculo(1, 7, ".jpg", Id);
-        var segunda = LlavesArchivo.FotoVehiculo(1, 7, ".jpg", new Guid("22222222-2222-2222-2222-222222222222"));
+        var primera = LlavesArchivo.FotoVehiculo(Id(1), Id(7), ".jpg", Archivo);
+        var segunda = LlavesArchivo.FotoVehiculo(Id(1), Id(7), ".jpg", new Guid("22222222-2222-2222-2222-222222222222"));
 
         Assert.NotEqual(primera, segunda);
     }
@@ -54,7 +54,7 @@ public class LlavesArchivoTests
     [Fact]
     public void ComprobanteCarga_LlaveCabeEnLaColumnaDe255()
     {
-        var llave = LlavesArchivo.ComprobanteCarga(int.MaxValue, int.MaxValue, ".webp", Id);
+        var llave = LlavesArchivo.ComprobanteCarga(Id(int.MaxValue), Id(int.MaxValue), ".webp", Archivo);
 
         Assert.True(llave.Length <= 255);
     }

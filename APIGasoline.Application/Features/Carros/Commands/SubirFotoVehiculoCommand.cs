@@ -12,7 +12,7 @@ namespace APIGasoline.Application.Features.Carros.Commands;
 /// <summary>
 /// Sube (o reemplaza) la foto del vehículo. En la BD solo se guarda la llave del archivo.
 /// </summary>
-public record SubirFotoVehiculoCommand(int CarroId, ArchivoEntrada Archivo) : IRequest<CarroDto>;
+public record SubirFotoVehiculoCommand(Guid CarroId, ArchivoEntrada Archivo) : IRequest<CarroDto>;
 
 public class SubirFotoVehiculoCommandHandler : IRequestHandler<SubirFotoVehiculoCommand, CarroDto>
 {

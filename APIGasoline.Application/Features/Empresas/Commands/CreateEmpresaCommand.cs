@@ -7,7 +7,7 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.Empresas.Commands;
 
-public record CreateEmpresaCommand(string Nombre, int? CorporativoId, int? DivisionId) : IRequest<EmpresaDto>;
+public record CreateEmpresaCommand(string Nombre, Guid? CorporativoId, Guid? DivisionId) : IRequest<EmpresaDto>;
 
 public class CreateEmpresaCommandHandler : IRequestHandler<CreateEmpresaCommand, EmpresaDto>
 {

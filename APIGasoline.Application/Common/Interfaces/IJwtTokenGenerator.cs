@@ -3,7 +3,7 @@
 /// <summary>
 /// Datos que viajan como claims dentro del token.
 /// </summary>
-public record TokenUsuario(int UsuarioId, string Email, int? EmpleadoId, int? EmpresaId, IReadOnlyList<string> Roles);
+public record TokenUsuario(Guid UsuarioId, string Email, Guid? EmpleadoId, Guid? EmpresaId, IReadOnlyList<string> Roles);
 
 public record TokenGenerado(string Token, DateTime ExpiraEnUtc);
 

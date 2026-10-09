@@ -14,12 +14,12 @@ public class NotificacionRepository : INotificacionRepository
         _context = context;
     }
 
-    public Task<Notificacion?> GetByIdAsync(int notificacionId, CancellationToken cancellationToken = default)
+    public Task<Notificacion?> GetByIdAsync(Guid notificacionId, CancellationToken cancellationToken = default)
         => _context.Notificaciones.FirstOrDefaultAsync(n => n.NotificacionId == notificacionId, cancellationToken);
 
     public async Task<IReadOnlyList<Notificacion>> GetAllAsync(
-        int? empresaId = null,
-        int? empleadoDestinatarioId = null,
+        Guid? empresaId = null,
+        Guid? empleadoDestinatarioId = null,
         bool soloNoLeidas = false,
         TipoNotificacion? tipo = null,
         CancellationToken cancellationToken = default)
@@ -44,10 +44,10 @@ public class NotificacionRepository : INotificacionRepository
             .ToListAsync(cancellationToken);
     }
 
-    public Task<int> ContarNoLeidasAsync(int empleadoDestinatarioId, CancellationToken cancellationToken = default)
+    public Task<int> ContarNoLeidasAsync(Guid empleadoDestinatarioId, CancellationToken cancellationToken = default)
         => _context.Notificaciones.CountAsync(n => n.EmpleadoDestinatarioId == empleadoDestinatarioId && !n.Leida, cancellationToken);
 
-    public async Task<IReadOnlyList<Notificacion>> GetNoLeidasAsync(int empleadoDestinatarioId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Notificacion>> GetNoLeidasAsync(Guid empleadoDestinatarioId, CancellationToken cancellationToken = default)
         => await _context.Notificaciones
             .Where(n => n.EmpleadoDestinatarioId == empleadoDestinatarioId && !n.Leida)
             .ToListAsync(cancellationToken);

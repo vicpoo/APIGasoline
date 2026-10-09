@@ -4,7 +4,7 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.PuntosRuta.Commands;
 
-public record DeletePuntoRutaCommand(int PuntoRutaId) : IRequest;
+public record DeletePuntoRutaCommand(Guid PuntoRutaId) : IRequest;
 
 public class DeletePuntoRutaCommandHandler : IRequestHandler<DeletePuntoRutaCommand>
 {

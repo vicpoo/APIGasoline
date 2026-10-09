@@ -9,8 +9,8 @@ namespace APIGasoline.Domain.Tests.Escenarios;
 /// </summary>
 public class RutaEscenariosTests
 {
-    private const int EmpresaId = 1;
-    private const int ViajeId = 7; // simula el id que asignaría la BD
+    private static readonly Guid EmpresaId = Id(1);
+    private static readonly Guid ViajeId = Id(7);
     private const decimal KilometrajeInicial = 15000m;
 
     private static readonly DateTime Inicio = new(2026, 10, 7, 8, 30, 0, DateTimeKind.Utc);
@@ -101,7 +101,7 @@ public class RutaEscenariosTests
     }
 
     private static Viaje IniciarViaje()
-        => Viaje.Iniciar(EmpresaId, carroId: 1, solicitudReservaId: null, empleadoOperadorId: 1, Inicio, null, null, KilometrajeInicial);
+        => Viaje.Iniciar(EmpresaId, carroId: Id(1), solicitudReservaId: null, empleadoOperadorId: Id(1), Inicio, null, null, KilometrajeInicial);
 
     /// <summary>Puntos crudos como llegarían del celular: uno cada 30 s, ~278 m al norte.</summary>
     private static List<PuntoRuta> RecibirPuntos(int cantidad, decimal precision)

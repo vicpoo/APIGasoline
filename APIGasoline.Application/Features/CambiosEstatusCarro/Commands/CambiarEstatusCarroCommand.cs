@@ -15,11 +15,11 @@ namespace APIGasoline.Application.Features.CambiosEstatusCarro.Commands;
 /// Si se indica un viaje afectado que está en curso, el viaje se interrumpe.
 /// </summary>
 public record CambiarEstatusCarroCommand(
-    int CarroId,
-    int EmpleadoId,
+    Guid CarroId,
+    Guid EmpleadoId,
     EstadoCarro EstatusNuevo,
     string? Motivo,
-    int? ViajeAfectadoId,
+    Guid? ViajeAfectadoId,
     DateTime? FechaCambio,
     bool Sincronizado) : IRequest<CambioEstatusCarroDto>;
 

@@ -13,7 +13,7 @@ namespace APIGasoline.Application.Features.RutasProcesadas.Commands;
 /// limpia los puntos GPS, mide distancia y tiempos, compara contra el odómetro,
 /// calcula km/L y genera la polyline. Los puntos crudos no se modifican.
 /// </summary>
-public record ProcesarRutaViajeCommand(int ViajeId) : IRequest<RutaProcesadaDto>;
+public record ProcesarRutaViajeCommand(Guid ViajeId) : IRequest<RutaProcesadaDto>;
 
 public class ProcesarRutaViajeCommandHandler : IRequestHandler<ProcesarRutaViajeCommand, RutaProcesadaDto>
 {

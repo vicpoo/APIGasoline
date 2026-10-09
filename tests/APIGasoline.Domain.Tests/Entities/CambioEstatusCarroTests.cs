@@ -17,7 +17,7 @@ public class CambioEstatusCarroTests
     {
         var carro = ConstruirCarro();
 
-        var cambio = CambioEstatusCarro.Registrar(carro, 2, EstadoCarro.EnMantenimiento, "  Servicio de los 20,000 km  ", fechaCambio: FechaCambio);
+        var cambio = CambioEstatusCarro.Registrar(carro, Id(2), EstadoCarro.EnMantenimiento, "  Servicio de los 20,000 km  ", fechaCambio: FechaCambio);
 
         Assert.Equal(EstadoCarro.EnMantenimiento, carro.Estado);
         Assert.Equal(EstadoCarro.Disponible, cambio.EstatusAnterior);
@@ -33,7 +33,7 @@ public class CambioEstatusCarroTests
     {
         var carro = ConstruirCarro();
 
-        Assert.Throws<DomainException>(() => CambioEstatusCarro.Registrar(carro, 2, EstadoCarro.EnMantenimiento, motivo));
+        Assert.Throws<DomainException>(() => CambioEstatusCarro.Registrar(carro, Id(2), EstadoCarro.EnMantenimiento, motivo));
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public class CambioEstatusCarroTests
     {
         var carro = ConstruirCarro(EstadoCarro.EnMantenimiento);
 
-        var cambio = CambioEstatusCarro.Registrar(carro, 2, EstadoCarro.Disponible, null);
+        var cambio = CambioEstatusCarro.Registrar(carro, Id(2), EstadoCarro.Disponible, null);
 
         Assert.Equal(EstadoCarro.Disponible, carro.Estado);
         Assert.Null(cambio.Motivo);
@@ -52,7 +52,7 @@ public class CambioEstatusCarroTests
     {
         var carro = ConstruirCarro();
 
-        Assert.Throws<DomainException>(() => CambioEstatusCarro.Registrar(carro, 2, EstadoCarro.Disponible, null));
+        Assert.Throws<DomainException>(() => CambioEstatusCarro.Registrar(carro, Id(2), EstadoCarro.Disponible, null));
     }
 
     [Fact]
@@ -60,7 +60,7 @@ public class CambioEstatusCarroTests
     {
         var carro = ConstruirCarro(EstadoCarro.EnMantenimiento);
 
-        Assert.Throws<DomainException>(() => CambioEstatusCarro.Registrar(carro, 2, EstadoCarro.Ocupado, null));
+        Assert.Throws<DomainException>(() => CambioEstatusCarro.Registrar(carro, Id(2), EstadoCarro.Ocupado, null));
     }
 
     [Fact]
@@ -68,7 +68,7 @@ public class CambioEstatusCarroTests
     {
         var carro = ConstruirCarro();
 
-        CambioEstatusCarro.Registrar(carro, 2, EstadoCarro.Ocupado, null);
+        CambioEstatusCarro.Registrar(carro, Id(2), EstadoCarro.Ocupado, null);
 
         Assert.Equal(EstadoCarro.Ocupado, carro.Estado);
     }
@@ -78,9 +78,9 @@ public class CambioEstatusCarroTests
     {
         var carro = ConstruirCarro(EstadoCarro.Ocupado);
 
-        var cambio = CambioEstatusCarro.Registrar(carro, 1, EstadoCarro.EnMantenimiento, "Se sobrecalentó el motor", viajeAfectadoId: 7);
+        var cambio = CambioEstatusCarro.Registrar(carro, Id(1), EstadoCarro.EnMantenimiento, "Se sobrecalentó el motor", viajeAfectadoId: Id(7));
 
-        Assert.Equal(7, cambio.ViajeAfectadoId);
+        Assert.Equal(Id(7), cambio.ViajeAfectadoId);
     }
 
     [Theory]
@@ -90,7 +90,7 @@ public class CambioEstatusCarroTests
     {
         var carro = ConstruirCarro();
 
-        Assert.Throws<DomainException>(() => CambioEstatusCarro.Registrar(carro, empleadoId, EstadoCarro.EnMantenimiento, "Servicio", viajeAfectadoId));
+        Assert.Throws<DomainException>(() => CambioEstatusCarro.Registrar(carro, Id(empleadoId), EstadoCarro.EnMantenimiento, "Servicio", Id(viajeAfectadoId)));
     }
 
     [Fact]
@@ -98,15 +98,15 @@ public class CambioEstatusCarroTests
     {
         var carro = ConstruirCarro();
 
-        Assert.Throws<DomainException>(() => CambioEstatusCarro.Registrar(carro, 2, EstadoCarro.EnMantenimiento, new string('x', 256)));
+        Assert.Throws<DomainException>(() => CambioEstatusCarro.Registrar(carro, Id(2), EstadoCarro.EnMantenimiento, new string('x', 256)));
     }
 
     [Fact]
     public void Registrar_SinCarro_LanzaArgumentNullException()
     {
-        Assert.Throws<ArgumentNullException>(() => CambioEstatusCarro.Registrar(null!, 2, EstadoCarro.EnMantenimiento, "Servicio"));
+        Assert.Throws<ArgumentNullException>(() => CambioEstatusCarro.Registrar(null!, Id(2), EstadoCarro.EnMantenimiento, "Servicio"));
     }
 
     private static Carro ConstruirCarro(EstadoCarro estado = EstadoCarro.Disponible)
-        => Carro.Crear(1, "Nissan", "NP300", 2023, "Blanco", "DFG-123-A", null, 80m, 15000m, 2026, estado);
+        => Carro.Crear(Id(1), "Nissan", "NP300", 2023, "Blanco", "DFG-123-A", null, 80m, 15000m, 2026, estado);
 }

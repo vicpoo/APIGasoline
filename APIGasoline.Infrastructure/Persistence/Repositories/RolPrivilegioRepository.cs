@@ -13,10 +13,10 @@ public class RolPrivilegioRepository : IRolPrivilegioRepository
         _context = context;
     }
 
-    public Task<RolPrivilegio?> GetByIdAsync(int rolPrivilegioId, CancellationToken cancellationToken = default)
+    public Task<RolPrivilegio?> GetByIdAsync(Guid rolPrivilegioId, CancellationToken cancellationToken = default)
         => _context.RolPrivilegios.FirstOrDefaultAsync(rp => rp.RolPrivilegioId == rolPrivilegioId, cancellationToken);
 
-    public async Task<IReadOnlyList<RolPrivilegio>> GetAllAsync(int? rolId = null, int? privilegioId = null, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<RolPrivilegio>> GetAllAsync(Guid? rolId = null, Guid? privilegioId = null, CancellationToken cancellationToken = default)
     {
         var query = _context.RolPrivilegios.AsNoTracking();
 
@@ -31,7 +31,7 @@ public class RolPrivilegioRepository : IRolPrivilegioRepository
             .ToListAsync(cancellationToken);
     }
 
-    public Task<bool> AsignacionExistsAsync(int rolId, int privilegioId, int? excludeRolPrivilegioId = null, CancellationToken cancellationToken = default)
+    public Task<bool> AsignacionExistsAsync(Guid rolId, Guid privilegioId, Guid? excludeRolPrivilegioId = null, CancellationToken cancellationToken = default)
         => _context.RolPrivilegios.AnyAsync(
             rp => rp.RolId == rolId
                   && rp.PrivilegioId == privilegioId

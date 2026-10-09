@@ -19,7 +19,7 @@ public class CargaCombustibleTests
 
         Assert.Equal(45.30m, carga.Litros);
         Assert.Equal(Llave, carga.FotoComprobante);
-        Assert.Equal(1, carga.ViajeId);
+        Assert.Equal(Id(1), carga.ViajeId);
     }
 
     [Theory]
@@ -146,5 +146,5 @@ public class CargaCombustibleTests
         decimal? lat = 16.750120m,
         decimal? lng = -93.100340m,
         bool sincronizado = false)
-        => CargaCombustible.Crear(empresaId, viajeId, litros, monto, foto, fecha ?? FechaCarga, lat, lng, sincronizado);
+        => CargaCombustible.Crear(Id(empresaId), Id(viajeId), litros, monto, foto, fecha ?? FechaCarga, lat, lng, sincronizado);
 }

@@ -9,7 +9,7 @@ namespace APIGasoline.Application.Features.Roles.Commands;
 /// <summary>
 /// La empresa del rol no se cambia (un rol global ya asignado no puede volverse exclusivo).
 /// </summary>
-public record UpdateRolCommand(int RolId, string Nombre, string? Descripcion, bool Activo) : IRequest<RolDto>;
+public record UpdateRolCommand(Guid RolId, string Nombre, string? Descripcion, bool Activo) : IRequest<RolDto>;
 
 public class UpdateRolCommandHandler : IRequestHandler<UpdateRolCommand, RolDto>
 {

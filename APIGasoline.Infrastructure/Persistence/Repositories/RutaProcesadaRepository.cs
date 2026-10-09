@@ -13,10 +13,10 @@ public class RutaProcesadaRepository : IRutaProcesadaRepository
         _context = context;
     }
 
-    public Task<RutaProcesada?> GetByViajeAsync(int viajeId, CancellationToken cancellationToken = default)
+    public Task<RutaProcesada?> GetByViajeAsync(Guid viajeId, CancellationToken cancellationToken = default)
         => _context.RutasProcesadas.FirstOrDefaultAsync(r => r.ViajeId == viajeId, cancellationToken);
 
-    public async Task<IReadOnlyList<RutaProcesada>> GetConAlertaAsync(int? empresaId = null, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<RutaProcesada>> GetConAlertaAsync(Guid? empresaId = null, CancellationToken cancellationToken = default)
     {
         var query = _context.RutasProcesadas
             .AsNoTracking()

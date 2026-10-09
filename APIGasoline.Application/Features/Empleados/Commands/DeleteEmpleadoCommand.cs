@@ -7,7 +7,7 @@ namespace APIGasoline.Application.Features.Empleados.Commands;
 /// <summary>
 /// Soft delete: marca el empleado como eliminado (delete = true), no borra el registro.
 /// </summary>
-public record DeleteEmpleadoCommand(int EmpleadoId) : IRequest;
+public record DeleteEmpleadoCommand(Guid EmpleadoId) : IRequest;
 
 public class DeleteEmpleadoCommandHandler : IRequestHandler<DeleteEmpleadoCommand>
 {

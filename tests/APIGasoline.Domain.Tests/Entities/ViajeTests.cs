@@ -177,5 +177,5 @@ public class ViajeTests
         decimal? lat = 16.753056m,
         decimal? lng = -93.115556m,
         decimal kilometrajeInicial = 15480m)
-        => Viaje.Iniciar(empresaId, carroId, solicitudReservaId, operadorId, fechaInicio ?? Inicio, lat, lng, kilometrajeInicial);
+        => Viaje.Iniciar(Id(empresaId), Id(carroId), Id(solicitudReservaId), Id(operadorId), fechaInicio ?? Inicio, lat, lng, kilometrajeInicial);
 }

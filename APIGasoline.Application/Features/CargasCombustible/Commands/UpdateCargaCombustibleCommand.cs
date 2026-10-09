@@ -16,7 +16,7 @@ namespace APIGasoline.Application.Features.CargasCombustible.Commands;
 /// Si se manda <see cref="NuevaFotoComprobante"/>, reemplaza el comprobante; si es null, se conserva el actual.
 /// </summary>
 public record UpdateCargaCombustibleCommand(
-    int CargaCombustibleId,
+    Guid CargaCombustibleId,
     decimal Litros,
     decimal? Monto,
     ArchivoEntrada? NuevaFotoComprobante,

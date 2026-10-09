@@ -7,7 +7,7 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.Usuarios.Commands;
 
-public record UpdateUsuarioCommand(int UsuarioId, string Email, EstadoUsuario Estado) : IRequest<UsuarioDto>;
+public record UpdateUsuarioCommand(Guid UsuarioId, string Email, EstadoUsuario Estado) : IRequest<UsuarioDto>;
 
 public class UpdateUsuarioCommandHandler : IRequestHandler<UpdateUsuarioCommand, UsuarioDto>
 {

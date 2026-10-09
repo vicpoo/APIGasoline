@@ -6,7 +6,7 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.Viajes.Queries;
 
-public record GetViajeByIdQuery(int ViajeId) : IRequest<ViajeDto>;
+public record GetViajeByIdQuery(Guid ViajeId) : IRequest<ViajeDto>;
 
 public class GetViajeByIdQueryHandler : IRequestHandler<GetViajeByIdQuery, ViajeDto>
 {

@@ -67,5 +67,5 @@ public class NotificacionTests
         TipoNotificacion tipo = TipoNotificacion.NuevaSolicitud,
         int? referenciaId = 1,
         string? mensaje = "Nueva solicitud de reserva")
-        => Notificacion.Crear(empresaId, destinatarioId, tipo, referenciaId, mensaje);
+        => Notificacion.Crear(Id(empresaId), Id(destinatarioId), tipo, Id(referenciaId), mensaje);
 }

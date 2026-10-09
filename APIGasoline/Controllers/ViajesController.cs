@@ -25,10 +25,10 @@ public class ViajesController : ControllerBase
     /// </summary>
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<ViajeDto>>> GetAll(
-        [FromQuery] int? empresaId,
-        [FromQuery] int? carroId,
-        [FromQuery] int? empleadoOperadorId,
-        [FromQuery] int? solicitudReservaId,
+        [FromQuery] Guid? empresaId,
+        [FromQuery] Guid? carroId,
+        [FromQuery] Guid? empleadoOperadorId,
+        [FromQuery] Guid? solicitudReservaId,
         [FromQuery] EstadoViaje? estado,
         CancellationToken cancellationToken)
     {
@@ -38,8 +38,8 @@ public class ViajesController : ControllerBase
         return Ok(viajes);
     }
 
-    [HttpGet("{viajeId:int}")]
-    public async Task<ActionResult<ViajeDto>> GetById(int viajeId, CancellationToken cancellationToken)
+    [HttpGet("{viajeId:guid}")]
+    public async Task<ActionResult<ViajeDto>> GetById(Guid viajeId, CancellationToken cancellationToken)
     {
         var viaje = await _sender.Send(new GetViajeByIdQuery(viajeId), cancellationToken);
         return Ok(viaje);
@@ -66,8 +66,8 @@ public class ViajesController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { viajeId = viaje.ViajeId }, viaje);
     }
 
-    [HttpPost("{viajeId:int}/finalizar")]
-    public async Task<ActionResult<ViajeDto>> Finalizar(int viajeId, FinalizarViajeRequest request, CancellationToken cancellationToken)
+    [HttpPost("{viajeId:guid}/finalizar")]
+    public async Task<ActionResult<ViajeDto>> Finalizar(Guid viajeId, FinalizarViajeRequest request, CancellationToken cancellationToken)
     {
         var command = new FinalizarViajeCommand(
             viajeId,
@@ -79,8 +79,8 @@ public class ViajesController : ControllerBase
         return Ok(await _sender.Send(command, cancellationToken));
     }
 
-    [HttpPost("{viajeId:int}/interrumpir")]
-    public async Task<ActionResult<ViajeDto>> Interrumpir(int viajeId, InterrumpirViajeRequest request, CancellationToken cancellationToken)
+    [HttpPost("{viajeId:guid}/interrumpir")]
+    public async Task<ActionResult<ViajeDto>> Interrumpir(Guid viajeId, InterrumpirViajeRequest request, CancellationToken cancellationToken)
     {
         var command = new InterrumpirViajeCommand(
             viajeId,
@@ -120,8 +120,8 @@ public class ViajesController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { viajeId = viaje.ViajeId }, viaje);
     }
 
-    [HttpDelete("{viajeId:int}")]
-    public async Task<IActionResult> Delete(int viajeId, CancellationToken cancellationToken)
+    [HttpDelete("{viajeId:guid}")]
+    public async Task<IActionResult> Delete(Guid viajeId, CancellationToken cancellationToken)
     {
         await _sender.Send(new DeleteViajeCommand(viajeId), cancellationToken);
         return NoContent();

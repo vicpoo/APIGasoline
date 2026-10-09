@@ -15,13 +15,13 @@ public class EmpleadoRepository : IEmpleadoRepository
 
     // El filtro global (HasQueryFilter) ya excluye los empleados eliminados.
 
-    public Task<Empleado?> GetByIdAsync(int empleadoId, CancellationToken cancellationToken = default)
+    public Task<Empleado?> GetByIdAsync(Guid empleadoId, CancellationToken cancellationToken = default)
         => _context.Empleados.FirstOrDefaultAsync(e => e.EmpleadoId == empleadoId, cancellationToken);
 
-    public Task<Empleado?> GetByUsuarioIdAsync(int usuarioId, CancellationToken cancellationToken = default)
+    public Task<Empleado?> GetByUsuarioIdAsync(Guid usuarioId, CancellationToken cancellationToken = default)
         => _context.Empleados.FirstOrDefaultAsync(e => e.UsuarioId == usuarioId, cancellationToken);
 
-    public async Task<IReadOnlyList<Empleado>> GetAllAsync(int? empresaId = null, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Empleado>> GetAllAsync(Guid? empresaId = null, CancellationToken cancellationToken = default)
     {
         var query = _context.Empleados.AsNoTracking();
 
@@ -33,10 +33,10 @@ public class EmpleadoRepository : IEmpleadoRepository
             .ToListAsync(cancellationToken);
     }
 
-    public Task<bool> ExistsAsync(int empleadoId, CancellationToken cancellationToken = default)
+    public Task<bool> ExistsAsync(Guid empleadoId, CancellationToken cancellationToken = default)
         => _context.Empleados.AnyAsync(e => e.EmpleadoId == empleadoId, cancellationToken);
 
-    public Task<bool> UsuarioAsignadoAsync(int usuarioId, int? excludeEmpleadoId = null, CancellationToken cancellationToken = default)
+    public Task<bool> UsuarioAsignadoAsync(Guid usuarioId, Guid? excludeEmpleadoId = null, CancellationToken cancellationToken = default)
         => _context.Empleados
             .IgnoreQueryFilters()
             .AnyAsync(
@@ -44,7 +44,7 @@ public class EmpleadoRepository : IEmpleadoRepository
                      && (excludeEmpleadoId == null || e.EmpleadoId != excludeEmpleadoId),
                 cancellationToken);
 
-    public async Task<IReadOnlyList<int>> GetIdsConRolAsync(int empresaId, string nombreRol, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Guid>> GetIdsConRolAsync(Guid empresaId, string nombreRol, CancellationToken cancellationToken = default)
         => await _context.Empleados
             .AsNoTracking()
             .Where(e => e.EmpresaId == empresaId

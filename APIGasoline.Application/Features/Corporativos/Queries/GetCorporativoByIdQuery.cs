@@ -6,7 +6,7 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.Corporativos.Queries;
 
-public record GetCorporativoByIdQuery(int CorporativoId) : IRequest<CorporativoDto>;
+public record GetCorporativoByIdQuery(Guid CorporativoId) : IRequest<CorporativoDto>;
 
 public class GetCorporativoByIdQueryHandler : IRequestHandler<GetCorporativoByIdQuery, CorporativoDto>
 {

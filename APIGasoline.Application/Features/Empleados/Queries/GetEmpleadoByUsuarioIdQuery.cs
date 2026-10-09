@@ -12,7 +12,7 @@ namespace APIGasoline.Application.Features.Empleados.Queries;
 /// Obtiene el empleado ligado a un usuario del servicio de seguridad
 /// (útil al iniciar sesión en la app).
 /// </summary>
-public record GetEmpleadoByUsuarioIdQuery(int UsuarioId) : IRequest<EmpleadoDto>;
+public record GetEmpleadoByUsuarioIdQuery(Guid UsuarioId) : IRequest<EmpleadoDto>;
 
 public class GetEmpleadoByUsuarioIdQueryHandler : IRequestHandler<GetEmpleadoByUsuarioIdQuery, EmpleadoDto>
 {

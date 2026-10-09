@@ -8,7 +8,7 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.CargasCombustible.Queries;
 
-public record GetCargaCombustibleByIdQuery(int CargaCombustibleId) : IRequest<CargaCombustibleDto>;
+public record GetCargaCombustibleByIdQuery(Guid CargaCombustibleId) : IRequest<CargaCombustibleDto>;
 
 public class GetCargaCombustibleByIdQueryHandler : IRequestHandler<GetCargaCombustibleByIdQuery, CargaCombustibleDto>
 {

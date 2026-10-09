@@ -13,7 +13,7 @@ namespace APIGasoline.Application.Features.SolicitudesReserva.Commands;
 /// Aprueba la solicitud, marca el carro como ocupado y rechaza automáticamente
 /// las demás solicitudes pendientes de ese mismo carro. Todo en un solo SaveChanges (atómico).
 /// </summary>
-public record AprobarSolicitudReservaCommand(int SolicitudReservaId, int EmpleadoConfirmadorId, string? Motivo) : IRequest<SolicitudReservaDto>;
+public record AprobarSolicitudReservaCommand(Guid SolicitudReservaId, Guid EmpleadoConfirmadorId, string? Motivo) : IRequest<SolicitudReservaDto>;
 
 public class AprobarSolicitudReservaCommandHandler : IRequestHandler<AprobarSolicitudReservaCommand, SolicitudReservaDto>
 {

@@ -14,7 +14,7 @@ public class UsuarioConfiguration : IEntityTypeConfiguration<Usuario>
         builder.HasKey(u => u.UsuarioId);
         builder.Property(u => u.UsuarioId)
             .HasColumnName("usuario_id")
-            .ValueGeneratedOnAdd();
+            .ValueGeneratedNever();
 
         builder.Property(u => u.Email)
             .HasColumnName("email")

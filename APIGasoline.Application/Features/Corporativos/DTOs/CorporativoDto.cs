@@ -1,3 +1,3 @@
 ﻿namespace APIGasoline.Application.Features.Corporativos.DTOs;
 
-public record CorporativoDto(int CorporativoId, string Nombre, bool Activo, DateTime? FechaRegistro);
+public record CorporativoDto(Guid CorporativoId, string Nombre, bool Activo, DateTime? FechaRegistro);

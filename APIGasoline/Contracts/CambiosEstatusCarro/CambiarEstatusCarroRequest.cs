@@ -5,12 +5,12 @@ namespace APIGasoline.Contracts.CambiosEstatusCarro;
 
 public class CambiarEstatusCarroRequest
 {
-    [Range(1, int.MaxValue)]
-    public int CarroId { get; set; }
+    [GuidNoVacio]
+    public Guid CarroId { get; set; }
 
     /// <summary>Empleado que realiza el cambio.</summary>
-    [Range(1, int.MaxValue)]
-    public int EmpleadoId { get; set; }
+    [GuidNoVacio]
+    public Guid EmpleadoId { get; set; }
 
     [Required]
     public EstadoCarro? EstatusNuevo { get; set; }
@@ -20,8 +20,8 @@ public class CambiarEstatusCarroRequest
     public string? Motivo { get; set; }
 
     /// <summary>Si viene y el viaje está en curso, se interrumpe.</summary>
-    [Range(1, int.MaxValue)]
-    public int? ViajeAfectadoId { get; set; }
+    [GuidNoVacio]
+    public Guid? ViajeAfectadoId { get; set; }
 
     /// <summary>Solo para registros offline; si no viene, se usa la hora del servidor.</summary>
     public DateTime? FechaCambio { get; set; }

@@ -6,7 +6,7 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.Divisiones.Commands;
 
-public record UpdateDivisionCommand(int DivisionId, int CorporativoId, string Nombre, bool Activo) : IRequest<DivisionDto>;
+public record UpdateDivisionCommand(Guid DivisionId, Guid CorporativoId, string Nombre, bool Activo) : IRequest<DivisionDto>;
 
 public class UpdateDivisionCommandHandler : IRequestHandler<UpdateDivisionCommand, DivisionDto>
 {

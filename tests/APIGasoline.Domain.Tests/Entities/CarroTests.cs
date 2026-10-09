@@ -244,5 +244,5 @@ public class CarroTests
         decimal? capacidadTanque = 80m,
         decimal kilometraje = 15000m,
         EstadoCarro estado = EstadoCarro.Disponible)
-        => Carro.Crear(1, marca, modelo, anio, color, placas, foto, capacidadTanque, kilometraje, AnioActual, estado);
+        => Carro.Crear(Id(1), marca, modelo, anio, color, placas, foto, capacidadTanque, kilometraje, AnioActual, estado);
 }

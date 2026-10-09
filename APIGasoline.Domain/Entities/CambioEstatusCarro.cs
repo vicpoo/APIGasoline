@@ -7,11 +7,11 @@ public class CambioEstatusCarro
 {
     public const int MotivoMaxLength = 255;
 
-    public int CambioEstatusCarroId { get; private set; }
-    public int EmpresaId { get; private set; }
-    public int CarroId { get; private set; }
-    public int EmpleadoId { get; private set; }
-    public int? ViajeAfectadoId { get; private set; }
+    public Guid CambioEstatusCarroId { get; private set; } = Guid.CreateVersion7();
+    public Guid EmpresaId { get; private set; }
+    public Guid CarroId { get; private set; }
+    public Guid EmpleadoId { get; private set; }
+    public Guid? ViajeAfectadoId { get; private set; }
     public EstadoCarro EstatusAnterior { get; private set; }
     public EstadoCarro EstatusNuevo { get; private set; }
     public string? Motivo { get; private set; }
@@ -27,20 +27,20 @@ public class CambioEstatusCarro
 
     public static CambioEstatusCarro Registrar(
         Carro carro,
-        int empleadoId,
+        Guid empleadoId,
         EstadoCarro estatusNuevo,
         string? motivo,
-        int? viajeAfectadoId = null,
+        Guid? viajeAfectadoId = null,
         DateTime? fechaCambio = null,
         bool sincronizado = false)
     {
         ArgumentNullException.ThrowIfNull(carro);
 
-        if (empleadoId <= 0)
-            throw new DomainException("El id del empleado debe ser mayor a cero.");
+        if (empleadoId == Guid.Empty)
+            throw new DomainException("El id del empleado es obligatorio.");
 
-        if (viajeAfectadoId is <= 0)
-            throw new DomainException("El id del viaje afectado debe ser mayor a cero.");
+        if (viajeAfectadoId == Guid.Empty)
+            throw new DomainException("El id del viaje afectado es obligatorio.");
 
         var motivoNormalizado = string.IsNullOrWhiteSpace(motivo) ? null : motivo.Trim();
 

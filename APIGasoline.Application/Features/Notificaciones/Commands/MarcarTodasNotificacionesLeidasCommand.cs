@@ -6,7 +6,7 @@ namespace APIGasoline.Application.Features.Notificaciones.Commands;
 /// <summary>
 /// Marca como leídas todas las notificaciones pendientes de un empleado. Devuelve cuántas se marcaron.
 /// </summary>
-public record MarcarTodasNotificacionesLeidasCommand(int EmpleadoDestinatarioId) : IRequest<int>;
+public record MarcarTodasNotificacionesLeidasCommand(Guid EmpleadoDestinatarioId) : IRequest<int>;
 
 public class MarcarTodasNotificacionesLeidasCommandHandler : IRequestHandler<MarcarTodasNotificacionesLeidasCommand, int>
 {

@@ -7,7 +7,7 @@ public class Corporativo
 {
     public const int NombreMaxLength = 150;
 
-    public int CorporativoId { get; private set; }
+    public Guid CorporativoId { get; private set; } = Guid.CreateVersion7();
     public string Nombre { get; private set; } = string.Empty;
     public bool Activo { get; private set; } = true;
 

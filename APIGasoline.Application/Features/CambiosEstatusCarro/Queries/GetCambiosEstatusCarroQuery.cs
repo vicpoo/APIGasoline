@@ -9,8 +9,8 @@ namespace APIGasoline.Application.Features.CambiosEstatusCarro.Queries;
 /// Historial del más reciente al más antiguo. Filtros opcionales: empresa, carro y fechas.
 /// </summary>
 public record GetCambiosEstatusCarroQuery(
-    int? EmpresaId = null,
-    int? CarroId = null,
+    Guid? EmpresaId = null,
+    Guid? CarroId = null,
     DateTime? Desde = null,
     DateTime? Hasta = null) : IRequest<IReadOnlyList<CambioEstatusCarroDto>>;
 

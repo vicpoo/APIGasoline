@@ -1,5 +1,4 @@
 ﻿using System;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -19,8 +18,7 @@ namespace APIGasoline.Infrastructure.Migrations
                 name: "corporativo",
                 columns: table => new
                 {
-                    corporativo_id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    corporativo_id = table.Column<Guid>(type: "binary(16)", nullable: false),
                     nombre = table.Column<string>(type: "varchar(150)", maxLength: 150, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     activo = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: true),
@@ -36,8 +34,7 @@ namespace APIGasoline.Infrastructure.Migrations
                 name: "privilegio",
                 columns: table => new
                 {
-                    privilegio_id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    privilegio_id = table.Column<Guid>(type: "binary(16)", nullable: false),
                     nombre = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     descripcion = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: true)
@@ -54,8 +51,7 @@ namespace APIGasoline.Infrastructure.Migrations
                 name: "usuario",
                 columns: table => new
                 {
-                    usuario_id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    usuario_id = table.Column<Guid>(type: "binary(16)", nullable: false),
                     email = table.Column<string>(type: "varchar(150)", maxLength: 150, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     password_hash = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false)
@@ -74,9 +70,8 @@ namespace APIGasoline.Infrastructure.Migrations
                 name: "division",
                 columns: table => new
                 {
-                    division_id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    corporativo_id = table.Column<int>(type: "int", nullable: false),
+                    division_id = table.Column<Guid>(type: "binary(16)", nullable: false),
+                    corporativo_id = table.Column<Guid>(type: "binary(16)", nullable: false),
                     nombre = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     activo = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: true),
@@ -99,10 +94,9 @@ namespace APIGasoline.Infrastructure.Migrations
                 name: "empresa",
                 columns: table => new
                 {
-                    empresa_id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    corporativo_id = table.Column<int>(type: "int", nullable: true),
-                    division_id = table.Column<int>(type: "int", nullable: true),
+                    empresa_id = table.Column<Guid>(type: "binary(16)", nullable: false),
+                    corporativo_id = table.Column<Guid>(type: "binary(16)", nullable: true),
+                    division_id = table.Column<Guid>(type: "binary(16)", nullable: true),
                     nombre = table.Column<string>(type: "varchar(150)", maxLength: 150, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     delete = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: false),
@@ -130,9 +124,8 @@ namespace APIGasoline.Infrastructure.Migrations
                 name: "carro",
                 columns: table => new
                 {
-                    carro_id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    empresa_id = table.Column<int>(type: "int", nullable: false),
+                    carro_id = table.Column<Guid>(type: "binary(16)", nullable: false),
+                    empresa_id = table.Column<Guid>(type: "binary(16)", nullable: false),
                     marca = table.Column<string>(type: "varchar(80)", maxLength: 80, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     modelo = table.Column<string>(type: "varchar(80)", maxLength: 80, nullable: false)
@@ -167,9 +160,8 @@ namespace APIGasoline.Infrastructure.Migrations
                 name: "centro_costo",
                 columns: table => new
                 {
-                    centro_costo_id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    empresa_id = table.Column<int>(type: "int", nullable: false),
+                    centro_costo_id = table.Column<Guid>(type: "binary(16)", nullable: false),
+                    empresa_id = table.Column<Guid>(type: "binary(16)", nullable: false),
                     nombre = table.Column<string>(type: "varchar(150)", maxLength: 150, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     clave = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false)
@@ -193,10 +185,9 @@ namespace APIGasoline.Infrastructure.Migrations
                 name: "empleado",
                 columns: table => new
                 {
-                    empleado_id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    empresa_id = table.Column<int>(type: "int", nullable: false),
-                    usuario_id = table.Column<int>(type: "int", nullable: false),
+                    empleado_id = table.Column<Guid>(type: "binary(16)", nullable: false),
+                    empresa_id = table.Column<Guid>(type: "binary(16)", nullable: false),
+                    usuario_id = table.Column<Guid>(type: "binary(16)", nullable: false),
                     nombre_completo = table.Column<string>(type: "varchar(150)", maxLength: 150, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     foto_perfil = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: true)
@@ -229,9 +220,8 @@ namespace APIGasoline.Infrastructure.Migrations
                 name: "rol",
                 columns: table => new
                 {
-                    rol_id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    empresa_id = table.Column<int>(type: "int", nullable: true),
+                    rol_id = table.Column<Guid>(type: "binary(16)", nullable: false),
+                    empresa_id = table.Column<Guid>(type: "binary(16)", nullable: true),
                     nombre = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     descripcion = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: true)
@@ -254,13 +244,12 @@ namespace APIGasoline.Infrastructure.Migrations
                 name: "notificacion",
                 columns: table => new
                 {
-                    notificacion_id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    empresa_id = table.Column<int>(type: "int", nullable: false),
-                    empleado_destinatario_id = table.Column<int>(type: "int", nullable: false),
+                    notificacion_id = table.Column<Guid>(type: "binary(16)", nullable: false),
+                    empresa_id = table.Column<Guid>(type: "binary(16)", nullable: false),
+                    empleado_destinatario_id = table.Column<Guid>(type: "binary(16)", nullable: false),
                     tipo = table.Column<string>(type: "enum('nueva_solicitud','resultado_solicitud','cambio_estatus_forzado')", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    referencia_id = table.Column<int>(type: "int", nullable: true),
+                    referencia_id = table.Column<Guid>(type: "binary(16)", nullable: true),
                     mensaje = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     leida = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: false),
@@ -288,15 +277,14 @@ namespace APIGasoline.Infrastructure.Migrations
                 name: "solicitud_reserva",
                 columns: table => new
                 {
-                    solicitud_reserva_id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    empresa_id = table.Column<int>(type: "int", nullable: false),
-                    carro_id = table.Column<int>(type: "int", nullable: false),
-                    empleado_solicitante_id = table.Column<int>(type: "int", nullable: false),
+                    solicitud_reserva_id = table.Column<Guid>(type: "binary(16)", nullable: false),
+                    empresa_id = table.Column<Guid>(type: "binary(16)", nullable: false),
+                    carro_id = table.Column<Guid>(type: "binary(16)", nullable: false),
+                    empleado_solicitante_id = table.Column<Guid>(type: "binary(16)", nullable: false),
                     fecha_solicitud = table.Column<DateTime>(type: "timestamp", nullable: true, defaultValueSql: "CURRENT_TIMESTAMP"),
                     estado = table.Column<string>(type: "enum('pendiente','aprobada','rechazada','cancelada')", nullable: false, defaultValueSql: "'pendiente'")
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    empleado_confirmador_id = table.Column<int>(type: "int", nullable: true),
+                    empleado_confirmador_id = table.Column<Guid>(type: "binary(16)", nullable: true),
                     fecha_resolucion = table.Column<DateTime>(type: "timestamp", nullable: true),
                     motivo_resolucion = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4")
@@ -336,10 +324,9 @@ namespace APIGasoline.Infrastructure.Migrations
                 name: "rol_privilegio",
                 columns: table => new
                 {
-                    rol_privilegio_id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    rol_id = table.Column<int>(type: "int", nullable: false),
-                    privilegio_id = table.Column<int>(type: "int", nullable: false)
+                    rol_privilegio_id = table.Column<Guid>(type: "binary(16)", nullable: false),
+                    rol_id = table.Column<Guid>(type: "binary(16)", nullable: false),
+                    privilegio_id = table.Column<Guid>(type: "binary(16)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -363,10 +350,9 @@ namespace APIGasoline.Infrastructure.Migrations
                 name: "usuario_rol",
                 columns: table => new
                 {
-                    usuario_rol_id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    usuario_id = table.Column<int>(type: "int", nullable: false),
-                    rol_id = table.Column<int>(type: "int", nullable: false)
+                    usuario_rol_id = table.Column<Guid>(type: "binary(16)", nullable: false),
+                    usuario_id = table.Column<Guid>(type: "binary(16)", nullable: false),
+                    rol_id = table.Column<Guid>(type: "binary(16)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -390,12 +376,11 @@ namespace APIGasoline.Infrastructure.Migrations
                 name: "viaje",
                 columns: table => new
                 {
-                    viaje_id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    empresa_id = table.Column<int>(type: "int", nullable: false),
-                    carro_id = table.Column<int>(type: "int", nullable: false),
-                    solicitud_reserva_id = table.Column<int>(type: "int", nullable: true),
-                    empleado_operador_id = table.Column<int>(type: "int", nullable: false),
+                    viaje_id = table.Column<Guid>(type: "binary(16)", nullable: false),
+                    empresa_id = table.Column<Guid>(type: "binary(16)", nullable: false),
+                    carro_id = table.Column<Guid>(type: "binary(16)", nullable: false),
+                    solicitud_reserva_id = table.Column<Guid>(type: "binary(16)", nullable: true),
+                    empleado_operador_id = table.Column<Guid>(type: "binary(16)", nullable: false),
                     fecha_inicio = table.Column<DateTime>(type: "timestamp", nullable: false),
                     ubicacion_inicio_lat = table.Column<decimal>(type: "decimal(9,6)", precision: 9, scale: 6, nullable: true),
                     ubicacion_inicio_lng = table.Column<decimal>(type: "decimal(9,6)", precision: 9, scale: 6, nullable: true),
@@ -446,12 +431,11 @@ namespace APIGasoline.Infrastructure.Migrations
                 name: "cambio_estatus_carro",
                 columns: table => new
                 {
-                    cambio_estatus_carro_id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    empresa_id = table.Column<int>(type: "int", nullable: false),
-                    carro_id = table.Column<int>(type: "int", nullable: false),
-                    empleado_id = table.Column<int>(type: "int", nullable: false),
-                    viaje_afectado_id = table.Column<int>(type: "int", nullable: true),
+                    cambio_estatus_carro_id = table.Column<Guid>(type: "binary(16)", nullable: false),
+                    empresa_id = table.Column<Guid>(type: "binary(16)", nullable: false),
+                    carro_id = table.Column<Guid>(type: "binary(16)", nullable: false),
+                    empleado_id = table.Column<Guid>(type: "binary(16)", nullable: false),
+                    viaje_afectado_id = table.Column<Guid>(type: "binary(16)", nullable: true),
                     estatus_anterior = table.Column<string>(type: "enum('disponible','ocupado','en_mantenimiento')", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     estatus_nuevo = table.Column<string>(type: "enum('disponible','ocupado','en_mantenimiento')", nullable: false)
@@ -495,10 +479,9 @@ namespace APIGasoline.Infrastructure.Migrations
                 name: "carga_combustible",
                 columns: table => new
                 {
-                    carga_combustible_id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    empresa_id = table.Column<int>(type: "int", nullable: false),
-                    viaje_id = table.Column<int>(type: "int", nullable: false),
+                    carga_combustible_id = table.Column<Guid>(type: "binary(16)", nullable: false),
+                    empresa_id = table.Column<Guid>(type: "binary(16)", nullable: false),
+                    viaje_id = table.Column<Guid>(type: "binary(16)", nullable: false),
                     litros = table.Column<decimal>(type: "decimal(8,2)", precision: 8, scale: 2, nullable: false),
                     monto = table.Column<decimal>(type: "decimal(10,2)", precision: 10, scale: 2, nullable: true),
                     foto_comprobante = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false)
@@ -530,12 +513,14 @@ namespace APIGasoline.Infrastructure.Migrations
                 name: "punto_ruta",
                 columns: table => new
                 {
-                    punto_ruta_id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    empresa_id = table.Column<int>(type: "int", nullable: false),
-                    viaje_id = table.Column<int>(type: "int", nullable: false),
+                    punto_ruta_id = table.Column<Guid>(type: "binary(16)", nullable: false),
+                    empresa_id = table.Column<Guid>(type: "binary(16)", nullable: false),
+                    viaje_id = table.Column<Guid>(type: "binary(16)", nullable: false),
                     latitud = table.Column<decimal>(type: "decimal(9,6)", precision: 9, scale: 6, nullable: false),
                     longitud = table.Column<decimal>(type: "decimal(9,6)", precision: 9, scale: 6, nullable: false),
+                    precision_metros = table.Column<decimal>(type: "decimal(6,2)", precision: 6, scale: 2, nullable: true),
+                    altitud = table.Column<decimal>(type: "decimal(7,2)", precision: 7, scale: 2, nullable: true),
+                    velocidad = table.Column<decimal>(type: "decimal(6,2)", precision: 6, scale: 2, nullable: true),
                     timestamp_captura = table.Column<DateTime>(type: "timestamp", nullable: false),
                     sincronizado = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: false)
                 },
@@ -550,6 +535,50 @@ namespace APIGasoline.Infrastructure.Migrations
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "fk_punto_ruta_viaje",
+                        columns: x => new { x.empresa_id, x.viaje_id },
+                        principalTable: "viaje",
+                        principalColumns: new[] { "empresa_id", "viaje_id" },
+                        onDelete: ReferentialAction.Cascade);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "ruta_procesada",
+                columns: table => new
+                {
+                    ruta_procesada_id = table.Column<Guid>(type: "binary(16)", nullable: false),
+                    empresa_id = table.Column<Guid>(type: "binary(16)", nullable: false),
+                    viaje_id = table.Column<Guid>(type: "binary(16)", nullable: false),
+                    puntos_recibidos = table.Column<int>(type: "int", nullable: false, defaultValue: 0),
+                    puntos_descartados = table.Column<int>(type: "int", nullable: false, defaultValue: 0),
+                    distancia_gps_km = table.Column<decimal>(type: "decimal(10,3)", precision: 10, scale: 3, nullable: false, defaultValue: 0m),
+                    tiempo_movimiento_seg = table.Column<int>(type: "int", nullable: false, defaultValue: 0),
+                    tiempo_detenido_seg = table.Column<int>(type: "int", nullable: false, defaultValue: 0),
+                    velocidad_promedio_kmh = table.Column<decimal>(type: "decimal(6,2)", precision: 6, scale: 2, nullable: true),
+                    velocidad_maxima_kmh = table.Column<decimal>(type: "decimal(6,2)", precision: 6, scale: 2, nullable: true),
+                    distancia_odometro_km = table.Column<decimal>(type: "decimal(10,2)", precision: 10, scale: 2, nullable: true),
+                    diferencia_km = table.Column<decimal>(type: "decimal(10,2)", precision: 10, scale: 2, nullable: true),
+                    diferencia_porcentaje = table.Column<decimal>(type: "decimal(7,2)", precision: 7, scale: 2, nullable: true),
+                    alerta_kilometraje = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: false),
+                    litros_cargados = table.Column<decimal>(type: "decimal(8,2)", precision: 8, scale: 2, nullable: false, defaultValue: 0m),
+                    rendimiento_km_por_litro = table.Column<decimal>(type: "decimal(6,2)", precision: 6, scale: 2, nullable: true),
+                    polyline = table.Column<string>(type: "text", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    version_algoritmo = table.Column<string>(type: "varchar(20)", maxLength: 20, nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    fecha_proceso = table.Column<DateTime>(type: "timestamp", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ruta_procesada", x => x.ruta_procesada_id);
+                    table.ForeignKey(
+                        name: "fk_ruta_procesada_empresa",
+                        column: x => x.empresa_id,
+                        principalTable: "empresa",
+                        principalColumn: "empresa_id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_ruta_procesada_viaje",
                         columns: x => new { x.empresa_id, x.viaje_id },
                         principalTable: "viaje",
                         principalColumns: new[] { "empresa_id", "viaje_id" },
@@ -740,6 +769,33 @@ namespace APIGasoline.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "ix_ruta_procesada_empresa_id",
+                table: "ruta_procesada",
+                column: "empresa_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_ruta_procesada_empresa_id_alerta_kilometraje",
+                table: "ruta_procesada",
+                columns: new[] { "empresa_id", "alerta_kilometraje" });
+
+            migrationBuilder.CreateIndex(
+                name: "ix_ruta_procesada_empresa_id_viaje_id",
+                table: "ruta_procesada",
+                columns: new[] { "empresa_id", "viaje_id" });
+
+            migrationBuilder.CreateIndex(
+                name: "uq_ruta_procesada_empresa_id_ruta_procesada_id",
+                table: "ruta_procesada",
+                columns: new[] { "empresa_id", "ruta_procesada_id" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "uq_ruta_procesada_viaje_id",
+                table: "ruta_procesada",
+                column: "viaje_id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "ix_solicitud_reserva_empresa_id",
                 table: "solicitud_reserva",
                 column: "empresa_id");
@@ -824,13 +880,16 @@ namespace APIGasoline.Infrastructure.Migrations
                 name: "rol_privilegio");
 
             migrationBuilder.DropTable(
+                name: "ruta_procesada");
+
+            migrationBuilder.DropTable(
                 name: "usuario_rol");
 
             migrationBuilder.DropTable(
-                name: "viaje");
+                name: "privilegio");
 
             migrationBuilder.DropTable(
-                name: "privilegio");
+                name: "viaje");
 
             migrationBuilder.DropTable(
                 name: "rol");

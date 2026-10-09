@@ -6,7 +6,7 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.Corporativos.Commands;
 
-public record UpdateCorporativoCommand(int CorporativoId, string Nombre, bool Activo) : IRequest<CorporativoDto>;
+public record UpdateCorporativoCommand(Guid CorporativoId, string Nombre, bool Activo) : IRequest<CorporativoDto>;
 
 public class UpdateCorporativoCommandHandler : IRequestHandler<UpdateCorporativoCommand, CorporativoDto>
 {

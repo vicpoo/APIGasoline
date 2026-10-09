@@ -13,10 +13,10 @@ public class DivisionRepository : IDivisionRepository
         _context = context;
     }
 
-    public Task<Division?> GetByIdAsync(int divisionId, CancellationToken cancellationToken = default)
+    public Task<Division?> GetByIdAsync(Guid divisionId, CancellationToken cancellationToken = default)
         => _context.Divisiones.FirstOrDefaultAsync(d => d.DivisionId == divisionId, cancellationToken);
 
-    public async Task<IReadOnlyList<Division>> GetAllAsync(int? corporativoId = null, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Division>> GetAllAsync(Guid? corporativoId = null, CancellationToken cancellationToken = default)
     {
         var query = _context.Divisiones.AsNoTracking();
 
@@ -28,10 +28,10 @@ public class DivisionRepository : IDivisionRepository
             .ToListAsync(cancellationToken);
     }
 
-    public Task<bool> ExistsAsync(int divisionId, CancellationToken cancellationToken = default)
+    public Task<bool> ExistsAsync(Guid divisionId, CancellationToken cancellationToken = default)
         => _context.Divisiones.AnyAsync(d => d.DivisionId == divisionId, cancellationToken);
 
-    public Task<bool> ExistsByCorporativoAsync(int corporativoId, CancellationToken cancellationToken = default)
+    public Task<bool> ExistsByCorporativoAsync(Guid corporativoId, CancellationToken cancellationToken = default)
         => _context.Divisiones.AnyAsync(d => d.CorporativoId == corporativoId, cancellationToken);
 
     public async Task AddAsync(Division division, CancellationToken cancellationToken = default)

@@ -7,8 +7,8 @@ namespace APIGasoline.Contracts.CargasCombustible;
 /// </summary>
 public class CreateCargaCombustibleRequest
 {
-    [Range(1, int.MaxValue)]
-    public int ViajeId { get; set; }
+    [GuidNoVacio]
+    public Guid ViajeId { get; set; }
 
     [Required]
     public decimal? Litros { get; set; }

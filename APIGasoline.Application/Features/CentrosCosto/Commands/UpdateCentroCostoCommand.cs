@@ -6,7 +6,7 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.CentrosCosto.Commands;
 
-public record UpdateCentroCostoCommand(int CentroCostoId, int EmpresaId, string Nombre, string Clave, bool Activo) : IRequest<CentroCostoDto>;
+public record UpdateCentroCostoCommand(Guid CentroCostoId, Guid EmpresaId, string Nombre, string Clave, bool Activo) : IRequest<CentroCostoDto>;
 
 public class UpdateCentroCostoCommandHandler : IRequestHandler<UpdateCentroCostoCommand, CentroCostoDto>
 {

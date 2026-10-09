@@ -13,7 +13,7 @@ public class RutaProcesadaConfiguration : IEntityTypeConfiguration<RutaProcesada
         builder.HasKey(r => r.RutaProcesadaId);
         builder.Property(r => r.RutaProcesadaId)
             .HasColumnName("ruta_procesada_id")
-            .ValueGeneratedOnAdd();
+            .ValueGeneratedNever();
 
         builder.Property(r => r.EmpresaId).HasColumnName("empresa_id").IsRequired();
         builder.Property(r => r.ViajeId).HasColumnName("viaje_id").IsRequired();

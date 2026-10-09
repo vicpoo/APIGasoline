@@ -4,11 +4,11 @@ namespace APIGasoline.Contracts.Empleados;
 
 public class CreateEmpleadoRequest
 {
-    [Range(1, int.MaxValue)]
-    public int EmpresaId { get; set; }
+    [GuidNoVacio]
+    public Guid EmpresaId { get; set; }
 
-    [Range(1, int.MaxValue)]
-    public int UsuarioId { get; set; }
+    [GuidNoVacio]
+    public Guid UsuarioId { get; set; }
 
     [Required]
     [StringLength(150)]

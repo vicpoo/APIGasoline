@@ -6,9 +6,9 @@ namespace APIGasoline.Domain.Entities;
 
 public class RutaProcesada
 {
-    public int RutaProcesadaId { get; private set; }
-    public int EmpresaId { get; private set; }
-    public int ViajeId { get; private set; }
+    public Guid RutaProcesadaId { get; private set; } = Guid.CreateVersion7();
+    public Guid EmpresaId { get; private set; }
+    public Guid ViajeId { get; private set; }
 
     // --- Limpieza ---
     public int PuntosRecibidos { get; private set; }
@@ -43,13 +43,13 @@ public class RutaProcesada
     {
     }
 
-    public static RutaProcesada Crear(int empresaId, int viajeId, ResultadoRuta resultado, DateTime fechaProceso)
+    public static RutaProcesada Crear(Guid empresaId, Guid viajeId, ResultadoRuta resultado, DateTime fechaProceso)
     {
-        if (empresaId <= 0)
-            throw new DomainException("El id de la empresa debe ser mayor a cero.");
+        if (empresaId == Guid.Empty)
+            throw new DomainException("El id de la empresa es obligatorio.");
 
-        if (viajeId <= 0)
-            throw new DomainException("El id del viaje debe ser mayor a cero.");
+        if (viajeId == Guid.Empty)
+            throw new DomainException("El id del viaje es obligatorio.");
 
         var ruta = new RutaProcesada { EmpresaId = empresaId, ViajeId = viajeId };
         ruta.Actualizar(resultado, fechaProceso);

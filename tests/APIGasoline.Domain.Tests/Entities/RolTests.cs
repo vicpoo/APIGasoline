@@ -14,7 +14,7 @@ public class RolTests
         var rol = Rol.Crear("Confirmador", null);
 
         Assert.True(rol.EsGlobal);
-        Assert.True(rol.DisponiblePara(1));
+        Assert.True(rol.DisponiblePara(Id(1)));
         Assert.True(rol.DisponiblePara(null));
     }
 
@@ -23,15 +23,15 @@ public class RolTests
     [InlineData(2, false)]
     public void DisponiblePara_RolDeEmpresa_SoloParaSuEmpresa(int empresaId, bool esperado)
     {
-        var rol = Rol.Crear("Gestor de activos", null, empresaId: 1);
+        var rol = Rol.Crear("Gestor de activos", null, empresaId: Id(1));
 
-        Assert.Equal(esperado, rol.DisponiblePara(empresaId));
+        Assert.Equal(esperado, rol.DisponiblePara(Id(empresaId)));
     }
 
     [Fact]
     public void Crear_EmpresaCero_LanzaDomainException()
     {
-        Assert.Throws<DomainException>(() => Rol.Crear("Operador", null, empresaId: 0));
+        Assert.Throws<DomainException>(() => Rol.Crear("Operador", null, empresaId: Guid.Empty));
     }
 
     [Theory]

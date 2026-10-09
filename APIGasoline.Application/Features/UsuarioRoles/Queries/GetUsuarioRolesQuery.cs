@@ -8,7 +8,7 @@ namespace APIGasoline.Application.Features.UsuarioRoles.Queries;
 /// <summary>
 /// Lista las asignaciones. Se puede filtrar por usuario, por rol o por ambos.
 /// </summary>
-public record GetUsuarioRolesQuery(int? UsuarioId = null, int? RolId = null) : IRequest<IReadOnlyList<UsuarioRolDto>>;
+public record GetUsuarioRolesQuery(Guid? UsuarioId = null, Guid? RolId = null) : IRequest<IReadOnlyList<UsuarioRolDto>>;
 
 public class GetUsuarioRolesQueryHandler : IRequestHandler<GetUsuarioRolesQuery, IReadOnlyList<UsuarioRolDto>>
 {

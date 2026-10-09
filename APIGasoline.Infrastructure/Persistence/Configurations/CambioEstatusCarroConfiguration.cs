@@ -14,7 +14,7 @@ public class CambioEstatusCarroConfiguration : IEntityTypeConfiguration<CambioEs
         builder.HasKey(c => c.CambioEstatusCarroId);
         builder.Property(c => c.CambioEstatusCarroId)
             .HasColumnName("cambio_estatus_carro_id")
-            .ValueGeneratedOnAdd();
+            .ValueGeneratedNever();
 
         builder.Property(c => c.EmpresaId).HasColumnName("empresa_id").IsRequired();
         builder.Property(c => c.CarroId).HasColumnName("carro_id").IsRequired();

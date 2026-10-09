@@ -4,8 +4,8 @@ namespace APIGasoline.Contracts.Divisiones;
 
 public class UpdateDivisionRequest
 {
-    [Range(1, int.MaxValue)]
-    public int CorporativoId { get; set; }
+    [GuidNoVacio]
+    public Guid CorporativoId { get; set; }
 
     [Required]
     [StringLength(100)]

@@ -8,9 +8,9 @@ public class CreateEmpresaRequest
     [StringLength(150)]
     public string Nombre { get; set; } = string.Empty;
 
-    [Range(1, int.MaxValue)]
-    public int? CorporativoId { get; set; }
+    [GuidNoVacio]
+    public Guid? CorporativoId { get; set; }
 
-    [Range(1, int.MaxValue)]
-    public int? DivisionId { get; set; }
+    [GuidNoVacio]
+    public Guid? DivisionId { get; set; }
 }

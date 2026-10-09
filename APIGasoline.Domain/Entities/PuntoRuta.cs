@@ -14,9 +14,9 @@ public class PuntoRuta
     public const decimal AltitudMaxima = 9000m;        // Everest ≈ 8849 m
     public const decimal VelocidadMaxima = 9999.99m;   // decimal(6,2), en m/s
 
-    public int PuntoRutaId { get; private set; }
-    public int EmpresaId { get; private set; }
-    public int ViajeId { get; private set; }
+    public Guid PuntoRutaId { get; private set; } = Guid.CreateVersion7();
+    public Guid EmpresaId { get; private set; }
+    public Guid ViajeId { get; private set; }
     public decimal Latitud { get; private set; }
     public decimal Longitud { get; private set; }
 
@@ -46,8 +46,8 @@ public class PuntoRuta
     /// (que solo manda latitud, longitud y hora) siga funcionando.
     /// </remarks>
     public static PuntoRuta Crear(
-        int empresaId,
-        int viajeId,
+        Guid empresaId,
+        Guid viajeId,
         decimal latitud,
         decimal longitud,
         DateTime timestampCaptura,
@@ -56,11 +56,11 @@ public class PuntoRuta
         decimal? altitud = null,
         decimal? velocidad = null)
     {
-        if (empresaId <= 0)
-            throw new DomainException("El id de la empresa debe ser mayor a cero.");
+        if (empresaId == Guid.Empty)
+            throw new DomainException("El id de la empresa es obligatorio.");
 
-        if (viajeId <= 0)
-            throw new DomainException("El id del viaje debe ser mayor a cero.");
+        if (viajeId == Guid.Empty)
+            throw new DomainException("El id del viaje es obligatorio.");
 
         if (latitud is < -90m or > 90m)
             throw new DomainException($"La latitud {latitud} debe estar entre -90 y 90.");

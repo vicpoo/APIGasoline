@@ -14,7 +14,7 @@ public class CarroConfiguration : IEntityTypeConfiguration<Carro>
         builder.HasKey(c => c.CarroId);
         builder.Property(c => c.CarroId)
             .HasColumnName("carro_id")
-            .ValueGeneratedOnAdd();
+            .ValueGeneratedNever();
 
         builder.Property(c => c.EmpresaId)
             .HasColumnName("empresa_id")

@@ -29,7 +29,7 @@ internal static class CargaCombustibleValidator
             throw new BadRequestException(
                 $"Los litros ({carga.Litros}) exceden la capacidad del tanque del carro ({carro.CapacidadTanque}).");
 
-        var excludeId = carga.CargaCombustibleId == 0 ? (int?)null : carga.CargaCombustibleId;
+        var excludeId = carga.CargaCombustibleId;
 
         if (await unitOfWork.CargasCombustible.ExisteEnFechaAsync(viaje.ViajeId, carga.FechaCarga, excludeId, cancellationToken))
             throw new ConflictException("Ya existe una carga registrada para este viaje en la misma fecha y hora.");

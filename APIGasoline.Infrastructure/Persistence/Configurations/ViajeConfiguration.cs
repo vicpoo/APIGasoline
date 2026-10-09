@@ -14,7 +14,7 @@ public class ViajeConfiguration : IEntityTypeConfiguration<Viaje>
         builder.HasKey(v => v.ViajeId);
         builder.Property(v => v.ViajeId)
             .HasColumnName("viaje_id")
-            .ValueGeneratedOnAdd();
+            .ValueGeneratedNever();
 
         builder.Property(v => v.EmpresaId).HasColumnName("empresa_id").IsRequired();
         builder.Property(v => v.CarroId).HasColumnName("carro_id").IsRequired();

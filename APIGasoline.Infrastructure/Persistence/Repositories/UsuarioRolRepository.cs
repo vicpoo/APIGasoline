@@ -13,10 +13,10 @@ public class UsuarioRolRepository : IUsuarioRolRepository
         _context = context;
     }
 
-    public Task<UsuarioRol?> GetByIdAsync(int usuarioRolId, CancellationToken cancellationToken = default)
+    public Task<UsuarioRol?> GetByIdAsync(Guid usuarioRolId, CancellationToken cancellationToken = default)
         => _context.UsuarioRoles.FirstOrDefaultAsync(ur => ur.UsuarioRolId == usuarioRolId, cancellationToken);
 
-    public async Task<IReadOnlyList<UsuarioRol>> GetAllAsync(int? usuarioId = null, int? rolId = null, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<UsuarioRol>> GetAllAsync(Guid? usuarioId = null, Guid? rolId = null, CancellationToken cancellationToken = default)
     {
         var query = _context.UsuarioRoles.AsNoTracking();
 
@@ -31,7 +31,7 @@ public class UsuarioRolRepository : IUsuarioRolRepository
             .ToListAsync(cancellationToken);
     }
 
-    public Task<bool> AsignacionExistsAsync(int usuarioId, int rolId, int? excludeUsuarioRolId = null, CancellationToken cancellationToken = default)
+    public Task<bool> AsignacionExistsAsync(Guid usuarioId, Guid rolId, Guid? excludeUsuarioRolId = null, CancellationToken cancellationToken = default)
         => _context.UsuarioRoles.AnyAsync(
             ur => ur.UsuarioId == usuarioId
                   && ur.RolId == rolId

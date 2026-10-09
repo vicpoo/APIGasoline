@@ -8,9 +8,9 @@ public class CargaCombustible
     public const decimal MontoMaximo = 99999999.99m;    // decimal(10,2)
     public const int FotoMaxLength = 255;
 
-    public int CargaCombustibleId { get; private set; }
-    public int EmpresaId { get; private set; }
-    public int ViajeId { get; private set; }
+    public Guid CargaCombustibleId { get; private set; } = Guid.CreateVersion7();
+    public Guid EmpresaId { get; private set; }
+    public Guid ViajeId { get; private set; }
     public decimal Litros { get; private set; }
     public decimal? Monto { get; private set; }
 
@@ -29,8 +29,8 @@ public class CargaCombustible
     }
 
     public static CargaCombustible Crear(
-        int empresaId,
-        int viajeId,
+        Guid empresaId,
+        Guid viajeId,
         decimal litros,
         decimal? monto,
         string fotoComprobante,
@@ -39,11 +39,11 @@ public class CargaCombustible
         decimal? lng,
         bool sincronizado)
     {
-        if (empresaId <= 0)
-            throw new DomainException("El id de la empresa debe ser mayor a cero.");
+        if (empresaId == Guid.Empty)
+            throw new DomainException("El id de la empresa es obligatorio.");
 
-        if (viajeId <= 0)
-            throw new DomainException("El id del viaje debe ser mayor a cero.");
+        if (viajeId == Guid.Empty)
+            throw new DomainException("El id del viaje es obligatorio.");
 
         var carga = new CargaCombustible
         {

@@ -13,7 +13,7 @@ public class DivisionConfiguration : IEntityTypeConfiguration<Division>
         builder.HasKey(d => d.DivisionId);
         builder.Property(d => d.DivisionId)
             .HasColumnName("division_id")
-            .ValueGeneratedOnAdd();
+            .ValueGeneratedNever();
 
         builder.Property(d => d.CorporativoId)
             .HasColumnName("corporativo_id")

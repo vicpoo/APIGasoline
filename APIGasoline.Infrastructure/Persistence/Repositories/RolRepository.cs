@@ -13,10 +13,10 @@ public class RolRepository : IRolRepository
         _context = context;
     }
 
-    public Task<Rol?> GetByIdAsync(int rolId, CancellationToken cancellationToken = default)
+    public Task<Rol?> GetByIdAsync(Guid rolId, CancellationToken cancellationToken = default)
         => _context.Roles.FirstOrDefaultAsync(r => r.RolId == rolId, cancellationToken);
 
-    public async Task<IReadOnlyList<Rol>> GetAllAsync(int? empresaId = null, bool soloGlobales = false, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Rol>> GetAllAsync(Guid? empresaId = null, bool soloGlobales = false, CancellationToken cancellationToken = default)
     {
         var query = _context.Roles.AsNoTracking();
 
@@ -31,7 +31,7 @@ public class RolRepository : IRolRepository
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyList<Rol>> GetActivosByUsuarioAsync(int usuarioId, int? empresaId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Rol>> GetActivosByUsuarioAsync(Guid usuarioId, Guid? empresaId, CancellationToken cancellationToken = default)
         => await _context.Roles
             .AsNoTracking()
             .Where(r => r.Activo
@@ -40,10 +40,10 @@ public class RolRepository : IRolRepository
             .OrderBy(r => r.Nombre)
             .ToListAsync(cancellationToken);
 
-    public Task<bool> ExistsAsync(int rolId, CancellationToken cancellationToken = default)
+    public Task<bool> ExistsAsync(Guid rolId, CancellationToken cancellationToken = default)
         => _context.Roles.AnyAsync(r => r.RolId == rolId, cancellationToken);
 
-    public Task<bool> NombreExistsAsync(string nombre, int? empresaId, int? excludeRolId = null, CancellationToken cancellationToken = default)
+    public Task<bool> NombreExistsAsync(string nombre, Guid? empresaId, Guid? excludeRolId = null, CancellationToken cancellationToken = default)
         => _context.Roles.AnyAsync(
             r => r.Nombre == nombre
                  && r.EmpresaId == empresaId

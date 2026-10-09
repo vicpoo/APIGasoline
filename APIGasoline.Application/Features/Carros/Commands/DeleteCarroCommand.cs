@@ -5,7 +5,7 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.Carros.Commands;
 
-public record DeleteCarroCommand(int CarroId) : IRequest;
+public record DeleteCarroCommand(Guid CarroId) : IRequest;
 
 public class DeleteCarroCommandHandler : IRequestHandler<DeleteCarroCommand>
 {

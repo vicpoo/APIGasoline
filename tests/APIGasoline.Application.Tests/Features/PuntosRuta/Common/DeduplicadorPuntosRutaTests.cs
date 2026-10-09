@@ -87,5 +87,5 @@ public class DeduplicadorPuntosRutaTests
     }
 
     private static PuntoRuta ConstruirPunto(DateTime timestamp, decimal latitud = 16.753056m, decimal longitud = -93.115556m)
-        => PuntoRuta.Crear(1, 1, latitud, longitud, timestamp, false);
+        => PuntoRuta.Crear(Id(1), Id(1), latitud, longitud, timestamp, false);
 }

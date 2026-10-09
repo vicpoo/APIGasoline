@@ -17,7 +17,7 @@ namespace APIGasoline.Application.Features.CargasCombustible.Commands;
 /// El comprobante (foto del ticket) es obligatorio: se sube al almacenamiento y en la BD solo se guarda su llave.
 /// </summary>
 public record CreateCargaCombustibleCommand(
-    int ViajeId,
+    Guid ViajeId,
     decimal Litros,
     decimal? Monto,
     ArchivoEntrada FotoComprobante,

@@ -4,7 +4,7 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.Corporativos.Commands;
 
-public record DeleteCorporativoCommand(int CorporativoId) : IRequest;
+public record DeleteCorporativoCommand(Guid CorporativoId) : IRequest;
 
 public class DeleteCorporativoCommandHandler : IRequestHandler<DeleteCorporativoCommand>
 {

@@ -8,13 +8,13 @@ public class Notificacion
 {
     public const int MensajeMaxLength = 255;
 
-    public int NotificacionId { get; private set; }
-    public int EmpresaId { get; private set; }
-    public int EmpleadoDestinatarioId { get; private set; }
+    public Guid NotificacionId { get; private set; } = Guid.CreateVersion7();
+    public Guid EmpresaId { get; private set; }
+    public Guid EmpleadoDestinatarioId { get; private set; }
     public TipoNotificacion Tipo { get; private set; }
 
   
-    public int? ReferenciaId { get; private set; }
+    public Guid? ReferenciaId { get; private set; }
 
     public string? Mensaje { get; private set; }
     public bool Leida { get; private set; }
@@ -26,19 +26,19 @@ public class Notificacion
     {
     }
 
-    public static Notificacion Crear(int empresaId, int empleadoDestinatarioId, TipoNotificacion tipo, int? referenciaId, string? mensaje)
+    public static Notificacion Crear(Guid empresaId, Guid empleadoDestinatarioId, TipoNotificacion tipo, Guid? referenciaId, string? mensaje)
     {
-        if (empresaId <= 0)
-            throw new DomainException("El id de la empresa debe ser mayor a cero.");
+        if (empresaId == Guid.Empty)
+            throw new DomainException("El id de la empresa es obligatorio.");
 
-        if (empleadoDestinatarioId <= 0)
-            throw new DomainException("El id del empleado destinatario debe ser mayor a cero.");
+        if (empleadoDestinatarioId == Guid.Empty)
+            throw new DomainException("El id del empleado destinatario es obligatorio.");
 
         if (!Enum.IsDefined(tipo))
             throw new DomainException("El tipo de notificación no es válido.");
 
-        if (referenciaId is <= 0)
-            throw new DomainException("El id de referencia debe ser mayor a cero.");
+        if (referenciaId == Guid.Empty)
+            throw new DomainException("El id de referencia es obligatorio.");
 
         var mensajeNormalizado = string.IsNullOrWhiteSpace(mensaje) ? null : mensaje.Trim();
 

@@ -7,7 +7,7 @@ namespace APIGasoline.Application.Features.Empresas.Commands;
 /// <summary>
 /// Soft delete: marca la empresa como eliminada (delete = true), no borra el registro.
 /// </summary>
-public record DeleteEmpresaCommand(int EmpresaId) : IRequest;
+public record DeleteEmpresaCommand(Guid EmpresaId) : IRequest;
 
 public class DeleteEmpresaCommandHandler : IRequestHandler<DeleteEmpresaCommand>
 {

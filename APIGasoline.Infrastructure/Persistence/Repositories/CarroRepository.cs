@@ -14,10 +14,10 @@ public class CarroRepository : ICarroRepository
         _context = context;
     }
 
-    public Task<Carro?> GetByIdAsync(int carroId, CancellationToken cancellationToken = default)
+    public Task<Carro?> GetByIdAsync(Guid carroId, CancellationToken cancellationToken = default)
         => _context.Carros.FirstOrDefaultAsync(c => c.CarroId == carroId, cancellationToken);
 
-    public async Task<IReadOnlyList<Carro>> GetAllAsync(int? empresaId = null, EstadoCarro? estado = null, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Carro>> GetAllAsync(Guid? empresaId = null, EstadoCarro? estado = null, CancellationToken cancellationToken = default)
     {
         var query = _context.Carros.AsNoTracking();
 
@@ -32,10 +32,10 @@ public class CarroRepository : ICarroRepository
             .ToListAsync(cancellationToken);
     }
 
-    public Task<bool> ExistsAsync(int carroId, CancellationToken cancellationToken = default)
+    public Task<bool> ExistsAsync(Guid carroId, CancellationToken cancellationToken = default)
         => _context.Carros.AnyAsync(c => c.CarroId == carroId, cancellationToken);
 
-    public Task<bool> PlacasExistsAsync(string placas, int? excludeCarroId = null, CancellationToken cancellationToken = default)
+    public Task<bool> PlacasExistsAsync(string placas, Guid? excludeCarroId = null, CancellationToken cancellationToken = default)
         => _context.Carros.AnyAsync(
             c => c.Placas == placas && (excludeCarroId == null || c.CarroId != excludeCarroId),
             cancellationToken);

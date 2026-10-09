@@ -24,7 +24,7 @@ public class RolesController : ControllerBase
     /// </summary>
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<RolDto>>> GetAll(
-        [FromQuery] int? empresaId,
+        [FromQuery] Guid? empresaId,
         [FromQuery] bool soloGlobales,
         CancellationToken cancellationToken)
     {
@@ -32,8 +32,8 @@ public class RolesController : ControllerBase
         return Ok(roles);
     }
 
-    [HttpGet("{rolId:int}")]
-    public async Task<ActionResult<RolDto>> GetById(int rolId, CancellationToken cancellationToken)
+    [HttpGet("{rolId:guid}")]
+    public async Task<ActionResult<RolDto>> GetById(Guid rolId, CancellationToken cancellationToken)
     {
         var rol = await _sender.Send(new GetRolByIdQuery(rolId), cancellationToken);
         return Ok(rol);
@@ -48,8 +48,8 @@ public class RolesController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { rolId = rol.RolId }, rol);
     }
 
-    [HttpPut("{rolId:int}")]
-    public async Task<ActionResult<RolDto>> Update(int rolId, UpdateRolRequest request, CancellationToken cancellationToken)
+    [HttpPut("{rolId:guid}")]
+    public async Task<ActionResult<RolDto>> Update(Guid rolId, UpdateRolRequest request, CancellationToken cancellationToken)
     {
         var command = new UpdateRolCommand(rolId, request.Nombre, request.Descripcion, request.Activo);
         var rol = await _sender.Send(command, cancellationToken);
@@ -57,8 +57,8 @@ public class RolesController : ControllerBase
         return Ok(rol);
     }
 
-    [HttpDelete("{rolId:int}")]
-    public async Task<IActionResult> Delete(int rolId, CancellationToken cancellationToken)
+    [HttpDelete("{rolId:guid}")]
+    public async Task<IActionResult> Delete(Guid rolId, CancellationToken cancellationToken)
     {
         await _sender.Send(new DeleteRolCommand(rolId), cancellationToken);
         return NoContent();

@@ -13,7 +13,7 @@ public class CorporativoRepository : ICorporativoRepository
         _context = context;
     }
 
-    public Task<Corporativo?> GetByIdAsync(int corporativoId, CancellationToken cancellationToken = default)
+    public Task<Corporativo?> GetByIdAsync(Guid corporativoId, CancellationToken cancellationToken = default)
         => _context.Corporativos.FirstOrDefaultAsync(c => c.CorporativoId == corporativoId, cancellationToken);
 
     public async Task<IReadOnlyList<Corporativo>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -22,7 +22,7 @@ public class CorporativoRepository : ICorporativoRepository
             .OrderBy(c => c.CorporativoId)
             .ToListAsync(cancellationToken);
 
-    public Task<bool> ExistsAsync(int corporativoId, CancellationToken cancellationToken = default)
+    public Task<bool> ExistsAsync(Guid corporativoId, CancellationToken cancellationToken = default)
         => _context.Corporativos.AnyAsync(c => c.CorporativoId == corporativoId, cancellationToken);
 
     public async Task AddAsync(Corporativo corporativo, CancellationToken cancellationToken = default)

@@ -6,7 +6,7 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.Divisiones.Queries;
 
-public record GetDivisionByIdQuery(int DivisionId) : IRequest<DivisionDto>;
+public record GetDivisionByIdQuery(Guid DivisionId) : IRequest<DivisionDto>;
 
 public class GetDivisionByIdQueryHandler : IRequestHandler<GetDivisionByIdQuery, DivisionDto>
 {

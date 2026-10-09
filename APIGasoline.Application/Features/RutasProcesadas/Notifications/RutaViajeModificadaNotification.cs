@@ -10,7 +10,7 @@ namespace APIGasoline.Application.Features.RutasProcesadas.Notifications;
 /// se finaliza, se interrumpe o se sincroniza, llegan puntos GPS
 /// o se crea, edita o borra una carga de combustible.
 /// </summary>
-public record RutaViajeModificadaNotification(int ViajeId) : INotification;
+public record RutaViajeModificadaNotification(Guid ViajeId) : INotification;
 
 /// <summary>
 /// Reprocesa la ruta si el viaje ya está cerrado.

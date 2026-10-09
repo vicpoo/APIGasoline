@@ -9,7 +9,7 @@ namespace APIGasoline.Application.Features.Roles.Queries;
 /// EmpresaId → roles disponibles para esa empresa (globales + exclusivos).
 /// SoloGlobales → solo los globales. Sin filtros → todos.
 /// </summary>
-public record GetRolesQuery(int? EmpresaId = null, bool SoloGlobales = false) : IRequest<IReadOnlyList<RolDto>>;
+public record GetRolesQuery(Guid? EmpresaId = null, bool SoloGlobales = false) : IRequest<IReadOnlyList<RolDto>>;
 
 public class GetRolesQueryHandler : IRequestHandler<GetRolesQuery, IReadOnlyList<RolDto>>
 {

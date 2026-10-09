@@ -6,7 +6,7 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.Notificaciones.Queries;
 
-public record GetNotificacionByIdQuery(int NotificacionId) : IRequest<NotificacionDto>;
+public record GetNotificacionByIdQuery(Guid NotificacionId) : IRequest<NotificacionDto>;
 
 public class GetNotificacionByIdQueryHandler : IRequestHandler<GetNotificacionByIdQuery, NotificacionDto>
 {

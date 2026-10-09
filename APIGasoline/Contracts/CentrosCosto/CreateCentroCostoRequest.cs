@@ -4,8 +4,8 @@ namespace APIGasoline.Contracts.CentrosCosto;
 
 public class CreateCentroCostoRequest
 {
-    [Range(1, int.MaxValue)]
-    public int EmpresaId { get; set; }
+    [GuidNoVacio]
+    public Guid EmpresaId { get; set; }
 
     [Required]
     [StringLength(150)]

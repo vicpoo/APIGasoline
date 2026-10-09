@@ -11,10 +11,10 @@ namespace APIGasoline.Application.Features.Viajes.Queries;
 /// Filtros opcionales: empresa, carro, operador, solicitud de reserva y estado.
 /// </summary>
 public record GetViajesQuery(
-    int? EmpresaId = null,
-    int? CarroId = null,
-    int? EmpleadoOperadorId = null,
-    int? SolicitudReservaId = null,
+    Guid? EmpresaId = null,
+    Guid? CarroId = null,
+    Guid? EmpleadoOperadorId = null,
+    Guid? SolicitudReservaId = null,
     EstadoViaje? Estado = null) : IRequest<IReadOnlyList<ViajeDto>>;
 
 public class GetViajesQueryHandler : IRequestHandler<GetViajesQuery, IReadOnlyList<ViajeDto>>

@@ -12,7 +12,7 @@ namespace APIGasoline.Application.Features.Auth.Queries;
 /// <summary>
 /// Perfil del usuario autenticado (el id viene del token).
 /// </summary>
-public record GetPerfilQuery(int UsuarioId) : IRequest<PerfilUsuarioDto>;
+public record GetPerfilQuery(Guid UsuarioId) : IRequest<PerfilUsuarioDto>;
 
 public class GetPerfilQueryHandler : IRequestHandler<GetPerfilQuery, PerfilUsuarioDto>
 {

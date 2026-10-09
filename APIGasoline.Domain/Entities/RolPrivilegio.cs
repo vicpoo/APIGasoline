@@ -5,16 +5,16 @@ namespace APIGasoline.Domain.Entities;
 
 public class RolPrivilegio
 {
-    public int RolPrivilegioId { get; private set; }
-    public int RolId { get; private set; }
-    public int PrivilegioId { get; private set; }
+    public Guid RolPrivilegioId { get; private set; } = Guid.CreateVersion7();
+    public Guid RolId { get; private set; }
+    public Guid PrivilegioId { get; private set; }
 
     // Requerido por Entity Framework
     private RolPrivilegio()
     {
     }
 
-    public static RolPrivilegio Crear(int rolId, int privilegioId)
+    public static RolPrivilegio Crear(Guid rolId, Guid privilegioId)
     {
         var rolPrivilegio = new RolPrivilegio();
         rolPrivilegio.Reasignar(rolId, privilegioId);
@@ -22,13 +22,13 @@ public class RolPrivilegio
         return rolPrivilegio;
     }
 
-    public void Reasignar(int rolId, int privilegioId)
+    public void Reasignar(Guid rolId, Guid privilegioId)
     {
-        if (rolId <= 0)
-            throw new DomainException("El id del rol debe ser mayor a cero.");
+        if (rolId == Guid.Empty)
+            throw new DomainException("El id del rol es obligatorio.");
 
-        if (privilegioId <= 0)
-            throw new DomainException("El id del privilegio debe ser mayor a cero.");
+        if (privilegioId == Guid.Empty)
+            throw new DomainException("El id del privilegio es obligatorio.");
 
         RolId = rolId;
         PrivilegioId = privilegioId;

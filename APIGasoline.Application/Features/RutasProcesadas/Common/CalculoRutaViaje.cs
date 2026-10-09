@@ -36,7 +36,7 @@ public static class CalculoRutaViaje
     /// si no, se crea uno nuevo. Devuelve la entidad a guardar.
     /// </summary>
     public static RutaProcesada CrearOActualizar(
-        RutaProcesada? existente, int empresaId, int viajeId, ResultadoRuta resultado, DateTime fechaProceso)
+        RutaProcesada? existente, Guid empresaId, Guid viajeId, ResultadoRuta resultado, DateTime fechaProceso)
     {
         if (existente is null)
             return RutaProcesada.Crear(empresaId, viajeId, resultado, fechaProceso);

@@ -9,7 +9,7 @@ namespace APIGasoline.Application.Features.Empleados.Commands;
 /// <summary>
 /// Quita la foto de perfil o la licencia: limpia la llave en BD y después elimina el archivo.
 /// </summary>
-public record EliminarFotoEmpleadoCommand(int EmpleadoId, TipoFotoEmpleado Tipo) : IRequest;
+public record EliminarFotoEmpleadoCommand(Guid EmpleadoId, TipoFotoEmpleado Tipo) : IRequest;
 
 public class EliminarFotoEmpleadoCommandHandler : IRequestHandler<EliminarFotoEmpleadoCommand>
 {

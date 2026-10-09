@@ -26,8 +26,8 @@ public class CambiosEstatusCarroController : ControllerBase
     /// </summary>
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<CambioEstatusCarroDto>>> GetAll(
-        [FromQuery] int? empresaId,
-        [FromQuery] int? carroId,
+        [FromQuery] Guid? empresaId,
+        [FromQuery] Guid? carroId,
         [FromQuery] DateTime? desde,
         [FromQuery] DateTime? hasta,
         CancellationToken cancellationToken)
@@ -36,8 +36,8 @@ public class CambiosEstatusCarroController : ControllerBase
         return Ok(cambios);
     }
 
-    [HttpGet("{cambioEstatusCarroId:int}")]
-    public async Task<ActionResult<CambioEstatusCarroDto>> GetById(int cambioEstatusCarroId, CancellationToken cancellationToken)
+    [HttpGet("{cambioEstatusCarroId:guid}")]
+    public async Task<ActionResult<CambioEstatusCarroDto>> GetById(Guid cambioEstatusCarroId, CancellationToken cancellationToken)
     {
         var cambio = await _sender.Send(new GetCambioEstatusCarroByIdQuery(cambioEstatusCarroId), cancellationToken);
         return Ok(cambio);

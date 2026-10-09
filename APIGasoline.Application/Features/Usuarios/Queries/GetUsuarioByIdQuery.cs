@@ -9,7 +9,7 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.Usuarios.Queries;
 
-public record GetUsuarioByIdQuery(int UsuarioId) : IRequest<UsuarioDto>;
+public record GetUsuarioByIdQuery(Guid UsuarioId) : IRequest<UsuarioDto>;
 
 public class GetUsuarioByIdQueryHandler : IRequestHandler<GetUsuarioByIdQuery, UsuarioDto>
 {

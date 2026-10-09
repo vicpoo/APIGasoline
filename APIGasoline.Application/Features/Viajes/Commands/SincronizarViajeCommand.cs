@@ -15,10 +15,10 @@ namespace APIGasoline.Application.Features.Viajes.Commands;
 /// Puede venir en curso, finalizado o interrumpido. Queda con sincronizado = true.
 /// </summary>
 public record SincronizarViajeCommand(
-    int EmpresaId,
-    int CarroId,
-    int? SolicitudReservaId,
-    int EmpleadoOperadorId,
+    Guid EmpresaId,
+    Guid CarroId,
+    Guid? SolicitudReservaId,
+    Guid EmpleadoOperadorId,
     DateTime FechaInicio,
     decimal? UbicacionInicioLat,
     decimal? UbicacionInicioLng,

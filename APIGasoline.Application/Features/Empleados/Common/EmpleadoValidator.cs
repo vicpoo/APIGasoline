@@ -8,7 +8,7 @@ namespace APIGasoline.Application.Features.Empleados.Common;
 /// </summary>
 internal static class EmpleadoValidator
 {
-    public static async Task ValidarAsync(IUnitOfWork unitOfWork, int empresaId, int usuarioId, int? excludeEmpleadoId, CancellationToken cancellationToken)
+    public static async Task ValidarAsync(IUnitOfWork unitOfWork, Guid empresaId, Guid usuarioId, Guid? excludeEmpleadoId, CancellationToken cancellationToken)
     {
         // Las empresas eliminadas (soft delete) no cuentan como existentes
         if (!await unitOfWork.Empresas.ExistsAsync(empresaId, cancellationToken))

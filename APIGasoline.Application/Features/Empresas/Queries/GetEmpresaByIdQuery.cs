@@ -6,7 +6,7 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.Empresas.Queries;
 
-public record GetEmpresaByIdQuery(int EmpresaId) : IRequest<EmpresaDto>;
+public record GetEmpresaByIdQuery(Guid EmpresaId) : IRequest<EmpresaDto>;
 
 public class GetEmpresaByIdQueryHandler : IRequestHandler<GetEmpresaByIdQuery, EmpresaDto>
 {

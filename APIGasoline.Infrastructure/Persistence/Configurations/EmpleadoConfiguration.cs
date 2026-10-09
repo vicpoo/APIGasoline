@@ -13,7 +13,7 @@ public class EmpleadoConfiguration : IEntityTypeConfiguration<Empleado>
         builder.HasKey(e => e.EmpleadoId);
         builder.Property(e => e.EmpleadoId)
             .HasColumnName("empleado_id")
-            .ValueGeneratedOnAdd();
+            .ValueGeneratedNever();
 
         builder.Property(e => e.EmpresaId)
             .HasColumnName("empresa_id")

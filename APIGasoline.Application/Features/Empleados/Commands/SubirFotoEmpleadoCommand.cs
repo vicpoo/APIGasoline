@@ -14,7 +14,7 @@ namespace APIGasoline.Application.Features.Empleados.Commands;
 /// Sube (o reemplaza) la foto de perfil o la licencia del empleado.
 /// En la BD solo se guarda la llave del archivo.
 /// </summary>
-public record SubirFotoEmpleadoCommand(int EmpleadoId, TipoFotoEmpleado Tipo, ArchivoEntrada Archivo) : IRequest<EmpleadoDto>;
+public record SubirFotoEmpleadoCommand(Guid EmpleadoId, TipoFotoEmpleado Tipo, ArchivoEntrada Archivo) : IRequest<EmpleadoDto>;
 
 public class SubirFotoEmpleadoCommandHandler : IRequestHandler<SubirFotoEmpleadoCommand, EmpleadoDto>
 {

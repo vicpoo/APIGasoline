@@ -12,8 +12,8 @@ namespace APIGasoline.Application.Features.CargasCombustible.Queries;
 /// Filtros opcionales: empresa, viaje y rango de fechas.
 /// </summary>
 public record GetCargasCombustibleQuery(
-    int? EmpresaId = null,
-    int? ViajeId = null,
+    Guid? EmpresaId = null,
+    Guid? ViajeId = null,
     DateTime? Desde = null,
     DateTime? Hasta = null) : IRequest<IReadOnlyList<CargaCombustibleDto>>;
 

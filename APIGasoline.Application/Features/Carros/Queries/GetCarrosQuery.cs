@@ -11,7 +11,7 @@ namespace APIGasoline.Application.Features.Carros.Queries;
 /// <summary>
 /// Lista los carros. Se puede filtrar por empresa, por estado o por ambos.
 /// </summary>
-public record GetCarrosQuery(int? EmpresaId = null, EstadoCarro? Estado = null) : IRequest<IReadOnlyList<CarroDto>>;
+public record GetCarrosQuery(Guid? EmpresaId = null, EstadoCarro? Estado = null) : IRequest<IReadOnlyList<CarroDto>>;
 
 public class GetCarrosQueryHandler : IRequestHandler<GetCarrosQuery, IReadOnlyList<CarroDto>>
 {

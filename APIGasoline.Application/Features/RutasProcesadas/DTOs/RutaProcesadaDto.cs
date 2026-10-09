@@ -5,9 +5,9 @@
 /// Polyline: ruta simplificada en formato Google Encoded Polyline, lista para dibujar en el mapa.
 /// </summary>
 public record RutaProcesadaDto(
-    int RutaProcesadaId,
-    int EmpresaId,
-    int ViajeId,
+    Guid RutaProcesadaId,
+    Guid EmpresaId,
+    Guid ViajeId,
     int PuntosRecibidos,
     int PuntosDescartados,
     decimal DistanciaGpsKm,
