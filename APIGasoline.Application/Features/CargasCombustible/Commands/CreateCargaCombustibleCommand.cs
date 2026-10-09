@@ -50,7 +50,9 @@ public class CreateCargaCombustibleCommandHandler : IRequestHandler<CreateCargaC
         var viaje = await _unitOfWork.Viajes.GetByIdAsync(request.ViajeId, cancellationToken)
             ?? throw new NotFoundException($"No existe un viaje con el id {request.ViajeId}.");
 
-        var llave = LlavesArchivo.ComprobanteCarga(viaje.EmpresaId, viaje.ViajeId, extension, Guid.NewGuid());
+        // El id de la carga se genera antes para guardar el comprobante en su carpeta
+        var cargaId = Guid.CreateVersion7();
+        var llave = LlavesArchivo.ComprobanteCarga(viaje.EmpresaId, viaje.ViajeId, cargaId, extension, Guid.NewGuid());
 
         // El dominio valida los datos (incluida la llave del comprobante)
         var carga = CargaCombustible.Crear(
@@ -62,7 +64,8 @@ public class CreateCargaCombustibleCommandHandler : IRequestHandler<CreateCargaC
             request.FechaCarga,
             request.UbicacionLat,
             request.UbicacionLng,
-            request.Sincronizado);
+            request.Sincronizado,
+            cargaId);
 
         // Primero todas las validaciones: así no se sube un archivo que después se rechaza
         await CargaCombustibleValidator.ValidarAsync(_unitOfWork, _dateTime, viaje, carga, cancellationToken);

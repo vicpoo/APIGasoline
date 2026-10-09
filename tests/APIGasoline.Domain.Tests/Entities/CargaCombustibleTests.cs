@@ -10,7 +10,7 @@ namespace APIGasoline.Domain.Tests.Entities;
 public class CargaCombustibleTests
 {
     private static readonly DateTime FechaCarga = new(2026, 10, 5, 10, 5, 0, DateTimeKind.Utc);
-    private const string Llave = "empresas/1/viajes/1/cargas/comprobante-11111111111111111111111111111111.jpg";
+    private const string Llave = "empresa/1/viaje/1/carga/1/comprobante-11111111111111111111111111111111.jpg";
 
     [Fact]
     public void Crear_DatosValidos_GuardaLosDatos()
@@ -28,6 +28,31 @@ public class CargaCombustibleTests
     public void Crear_IdsInvalidos_LanzaDomainException(int empresaId, int viajeId)
     {
         Assert.Throws<DomainException>(() => ConstruirCarga(empresaId: empresaId, viajeId: viajeId));
+    }
+
+    [Fact]
+    public void Crear_ConIdGeneradoAntes_UsaEseId()
+    {
+        var carga = CargaCombustible.Crear(Id(1), Id(1), 45.30m, null, Llave, FechaCarga, null, null, false, cargaCombustibleId: Id(40));
+
+        Assert.Equal(Id(40), carga.CargaCombustibleId);
+    }
+
+    [Fact]
+    public void Crear_SinId_GeneraUnoNuevo()
+    {
+        var primera = ConstruirCarga();
+        var segunda = ConstruirCarga();
+
+        Assert.NotEqual(Guid.Empty, primera.CargaCombustibleId);
+        Assert.NotEqual(primera.CargaCombustibleId, segunda.CargaCombustibleId);
+    }
+
+    [Fact]
+    public void Crear_ConIdVacio_LanzaDomainException()
+    {
+        Assert.Throws<DomainException>(() =>
+            CargaCombustible.Crear(Id(1), Id(1), 45.30m, null, Llave, FechaCarga, null, null, false, cargaCombustibleId: Guid.Empty));
     }
 
     // --- Litros y monto ---

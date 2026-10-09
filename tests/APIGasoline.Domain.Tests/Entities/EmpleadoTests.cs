@@ -57,7 +57,7 @@ public class EmpleadoTests
     {
         var empleado = ConstruirEmpleado();
 
-        empleado.CambiarFotoLicencia("empresas/1/empleados/1/licencia.pdf");
+        empleado.CambiarFotoLicencia("empresa/1/empleado/1/documento/licencia.pdf");
 
         Assert.True(empleado.TieneLicencia);
     }
@@ -66,7 +66,7 @@ public class EmpleadoTests
     public void CambiarFotoLicencia_Null_YaNoTieneLicencia()
     {
         var empleado = ConstruirEmpleado();
-        empleado.CambiarFotoLicencia("empresas/1/empleados/1/licencia.pdf");
+        empleado.CambiarFotoLicencia("empresa/1/empleado/1/documento/licencia.pdf");
 
         empleado.CambiarFotoLicencia(null);
 

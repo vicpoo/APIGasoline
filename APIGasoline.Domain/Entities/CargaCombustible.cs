@@ -37,7 +37,8 @@ public class CargaCombustible
         DateTime fechaCarga,
         decimal? lat,
         decimal? lng,
-        bool sincronizado)
+        bool sincronizado,
+        Guid? cargaCombustibleId = null)
     {
         if (empresaId == Guid.Empty)
             throw new DomainException("El id de la empresa es obligatorio.");
@@ -45,12 +46,19 @@ public class CargaCombustible
         if (viajeId == Guid.Empty)
             throw new DomainException("El id del viaje es obligatorio.");
 
+        if (cargaCombustibleId == Guid.Empty)
+            throw new DomainException("El id de la carga de combustible no es válido.");
+
         var carga = new CargaCombustible
         {
             EmpresaId = empresaId,
             ViajeId = viajeId,
             Sincronizado = sincronizado
         };
+
+        // El id se puede generar antes para armar la llave del comprobante en MinIO
+        if (cargaCombustibleId is { } id)
+            carga.CargaCombustibleId = id;
 
         carga.CambiarDatos(litros, monto, fotoComprobante, fechaCarga, lat, lng);
 

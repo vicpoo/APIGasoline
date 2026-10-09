@@ -227,7 +227,7 @@ public class CarroTests
     [Fact]
     public void CambiarFotoVehiculo_Null_QuitaLaFoto()
     {
-        var carro = ConstruirCarro(foto: "empresas/1/carros/1/vehiculo.jpg");
+        var carro = ConstruirCarro(foto: "empresa/1/carro/1/foto/vehiculo.jpg");
 
         carro.CambiarFotoVehiculo(null);
 

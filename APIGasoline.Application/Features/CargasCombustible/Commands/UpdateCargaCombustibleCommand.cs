@@ -57,7 +57,7 @@ public class UpdateCargaCombustibleCommandHandler : IRequestHandler<UpdateCargaC
         var comprobanteAnterior = carga.FotoComprobante;
         var llave = extension is null
             ? comprobanteAnterior
-            : LlavesArchivo.ComprobanteCarga(carga.EmpresaId, carga.ViajeId, extension, Guid.NewGuid());
+            : LlavesArchivo.ComprobanteCarga(carga.EmpresaId, carga.ViajeId, carga.CargaCombustibleId, extension, Guid.NewGuid());
 
         // El dominio valida los datos
         carga.CambiarDatos(
