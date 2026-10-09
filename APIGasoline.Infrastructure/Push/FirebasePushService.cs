@@ -35,7 +35,10 @@ public sealed class FirebasePushService : IPushNotificationService, IDisposable
 
         var opciones = new AppOptions
         {
-            Credential = GoogleCredential.FromFile(settings.Firebase.CredencialesPath)
+            // CredentialFactory valida que el JSON sea de una service account (FromFile aceptaba cualquier tipo)
+            Credential = CredentialFactory
+                .FromFile<ServiceAccountCredential>(settings.Firebase.CredencialesPath)
+                .ToGoogleCredential()
         };
 
         if (!string.IsNullOrWhiteSpace(settings.Firebase.ProjectId))
@@ -95,6 +98,9 @@ public sealed class FirebasePushService : IPushNotificationService, IDisposable
         return new ResultadoPush(enviados, invalidos, error);
     }
 
+    // FirebaseAdmin 3.7 marca Tokens como obsoleto en favor de Fids (Firebase Installation IDs),
+    // pero la app móvil entrega un token de registro de FCM, que es lo que recibe Tokens.
+#pragma warning disable CS0618
     private static MulticastMessage Construir(MensajePush mensaje, IReadOnlyList<string> tokens) => new()
     {
         Tokens = tokens,
@@ -114,6 +120,7 @@ public sealed class FirebasePushService : IPushNotificationService, IDisposable
             Aps = new Aps { Sound = "default" }
         }
     };
+#pragma warning restore CS0618
 
     public void Dispose() => _app.Delete();
 }
