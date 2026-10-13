@@ -12,4 +12,6 @@ public record EmpleadoDto(
     string? FotoPerfilUrl,
     string? FotoLicenciaUrl,
     bool TieneLicencia,
+    /// <summary>Cuándo se subió la licencia (HU-LOG-01). null = pendiente.</summary>
+    DateTime? FechaCargaLicencia,
     DateTime? FechaAlta);

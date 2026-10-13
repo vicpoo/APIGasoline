@@ -37,7 +37,7 @@ public class SolicitudReservaConfiguration : IEntityTypeConfiguration<SolicitudR
 
         builder.Property(s => s.Estado)
             .HasColumnName("estado")
-            .HasColumnType("enum('pendiente','aprobada','rechazada','cancelada')")
+            .HasColumnType("enum('pendiente','aprobada','rechazada','cancelada','finalizada')")
             .HasConversion(
                 v => v.ToString().ToLowerInvariant(),
                 v => Enum.Parse<EstadoSolicitudReserva>(v, true))
@@ -55,6 +55,15 @@ public class SolicitudReservaConfiguration : IEntityTypeConfiguration<SolicitudR
         builder.Property(s => s.MotivoResolucion)
             .HasColumnName("motivo_resolucion")
             .HasMaxLength(SolicitudReserva.MotivoMaxLength);
+
+        // Liberación del carro (HU-USO-04 / HU-EST-02)
+        builder.Property(s => s.FechaLiberacion)
+            .HasColumnName("fecha_liberacion")
+            .HasColumnType("timestamp");
+
+        builder.Property(s => s.ObservacionesLiberacion)
+            .HasColumnName("observaciones_liberacion")
+            .HasMaxLength(SolicitudReserva.ObservacionesMaxLength);
 
         // Propiedades calculadas en el dominio, no son columnas
         builder.Ignore(s => s.EstaPendiente);
@@ -98,6 +107,10 @@ public class SolicitudReservaConfiguration : IEntityTypeConfiguration<SolicitudR
         // Índices de las llaves foráneas (EF los crearía igual; aquí les damos nombre)
         builder.HasIndex(s => new { s.EmpresaId, s.CarroId })
             .HasDatabaseName("ix_solicitud_reserva_empresa_id_carro_id");
+
+        // v4: reserva aprobada o pendientes de un carro
+        builder.HasIndex(s => new { s.EmpresaId, s.CarroId, s.Estado })
+            .HasDatabaseName("ix_solicitud_reserva_empresa_id_carro_id_estado");
 
         builder.HasIndex(s => new { s.EmpresaId, s.EmpleadoSolicitanteId })
             .HasDatabaseName("ix_solicitud_reserva_empresa_id_empleado_solicitante_id");

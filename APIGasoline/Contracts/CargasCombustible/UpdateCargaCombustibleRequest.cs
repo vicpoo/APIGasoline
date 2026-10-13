@@ -3,7 +3,9 @@
 namespace APIGasoline.Contracts.CargasCombustible;
 
 /// <summary>
-/// Se envía como multipart/form-data. "fotoComprobante" es opcional: si no se manda, se conserva el actual.
+/// Corrección de una carga. Se envía como multipart/form-data.
+/// "fotoComprobante" es opcional: si no se manda, se conserva el actual. "motivo" es obligatorio.
+/// Requiere token: el operador corrige mientras el viaje está en curso; después, un Confirmador o Gestor de activos.
 /// </summary>
 public class UpdateCargaCombustibleRequest
 {
@@ -20,4 +22,9 @@ public class UpdateCargaCombustibleRequest
 
     public decimal? UbicacionLat { get; set; }
     public decimal? UbicacionLng { get; set; }
+
+    /// <summary>Por qué se corrige (queda en el historial de auditoría).</summary>
+    [Required]
+    [StringLength(500)]
+    public string? Motivo { get; set; }
 }

@@ -107,6 +107,50 @@ public class CambioEstatusCarroTests
         Assert.Throws<ArgumentNullException>(() => CambioEstatusCarro.Registrar(null!, Id(2), EstadoCarro.EnMantenimiento, "Servicio"));
     }
 
+    // --- Registro de percances (tipo de motivo y foto) ---
+
+    [Fact]
+    public void Registrar_ConTipoMotivoYFoto_LosGuarda()
+    {
+        var carro = ConstruirCarro();
+
+        var cambio = CambioEstatusCarro.Registrar(
+            carro, Id(2), EstadoCarro.EnMantenimiento, "Golpe en la puerta trasera",
+            tipoMotivo: TipoMotivoCambio.ChoqueOGolpe,
+            fotoEvidencia: " empresa/1/carro/1/estatus/1/evidencia-a.jpg ");
+
+        Assert.Equal(TipoMotivoCambio.ChoqueOGolpe, cambio.TipoMotivo);
+        Assert.Equal("empresa/1/carro/1/estatus/1/evidencia-a.jpg", cambio.FotoEvidencia);
+    }
+
+    [Fact]
+    public void CambiarFotoEvidencia_DespuesDeRegistrar_SeGuarda()
+    {
+        var carro = ConstruirCarro();
+        var cambio = CambioEstatusCarro.Registrar(carro, Id(2), EstadoCarro.EnMantenimiento, "Falla de frenos", tipoMotivo: TipoMotivoCambio.FallaMecanica);
+
+        cambio.CambiarFotoEvidencia("empresa/1/carro/1/estatus/1/evidencia-b.jpg");
+
+        Assert.Equal("empresa/1/carro/1/estatus/1/evidencia-b.jpg", cambio.FotoEvidencia);
+    }
+
+    [Fact]
+    public void Registrar_TipoMotivoInvalido_LanzaDomainException()
+    {
+        var carro = ConstruirCarro();
+
+        Assert.Throws<DomainException>(() => CambioEstatusCarro.Registrar(carro, Id(2), EstadoCarro.EnMantenimiento, "Servicio", tipoMotivo: (TipoMotivoCambio)99));
+    }
+
+    [Fact]
+    public void Registrar_CarroDadoDeBaja_LanzaDomainException()
+    {
+        var carro = ConstruirCarro();
+        carro.DarDeBaja(DateTime.UtcNow, "Venta");
+
+        Assert.Throws<DomainException>(() => CambioEstatusCarro.Registrar(carro, Id(2), EstadoCarro.EnMantenimiento, "Servicio"));
+    }
+
     private static Carro ConstruirCarro(EstadoCarro estado = EstadoCarro.Disponible)
         => Carro.Crear(Id(1), "Nissan", "NP300", 2023, "Blanco", "DFG-123-A", null, 80m, 15000m, 2026, estado);
 }

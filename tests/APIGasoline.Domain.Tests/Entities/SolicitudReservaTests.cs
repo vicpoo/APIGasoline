@@ -176,6 +176,48 @@ public class SolicitudReservaTests
         Assert.Throws<DomainException>(() => solicitud.Cancelar(Fecha));
     }
 
+    // --- Finalizar (liberar el carro, HU-USO-04) ---
+
+    [Fact]
+    public void Finalizar_ReservaAprobada_QuedaFinalizadaConFechaYObservaciones()
+    {
+        var solicitud = ConstruirSolicitud();
+        solicitud.Aprobar(Confirmador, Fecha);
+
+        solicitud.Finalizar(Fecha.AddDays(2), "  Se entrega con el tanque a la mitad  ");
+
+        Assert.Equal(EstadoSolicitudReserva.Finalizada, solicitud.Estado);
+        Assert.Equal(Fecha.AddDays(2), solicitud.FechaLiberacion);
+        Assert.Equal("Se entrega con el tanque a la mitad", solicitud.ObservacionesLiberacion);
+    }
+
+    [Fact]
+    public void Finalizar_ReservaPendiente_LanzaDomainException()
+    {
+        var solicitud = ConstruirSolicitud();
+
+        Assert.Throws<DomainException>(() => solicitud.Finalizar(Fecha));
+    }
+
+    [Fact]
+    public void Finalizar_ObservacionesMayoresA500_LanzaDomainException()
+    {
+        var solicitud = ConstruirSolicitud();
+        solicitud.Aprobar(Confirmador, Fecha);
+
+        Assert.Throws<DomainException>(() => solicitud.Finalizar(Fecha, new string('x', 501)));
+    }
+
+    [Fact]
+    public void Finalizar_YaFinalizada_NoSePuedeCancelar()
+    {
+        var solicitud = ConstruirSolicitud();
+        solicitud.Aprobar(Confirmador, Fecha);
+        solicitud.Finalizar(Fecha.AddDays(1));
+
+        Assert.Throws<DomainException>(() => solicitud.Cancelar(Fecha.AddDays(2)));
+    }
+
     private static SolicitudReserva ConstruirSolicitud(int empresaId = 1, int carroId = 1)
         => SolicitudReserva.Crear(Id(empresaId), Id(carroId), Solicitante);
 }

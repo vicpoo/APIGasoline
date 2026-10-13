@@ -18,6 +18,10 @@ public class CambioEstatusCarroRepository : ICambioEstatusCarroRepository
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.CambioEstatusCarroId == cambioEstatusCarroId, cancellationToken);
 
+    public Task<CambioEstatusCarro?> GetByIdParaActualizarAsync(Guid cambioEstatusCarroId, CancellationToken cancellationToken = default)
+        => _context.CambiosEstatusCarro
+            .FirstOrDefaultAsync(c => c.CambioEstatusCarroId == cambioEstatusCarroId, cancellationToken);
+
     public async Task<IReadOnlyList<CambioEstatusCarro>> GetAllAsync(
         Guid? empresaId = null,
         Guid? carroId = null,

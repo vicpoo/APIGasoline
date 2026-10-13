@@ -40,11 +40,23 @@ public class CargaCombustibleConfiguration : IEntityTypeConfiguration<CargaCombu
         builder.Property(c => c.UbicacionLat).HasColumnName("ubicacion_lat").HasPrecision(9, 6);
         builder.Property(c => c.UbicacionLng).HasColumnName("ubicacion_lng").HasPrecision(9, 6);
 
-        builder.Property(c => c.Sincronizado)
-            .HasColumnName("sincronizado")
+        // null = comprobante pendiente (genera alerta en la revisión de combustible)
+        builder.Property(c => c.FechaSubidaComprobante)
+            .HasColumnName("fecha_subida_comprobante")
+            .HasColumnType("timestamp");
+
+        builder.Property(c => c.Corregido)
+            .HasColumnName("corregido")
             .HasDefaultValue(false)
             .ValueGeneratedNever()
             .IsRequired();
+
+        // Hora del servidor en que llegó la carga. Reemplaza a "sincronizado" (v4).
+        builder.Property(c => c.FechaRecepcion)
+            .HasColumnName("fecha_recepcion")
+            .HasColumnType("timestamp")
+            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .ValueGeneratedOnAdd();
 
         // Propiedad calculada en el dominio, no es columna
         builder.Ignore(c => c.PrecioPorLitro);

@@ -35,6 +35,10 @@ public class ViajeConfiguration : IEntityTypeConfiguration<Viaje>
             .HasPrecision(10, 2)
             .IsRequired();
 
+        builder.Property(v => v.FotoTableroInicial)
+            .HasColumnName("foto_tablero_inicial")
+            .HasMaxLength(Viaje.FotoMaxLength);
+
         // Fin
         builder.Property(v => v.FechaFin)
             .HasColumnName("fecha_fin")
@@ -43,6 +47,10 @@ public class ViajeConfiguration : IEntityTypeConfiguration<Viaje>
         builder.Property(v => v.UbicacionFinLat).HasColumnName("ubicacion_fin_lat").HasPrecision(9, 6);
         builder.Property(v => v.UbicacionFinLng).HasColumnName("ubicacion_fin_lng").HasPrecision(9, 6);
         builder.Property(v => v.KilometrajeFinal).HasColumnName("kilometraje_final").HasPrecision(10, 2);
+
+        builder.Property(v => v.FotoTableroFinal)
+            .HasColumnName("foto_tablero_final")
+            .HasMaxLength(Viaje.FotoMaxLength);
         builder.Property(v => v.DistanciaRecorrida).HasColumnName("distancia_recorrida").HasPrecision(10, 2);
 
         // enum('en_curso','finalizado','interrumpido') en MySQL
@@ -64,11 +72,18 @@ public class ViajeConfiguration : IEntityTypeConfiguration<Viaje>
             .HasColumnName("motivo_interrupcion")
             .HasMaxLength(Viaje.MotivoMaxLength);
 
-        builder.Property(v => v.Sincronizado)
-            .HasColumnName("sincronizado")
+        builder.Property(v => v.Corregido)
+            .HasColumnName("corregido")
             .HasDefaultValue(false)
             .ValueGeneratedNever()
             .IsRequired();
+
+        // Hora del servidor en que llegó el viaje. Reemplaza a "sincronizado" (v4).
+        builder.Property(v => v.FechaRecepcion)
+            .HasColumnName("fecha_recepcion")
+            .HasColumnType("timestamp")
+            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .ValueGeneratedOnAdd();
 
         // Propiedad calculada en el dominio, no es columna
         builder.Ignore(v => v.EstaEnCurso);
@@ -110,6 +125,9 @@ public class ViajeConfiguration : IEntityTypeConfiguration<Viaje>
 
         // Índices de las llaves foráneas (EF los crearía igual; aquí les damos nombre)
         builder.HasIndex(v => new { v.EmpresaId, v.CarroId }).HasDatabaseName("ix_viaje_empresa_id_carro_id");
+
+        // v4: historial de un carro por fecha y revisión de kilometraje entre viajes consecutivos
+        builder.HasIndex(v => new { v.EmpresaId, v.CarroId, v.FechaInicio }).HasDatabaseName("ix_viaje_empresa_id_carro_id_fecha_inicio");
         builder.HasIndex(v => new { v.EmpresaId, v.SolicitudReservaId }).HasDatabaseName("ix_viaje_empresa_id_solicitud_reserva_id");
         builder.HasIndex(v => new { v.EmpresaId, v.EmpleadoOperadorId }).HasDatabaseName("ix_viaje_empresa_id_empleado_operador_id");
     }

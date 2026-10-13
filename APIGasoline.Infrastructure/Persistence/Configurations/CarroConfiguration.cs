@@ -66,6 +66,21 @@ public class CarroConfiguration : IEntityTypeConfiguration<Carro>
             .ValueGeneratedNever()
             .IsRequired();
 
+        // Baja del carro (HU-AST-03)
+        builder.Property(c => c.DadoDeBaja)
+            .HasColumnName("dado_de_baja")
+            .HasDefaultValue(false)
+            .ValueGeneratedNever()
+            .IsRequired();
+
+        builder.Property(c => c.FechaBaja)
+            .HasColumnName("fecha_baja")
+            .HasColumnType("timestamp");
+
+        builder.Property(c => c.MotivoBaja)
+            .HasColumnName("motivo_baja")
+            .HasMaxLength(Carro.MotivoBajaMaxLength);
+
         // Propiedad calculada en el dominio, no es columna
         builder.Ignore(c => c.EstaDisponible);
 

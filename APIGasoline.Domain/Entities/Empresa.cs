@@ -13,6 +13,9 @@ public class Empresa
     public string Nombre { get; private set; } = string.Empty;
 
 
+    /// <summary>Empresa activa o inactiva (HU-ADM-01). No es lo mismo que eliminada.</summary>
+    public bool Activo { get; private set; } = true;
+
     public bool Eliminado { get; private set; }
 
     public DateTime? FechaRegistro { get; private set; }
@@ -59,6 +62,10 @@ public class Empresa
         CorporativoId = corporativoId;
         DivisionId = divisionId;
     }
+
+    public void Activar() => Activo = true;
+
+    public void Desactivar() => Activo = false;
 
     public void Eliminar()
     {

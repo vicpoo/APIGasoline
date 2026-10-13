@@ -21,7 +21,17 @@ public class CargaCombustible
     public decimal? UbicacionLat { get; private set; }
     public decimal? UbicacionLng { get; private set; }
 
-    public bool Sincronizado { get; private set; }
+    /// <summary>
+    /// Cuándo llegó la foto del comprobante a MinIO. null = el registro ya está en el servidor
+    /// pero la foto todavía no (comprobante pendiente; genera alerta en la revisión de combustible).
+    /// </summary>
+    public DateTime? FechaSubidaComprobante { get; private set; }
+
+    /// <summary>true si litros o monto se corrigieron después de capturarse. El detalle está en auditoria_evento.</summary>
+    public bool Corregido { get; private set; }
+
+    /// <summary>Hora del servidor en que llegó la carga (la pone la BD). Reemplaza al antiguo campo "sincronizado".</summary>
+    public DateTime? FechaRecepcion { get; private set; }
 
     // Requerido por Entity Framework
     private CargaCombustible()
@@ -37,7 +47,6 @@ public class CargaCombustible
         DateTime fechaCarga,
         decimal? lat,
         decimal? lng,
-        bool sincronizado,
         Guid? cargaCombustibleId = null)
     {
         if (empresaId == Guid.Empty)
@@ -52,8 +61,7 @@ public class CargaCombustible
         var carga = new CargaCombustible
         {
             EmpresaId = empresaId,
-            ViajeId = viajeId,
-            Sincronizado = sincronizado
+            ViajeId = viajeId
         };
 
         // El id se puede generar antes para armar la llave del comprobante en MinIO
@@ -101,6 +109,20 @@ public class CargaCombustible
         UbicacionLat = lat;
         UbicacionLng = lng;
     }
+
+    /// <summary>Registra que la foto del comprobante ya está en el almacenamiento.</summary>
+    public void MarcarComprobanteSubido(DateTime fecha)
+    {
+        if (fecha == default)
+            throw new DomainException("La fecha de subida del comprobante es obligatoria.");
+
+        FechaSubidaComprobante = fecha;
+    }
+
+    /// <summary>
+    /// Marca la carga como corregida después de capturarse (litros, monto, fecha o comprobante).
+    /// </summary>
+    public void MarcarCorregida() => Corregido = true;
 
     public decimal? PrecioPorLitro => Monto is null ? null : Math.Round(Monto.Value / Litros, 2);
 }

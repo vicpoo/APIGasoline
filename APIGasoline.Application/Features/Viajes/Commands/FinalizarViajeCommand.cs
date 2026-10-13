@@ -1,4 +1,6 @@
-﻿using APIGasoline.Application.Common.Exceptions;
+﻿using APIGasoline.Application.Common.Interfaces;
+using APIGasoline.Application.Common.Storage;
+using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Features.Viajes.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
@@ -21,12 +23,14 @@ public class FinalizarViajeCommandHandler : IRequestHandler<FinalizarViajeComman
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly IFileStorageService _storage;
     private readonly IPublisher _publisher;
 
-    public FinalizarViajeCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IPublisher publisher)
+    public FinalizarViajeCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IFileStorageService storage, IPublisher publisher)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _storage = storage;
         _publisher = publisher;
     }
 
@@ -46,6 +50,6 @@ public class FinalizarViajeCommandHandler : IRequestHandler<FinalizarViajeComman
         // El viaje ya quedó cerrado; procesar la ruta no puede deshacerlo
         await _publisher.Publish(new RutaViajeModificadaNotification(viaje.ViajeId), cancellationToken);
 
-        return _mapper.Map<ViajeDto>(viaje);
+        return await _mapper.Map<ViajeDto>(viaje).ConUrlsAsync(_storage, cancellationToken);
     }
 }

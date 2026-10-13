@@ -80,6 +80,17 @@ public class SolicitudesReservaController : ControllerBase
         return Ok(await _sender.Send(command, cancellationToken));
     }
 
+    /// <summary>
+    /// HU-USO-04: el operador libera el carro al terminar sus viajes. La reserva queda "finalizada"
+    /// y el carro vuelve a "disponible". No se puede liberar con un viaje en curso.
+    /// </summary>
+    [HttpPost("{solicitudReservaId:guid}/liberar")]
+    public async Task<ActionResult<SolicitudReservaDto>> Liberar(Guid solicitudReservaId, LiberarSolicitudReservaRequest request, CancellationToken cancellationToken)
+    {
+        var command = new LiberarSolicitudReservaCommand(solicitudReservaId, request.FechaLiberacion, request.Observaciones);
+        return Ok(await _sender.Send(command, cancellationToken));
+    }
+
     [HttpDelete("{solicitudReservaId:guid}")]
     public async Task<IActionResult> Delete(Guid solicitudReservaId, CancellationToken cancellationToken)
     {

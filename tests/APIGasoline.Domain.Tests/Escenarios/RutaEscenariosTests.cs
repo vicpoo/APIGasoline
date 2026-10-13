@@ -107,7 +107,7 @@ public class RutaEscenariosTests
     private static List<PuntoRuta> RecibirPuntos(int cantidad, decimal precision)
         => Enumerable.Range(0, cantidad)
             .Select(i => PuntoRuta.Crear(EmpresaId, ViajeId,
-                16.75m + i * 0.0025m, -93.11m, Inicio.AddSeconds(30 * i), sincronizado: false,
+                16.75m + i * 0.0025m, -93.11m, Inicio.AddSeconds(30 * i),
                 precisionMetros: precision, altitud: 530m, velocidad: 9.27m))
             .ToList();
 

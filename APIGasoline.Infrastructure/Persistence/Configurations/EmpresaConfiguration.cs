@@ -26,10 +26,17 @@ public class EmpresaConfiguration : IEntityTypeConfiguration<Empresa>
             .HasMaxLength(Empresa.NombreMaxLength)
             .IsRequired();
 
-        // Soft delete. "delete" es palabra reservada en MySQL; EF la escapa con `backticks`.
+        // Soft delete. v4: la columna se renombra de "delete" (palabra reservada) a "eliminado".
         builder.Property(e => e.Eliminado)
-            .HasColumnName("delete")
+            .HasColumnName("eliminado")
             .HasDefaultValue(false)
+            .ValueGeneratedNever()
+            .IsRequired();
+
+        // Empresa activa o inactiva (HU-ADM-01)
+        builder.Property(e => e.Activo)
+            .HasColumnName("activo")
+            .HasDefaultValue(true)
             .ValueGeneratedNever()
             .IsRequired();
 

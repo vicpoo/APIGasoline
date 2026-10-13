@@ -13,4 +13,7 @@ public class UpdateEmpresaRequest
 
     [GuidNoVacio]
     public Guid? DivisionId { get; set; }
+
+    /// <summary>HU-ADM-01: empresa activa o inactiva. Si no viene, no cambia.</summary>
+    public bool? Activo { get; set; }
 }

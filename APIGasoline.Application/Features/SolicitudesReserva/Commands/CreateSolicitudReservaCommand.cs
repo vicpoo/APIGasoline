@@ -39,6 +39,9 @@ public class CreateSolicitudReservaCommandHandler : IRequestHandler<CreateSolici
         if (carro.EmpresaId != solicitud.EmpresaId)
             throw new BadRequestException($"El carro {carro.CarroId} no pertenece a la empresa {solicitud.EmpresaId}.");
 
+        if (carro.DadoDeBaja)
+            throw new ConflictException($"El carro {carro.CarroId} está dado de baja.");
+
         if (carro.Estado == EstadoCarro.EnMantenimiento)
             throw new ConflictException($"El carro {carro.CarroId} está en mantenimiento.");
 

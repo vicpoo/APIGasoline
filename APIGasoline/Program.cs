@@ -2,12 +2,14 @@
 using System.Text.Json.Serialization;
 using System.Text;
 using APIGasoline.Application;
+using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Common.Outbox;
 using APIGasoline.Infrastructure;
 using APIGasoline.Infrastructure.Authentication;
 using APIGasoline.Infrastructure.Push;
 using APIGasoline.Infrastructure.Storage;
 using APIGasoline.Middleware;
+using APIGasoline.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
@@ -26,6 +28,10 @@ builder.Services
 builder.Services.AddOpenApi();
 
 builder.Services.AddApplication();
+
+// Usuario del token (lo usan la auditoría y las reglas de corrección)
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IUsuarioActual, UsuarioActual>();
 var jwtSettings = builder.Configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>()
     ?? throw new InvalidOperationException("Falta la sección 'Jwt' en la configuración.");
 

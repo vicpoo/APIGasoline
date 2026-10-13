@@ -70,4 +70,26 @@ public class EmpresaTests
 
         Assert.Throws<DomainException>(() => empresa.Eliminar());
     }
+
+    // --- Activa / inactiva (HU-ADM-01) ---
+
+    [Fact]
+    public void Crear_QuedaActiva()
+    {
+        var empresa = Empresa.Crear("Gasolinera Tuxtla Centro", null, null);
+
+        Assert.True(empresa.Activo);
+    }
+
+    [Fact]
+    public void Desactivar_YActivar_CambiaElEstado()
+    {
+        var empresa = Empresa.Crear("Gasolinera Tuxtla Centro", null, null);
+
+        empresa.Desactivar();
+        Assert.False(empresa.Activo);
+
+        empresa.Activar();
+        Assert.True(empresa.Activo);
+    }
 }

@@ -1,4 +1,6 @@
-﻿using APIGasoline.Application.Features.Viajes.DTOs;
+﻿using APIGasoline.Application.Common.Interfaces;
+using APIGasoline.Application.Common.Storage;
+using APIGasoline.Application.Features.Viajes.DTOs;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
@@ -21,11 +23,13 @@ public class GetViajesQueryHandler : IRequestHandler<GetViajesQuery, IReadOnlyLi
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly IFileStorageService _storage;
 
-    public GetViajesQueryHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    public GetViajesQueryHandler(IUnitOfWork unitOfWork, IMapper mapper, IFileStorageService storage)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _storage = storage;
     }
 
     public async Task<IReadOnlyList<ViajeDto>> Handle(GetViajesQuery request, CancellationToken cancellationToken)
@@ -33,6 +37,6 @@ public class GetViajesQueryHandler : IRequestHandler<GetViajesQuery, IReadOnlyLi
         var viajes = await _unitOfWork.Viajes.GetAllAsync(
             request.EmpresaId, request.CarroId, request.EmpleadoOperadorId, request.SolicitudReservaId, request.Estado, cancellationToken);
 
-        return _mapper.Map<IReadOnlyList<ViajeDto>>(viajes);
+        return await _mapper.Map<IReadOnlyList<ViajeDto>>(viajes).ConUrlsAsync(_storage, cancellationToken);
     }
 }

@@ -10,6 +10,7 @@ public class Carro
     public const int ColorMaxLength = 50;
     public const int PlacasMaxLength = 20;
     public const int FotoMaxLength = 255;
+    public const int MotivoBajaMaxLength = 255;
     public const int AnioMinimo = 1900;
     public const decimal CapacidadTanqueMaxima = 9999.99m;      // decimal(6,2)
     public const decimal KilometrajeMaximo = 99999999.99m;      // decimal(10,2)
@@ -30,6 +31,10 @@ public class Carro
 
     public EstadoCarro Estado { get; private set; } = EstadoCarro.Disponible;
 
+    /// <summary>Baja del carro (HU-AST-03). El historial de viajes se conserva.</summary>
+    public bool DadoDeBaja { get; private set; }
+    public DateTime? FechaBaja { get; private set; }
+    public string? MotivoBaja { get; private set; }
 
     public DateTime? FechaAlta { get; private set; }
 
@@ -130,6 +135,18 @@ public class Carro
             KilometrajeActual = kilometraje;
     }
 
+    /// <summary>
+    /// Ajusta el kilometraje cuando se corrige el último viaje del carro (puede bajar).
+    /// Solo lo usa el flujo de corrección; el uso normal solo avanza el kilometraje.
+    /// </summary>
+    public void CorregirKilometraje(decimal kilometraje)
+    {
+        if (kilometraje < 0 || kilometraje > KilometrajeMaximo)
+            throw new DomainException($"El kilometraje debe estar entre 0 y {KilometrajeMaximo}.");
+
+        KilometrajeActual = kilometraje;
+    }
+
     public void CambiarEstado(EstadoCarro estado)
     {
         if (!Enum.IsDefined(estado))
@@ -138,11 +155,14 @@ public class Carro
         Estado = estado;
     }
 
-    public bool EstaDisponible => Estado == EstadoCarro.Disponible;
+    public bool EstaDisponible => Estado == EstadoCarro.Disponible && !DadoDeBaja;
 
  
     public void Ocupar()
     {
+        if (DadoDeBaja)
+            throw new DomainException("El carro está dado de baja y no se puede asignar.");
+
         if (Estado == EstadoCarro.EnMantenimiento)
             throw new DomainException("El carro está en mantenimiento y no se puede asignar.");
 
@@ -157,6 +177,25 @@ public class Carro
     {
         if (Estado == EstadoCarro.Ocupado)
             Estado = EstadoCarro.Disponible;
+    }
+
+    /// <summary>
+    /// Retira el carro de la flota (HU-AST-03). No se puede dar de baja un carro en uso.
+    /// </summary>
+    public void DarDeBaja(DateTime fecha, string motivo)
+    {
+        if (DadoDeBaja)
+            throw new DomainException("El carro ya está dado de baja.");
+
+        if (Estado == EstadoCarro.Ocupado)
+            throw new DomainException("No se puede dar de baja un carro que está en uso. Primero libéralo.");
+
+        if (fecha == default)
+            throw new DomainException("La fecha de baja es obligatoria.");
+
+        MotivoBaja = Requerido(motivo, "El motivo de baja", MotivoBajaMaxLength);
+        FechaBaja = fecha;
+        DadoDeBaja = true;
     }
 
     private static string Requerido(string? valor, string campo, int max)

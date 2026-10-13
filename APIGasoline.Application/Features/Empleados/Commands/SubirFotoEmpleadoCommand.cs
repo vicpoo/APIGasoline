@@ -21,12 +21,14 @@ public class SubirFotoEmpleadoCommandHandler : IRequestHandler<SubirFotoEmpleado
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly IFileStorageService _storage;
+    private readonly IDateTimeProvider _dateTime;
 
-    public SubirFotoEmpleadoCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IFileStorageService storage)
+    public SubirFotoEmpleadoCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IFileStorageService storage, IDateTimeProvider dateTime)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _storage = storage;
+        _dateTime = dateTime;
     }
 
     public async Task<EmpleadoDto> Handle(SubirFotoEmpleadoCommand request, CancellationToken cancellationToken)
@@ -57,7 +59,7 @@ public class SubirFotoEmpleadoCommandHandler : IRequestHandler<SubirFotoEmpleado
         await ArchivoTransaccion.SubirYGuardarAsync(_unitOfWork, _storage, request.Archivo, llave, _ =>
         {
             if (request.Tipo == TipoFotoEmpleado.Licencia)
-                empleado.CambiarFotoLicencia(llave);
+                empleado.CambiarFotoLicencia(llave, _dateTime.Now); // HU-LOG-01: fecha de carga
             else
                 empleado.CambiarFotoPerfil(llave);
 

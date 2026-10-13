@@ -24,7 +24,4 @@ public class CreateCargaCombustibleRequest
 
     public decimal? UbicacionLat { get; set; }
     public decimal? UbicacionLng { get; set; }
-
-    /// <summary>true si la carga se registró sin conexión.</summary>
-    public bool Sincronizado { get; set; }
 }

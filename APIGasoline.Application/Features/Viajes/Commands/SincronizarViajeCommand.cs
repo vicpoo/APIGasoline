@@ -1,4 +1,6 @@
-﻿using APIGasoline.Application.Common.Exceptions;
+﻿using APIGasoline.Application.Common.Interfaces;
+using APIGasoline.Application.Common.Storage;
+using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Features.Viajes.Common;
 using APIGasoline.Application.Features.Viajes.DTOs;
 using APIGasoline.Domain.Entities;
@@ -12,7 +14,7 @@ namespace APIGasoline.Application.Features.Viajes.Commands;
 
 /// <summary>
 /// Sube un viaje que la app registró sin conexión (offline-first).
-/// Puede venir en curso, finalizado o interrumpido. Queda con sincronizado = true.
+/// Puede venir en curso, finalizado o interrumpido. La BD guarda la hora de llegada en fecha_recepcion.
 /// </summary>
 public record SincronizarViajeCommand(
     Guid EmpresaId,
@@ -34,12 +36,14 @@ public class SincronizarViajeCommandHandler : IRequestHandler<SincronizarViajeCo
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly IFileStorageService _storage;
     private readonly IPublisher _publisher;
 
-    public SincronizarViajeCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IPublisher publisher)
+    public SincronizarViajeCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IFileStorageService storage, IPublisher publisher)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _storage = storage;
         _publisher = publisher;
     }
 
@@ -73,7 +77,6 @@ public class SincronizarViajeCommandHandler : IRequestHandler<SincronizarViajeCo
                 break;
         }
 
-        viaje.MarcarSincronizado();
 
         var carro = await ViajeValidator.ValidarInicioAsync(_unitOfWork, viaje, esSincronizacion: true, cancellationToken);
 
@@ -87,6 +90,6 @@ public class SincronizarViajeCommandHandler : IRequestHandler<SincronizarViajeCo
         if (!viaje.EstaEnCurso)
             await _publisher.Publish(new RutaViajeModificadaNotification(viaje.ViajeId), cancellationToken);
 
-        return _mapper.Map<ViajeDto>(viaje);
+        return await _mapper.Map<ViajeDto>(viaje).ConUrlsAsync(_storage, cancellationToken);
     }
 }

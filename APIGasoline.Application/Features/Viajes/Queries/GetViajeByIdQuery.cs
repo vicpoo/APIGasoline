@@ -1,4 +1,6 @@
-﻿using APIGasoline.Application.Common.Exceptions;
+﻿using APIGasoline.Application.Common.Interfaces;
+using APIGasoline.Application.Common.Storage;
+using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Features.Viajes.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
@@ -12,11 +14,13 @@ public class GetViajeByIdQueryHandler : IRequestHandler<GetViajeByIdQuery, Viaje
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly IFileStorageService _storage;
 
-    public GetViajeByIdQueryHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    public GetViajeByIdQueryHandler(IUnitOfWork unitOfWork, IMapper mapper, IFileStorageService storage)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _storage = storage;
     }
 
     public async Task<ViajeDto> Handle(GetViajeByIdQuery request, CancellationToken cancellationToken)
@@ -24,6 +28,6 @@ public class GetViajeByIdQueryHandler : IRequestHandler<GetViajeByIdQuery, Viaje
         var viaje = await _unitOfWork.Viajes.GetByIdAsync(request.ViajeId, cancellationToken)
             ?? throw new NotFoundException($"No existe un viaje con el id {request.ViajeId}.");
 
-        return _mapper.Map<ViajeDto>(viaje);
+        return await _mapper.Map<ViajeDto>(viaje).ConUrlsAsync(_storage, cancellationToken);
     }
 }

@@ -29,6 +29,9 @@ public class DeleteCarroCommandHandler : IRequestHandler<DeleteCarroCommand>
         if (await _unitOfWork.Viajes.ExistsByCarroAsync(carro.CarroId, cancellationToken))
             throw new ConflictException("No se puede eliminar el carro porque tiene viajes registrados.");
 
+        if (await _unitOfWork.RevisionesAuditoria.ExistsByCarroAsync(carro.CarroId, cancellationToken))
+            throw new ConflictException("No se puede eliminar el carro porque tiene revisiones de auditoría.");
+
         if (await _unitOfWork.CambiosEstatusCarro.ExistsByCarroAsync(carro.CarroId, cancellationToken))
             throw new ConflictException("No se puede eliminar el carro porque tiene historial de cambios de estatus.");
 

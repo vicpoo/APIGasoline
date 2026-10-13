@@ -19,4 +19,11 @@ public static class LlavesArchivo
 
     public static string ComprobanteCarga(Guid empresaId, Guid viajeId, Guid cargaCombustibleId, string extension, Guid version)
         => $"empresa/{empresaId}/viaje/{viajeId}/carga/{cargaCombustibleId}/comprobante-{version:N}{extension}";
+
+    /// <param name="momento">"inicial" o "final".</param>
+    public static string FotoTablero(Guid empresaId, Guid viajeId, string momento, string extension, Guid version)
+        => $"empresa/{empresaId}/viaje/{viajeId}/tablero/{momento}-{version:N}{extension}";
+
+    public static string EvidenciaCambioEstatus(Guid empresaId, Guid carroId, Guid cambioEstatusCarroId, string extension, Guid version)
+        => $"empresa/{empresaId}/carro/{carroId}/estatus/{cambioEstatusCarroId}/evidencia-{version:N}{extension}";
 }

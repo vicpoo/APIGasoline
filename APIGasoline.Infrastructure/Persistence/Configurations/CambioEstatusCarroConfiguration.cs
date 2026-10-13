@@ -33,9 +33,19 @@ public class CambioEstatusCarroConfiguration : IEntityTypeConfiguration<CambioEs
             .HasConversion(new EstadoCarroConverter())
             .IsRequired();
 
+        // enum('liberacion','falla_mecanica','choque_o_golpe','servicio','emergencia','otro'); null = sin clasificar
+        builder.Property(c => c.TipoMotivo)
+            .HasColumnName("tipo_motivo")
+            .HasColumnType(TipoMotivoCambioConverter.ColumnType)
+            .HasConversion(new TipoMotivoCambioConverter());
+
         builder.Property(c => c.Motivo)
             .HasColumnName("motivo")
             .HasMaxLength(CambioEstatusCarro.MotivoMaxLength);
+
+        builder.Property(c => c.FotoEvidencia)
+            .HasColumnName("foto_evidencia")
+            .HasMaxLength(CambioEstatusCarro.FotoMaxLength);
 
         // Si la app manda la fecha (offline) se usa; si viene null, la pone la BD.
         builder.Property(c => c.FechaCambio)
@@ -44,11 +54,12 @@ public class CambioEstatusCarroConfiguration : IEntityTypeConfiguration<CambioEs
             .HasDefaultValueSql("CURRENT_TIMESTAMP")
             .ValueGeneratedOnAdd();
 
-        builder.Property(c => c.Sincronizado)
-            .HasColumnName("sincronizado")
-            .HasDefaultValue(false)
-            .ValueGeneratedNever()
-            .IsRequired();
+        // Hora del servidor en que llegó el registro. Reemplaza a "sincronizado" (v4).
+        builder.Property(c => c.FechaRecepcion)
+            .HasColumnName("fecha_recepcion")
+            .HasColumnType("timestamp")
+            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .ValueGeneratedOnAdd();
 
         // Restrict en todas: es una bitácora, no debe perderse en cascada.
         builder.HasOne<Empresa>()
@@ -87,6 +98,10 @@ public class CambioEstatusCarroConfiguration : IEntityTypeConfiguration<CambioEs
 
         builder.HasIndex(c => new { c.EmpresaId, c.CarroId })
             .HasDatabaseName("ix_cambio_estatus_carro_empresa_id_carro_id");
+
+        // Consulta de percances (falla_mecanica, choque_o_golpe)
+        builder.HasIndex(c => new { c.EmpresaId, c.TipoMotivo })
+            .HasDatabaseName("ix_cambio_estatus_carro_empresa_id_tipo_motivo");
 
         // Índices de las llaves foráneas (EF los crearía igual; aquí les damos nombre)
         builder.HasIndex(c => new { c.EmpresaId, c.EmpleadoId }).HasDatabaseName("ix_cambio_estatus_carro_empresa_id_empleado_id");

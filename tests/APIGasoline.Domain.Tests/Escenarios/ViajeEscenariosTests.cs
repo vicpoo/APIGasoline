@@ -40,15 +40,12 @@ public class ViajeEscenariosTests
 
         // El teléfono sube primero el viaje del día 5 y después el del día 4
         viajeDia5.Finalizar(Dia5.AddHours(2), null, null, 15500m);
-        viajeDia5.MarcarSincronizado();
         carro.AvanzarKilometraje(viajeDia5.KilometrajeFinal!.Value);
 
         viajeDia4.Finalizar(Dia4.AddHours(1), null, null, 15300m);
-        viajeDia4.MarcarSincronizado();
         carro.AvanzarKilometraje(viajeDia4.KilometrajeFinal!.Value);
 
         Assert.Equal(15500m, carro.KilometrajeActual);
-        Assert.True(viajeDia4.Sincronizado);
         Assert.Equal(300m, viajeDia4.DistanciaRecorrida);
     }
 

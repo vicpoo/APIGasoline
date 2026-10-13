@@ -1,4 +1,6 @@
-﻿using APIGasoline.Application.Features.CambiosEstatusCarro.DTOs;
+﻿using APIGasoline.Application.Common.Interfaces;
+using APIGasoline.Application.Common.Storage;
+using APIGasoline.Application.Features.CambiosEstatusCarro.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
 using MediatR;
@@ -18,11 +20,13 @@ public class GetCambiosEstatusCarroQueryHandler : IRequestHandler<GetCambiosEsta
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly IFileStorageService _storage;
 
-    public GetCambiosEstatusCarroQueryHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    public GetCambiosEstatusCarroQueryHandler(IUnitOfWork unitOfWork, IMapper mapper, IFileStorageService storage)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _storage = storage;
     }
 
     public async Task<IReadOnlyList<CambioEstatusCarroDto>> Handle(GetCambiosEstatusCarroQuery request, CancellationToken cancellationToken)
@@ -30,6 +34,6 @@ public class GetCambiosEstatusCarroQueryHandler : IRequestHandler<GetCambiosEsta
         var cambios = await _unitOfWork.CambiosEstatusCarro.GetAllAsync(
             request.EmpresaId, request.CarroId, request.Desde, request.Hasta, cancellationToken);
 
-        return _mapper.Map<IReadOnlyList<CambioEstatusCarroDto>>(cambios);
+        return await _mapper.Map<IReadOnlyList<CambioEstatusCarroDto>>(cambios).ConUrlsAsync(_storage, cancellationToken);
     }
 }

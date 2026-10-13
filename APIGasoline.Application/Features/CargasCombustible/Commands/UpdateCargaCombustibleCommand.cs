@@ -1,9 +1,11 @@
-﻿using APIGasoline.Application.Common.Exceptions;
+﻿using APIGasoline.Application.Common.Auditoria;
+using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Common.Models;
 using APIGasoline.Application.Common.Storage;
 using APIGasoline.Application.Features.CargasCombustible.Common;
 using APIGasoline.Application.Features.CargasCombustible.DTOs;
+using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
 using MediatR;
@@ -14,6 +16,8 @@ namespace APIGasoline.Application.Features.CargasCombustible.Commands;
 /// <summary>
 /// Corrige los datos de una carga. No se puede mover a otro viaje.
 /// Si se manda <see cref="NuevaFotoComprobante"/>, reemplaza el comprobante; si es null, se conserva el actual.
+/// Es una corrección: el motivo es obligatorio, se aplican las reglas de <see cref="ReglasCorreccion"/>,
+/// la carga queda marcada como corregida y el valor anterior se conserva en auditoria_evento.
 /// </summary>
 public record UpdateCargaCombustibleCommand(
     Guid CargaCombustibleId,
@@ -22,7 +26,8 @@ public record UpdateCargaCombustibleCommand(
     ArchivoEntrada? NuevaFotoComprobante,
     DateTime FechaCarga,
     decimal? UbicacionLat,
-    decimal? UbicacionLng) : IRequest<CargaCombustibleDto>;
+    decimal? UbicacionLng,
+    string? Motivo) : IRequest<CargaCombustibleDto>;
 
 public class UpdateCargaCombustibleCommandHandler : IRequestHandler<UpdateCargaCombustibleCommand, CargaCombustibleDto>
 {
@@ -31,14 +36,25 @@ public class UpdateCargaCombustibleCommandHandler : IRequestHandler<UpdateCargaC
     private readonly IDateTimeProvider _dateTime;
     private readonly IFileStorageService _storage;
     private readonly IPublisher _publisher;
+    private readonly IUsuarioActual _usuarioActual;
+    private readonly IContextoAuditoria _auditoria;
 
-    public UpdateCargaCombustibleCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IDateTimeProvider dateTime, IFileStorageService storage, IPublisher publisher)
+    public UpdateCargaCombustibleCommandHandler(
+        IUnitOfWork unitOfWork,
+        IMapper mapper,
+        IDateTimeProvider dateTime,
+        IFileStorageService storage,
+        IPublisher publisher,
+        IUsuarioActual usuarioActual,
+        IContextoAuditoria auditoria)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _dateTime = dateTime;
         _storage = storage;
         _publisher = publisher;
+        _usuarioActual = usuarioActual;
+        _auditoria = auditoria;
     }
 
     public async Task<CargaCombustibleDto> Handle(UpdateCargaCombustibleCommand request, CancellationToken cancellationToken)
@@ -53,6 +69,9 @@ public class UpdateCargaCombustibleCommandHandler : IRequestHandler<UpdateCargaC
 
         var viaje = await _unitOfWork.Viajes.GetByIdAsync(carga.ViajeId, cancellationToken)
             ?? throw new NotFoundException($"No existe un viaje con el id {carga.ViajeId}.");
+
+        // Quién puede corregir y con qué motivo
+        var motivo = ReglasCorreccion.Validar(_usuarioActual, viaje, request.Motivo);
 
         var comprobanteAnterior = carga.FotoComprobante;
         var llave = extension is null
@@ -70,6 +89,14 @@ public class UpdateCargaCombustibleCommandHandler : IRequestHandler<UpdateCargaC
 
         await CargaCombustibleValidator.ValidarAsync(_unitOfWork, _dateTime, viaje, carga, cancellationToken);
 
+        carga.MarcarCorregida();
+
+        if (request.NuevaFotoComprobante is not null)
+            carga.MarcarComprobanteSubido(_dateTime.Now);
+
+        // El interceptor guarda el valor anterior y el nuevo con esta acción y motivo
+        _auditoria.Registrar(carga.CargaCombustibleId, AccionAuditoria.Corregir, motivo);
+
         if (request.NuevaFotoComprobante is null)
         {
             // Sin archivo nuevo: solo cambios en BD
@@ -82,8 +109,7 @@ public class UpdateCargaCombustibleCommandHandler : IRequestHandler<UpdateCargaC
                 _ => Task.CompletedTask, // los cambios ya están en la entidad; el Commit hace SaveChanges
                 cancellationToken);
 
-            // Ya confirmado en BD: se borra el comprobante anterior
-            await _storage.IntentarEliminarAsync(comprobanteAnterior);
+            // El comprobante anterior NO se borra: es evidencia y su llave queda en el historial de auditoría
         }
 
         // Los litros cambian el rendimiento km/L de un viaje ya cerrado

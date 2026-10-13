@@ -19,7 +19,6 @@ namespace APIGasoline.Application.Features.PuntosRuta.Commands;
 /// </summary>
 public record RegistrarLotePuntosRutaCommand(
     Guid ViajeId,
-    bool Sincronizado,
     IReadOnlyList<PuntoRutaNuevoDto> Puntos) : IRequest<LotePuntosRutaResultadoDto>;
 
 public class RegistrarLotePuntosRutaCommandHandler : IRequestHandler<RegistrarLotePuntosRutaCommand, LotePuntosRutaResultadoDto>
@@ -60,7 +59,6 @@ public class RegistrarLotePuntosRutaCommandHandler : IRequestHandler<RegistrarLo
                 punto.Latitud,
                 punto.Longitud,
                 punto.TimestampCaptura,
-                request.Sincronizado,
                 punto.PrecisionMetros,
                 punto.Altitud,
                 punto.Velocidad);

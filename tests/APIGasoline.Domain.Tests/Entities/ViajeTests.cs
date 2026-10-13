@@ -158,14 +158,89 @@ public class ViajeTests
         Assert.Throws<DomainException>(() => viaje.Interrumpir(new string('x', 256), Fin, null, null, null));
     }
 
+    // --- Fotos del tablero ---
+
     [Fact]
-    public void MarcarSincronizado_ViajeOffline_QuedaSincronizado()
+    public void FotosTablero_ConLlave_SeGuardan()
     {
         var viaje = ConstruirViaje();
 
-        viaje.MarcarSincronizado();
+        viaje.CambiarFotoTableroInicial(" empresa/1/viaje/1/tablero/inicial-a.jpg ");
+        viaje.CambiarFotoTableroFinal("empresa/1/viaje/1/tablero/final-b.jpg");
 
-        Assert.True(viaje.Sincronizado);
+        Assert.Equal("empresa/1/viaje/1/tablero/inicial-a.jpg", viaje.FotoTableroInicial);
+        Assert.Equal("empresa/1/viaje/1/tablero/final-b.jpg", viaje.FotoTableroFinal);
+    }
+
+    [Fact]
+    public void FotoTablero_LlaveMayorA255_LanzaDomainException()
+    {
+        var viaje = ConstruirViaje();
+
+        Assert.Throws<DomainException>(() => viaje.CambiarFotoTableroInicial(new string('x', 256)));
+    }
+
+    // --- Corrección de kilometraje ---
+
+    [Fact]
+    public void CorregirKilometraje_ViajeCerrado_RecalculaDistanciaYQuedaCorregido()
+    {
+        var viaje = ConstruirViaje(kilometrajeInicial: 15480m);
+        viaje.Finalizar(Fin, null, null, 15800m); // se tecleó 15800 en vez de 15580
+
+        viaje.CorregirKilometraje(15480m, 15580m);
+
+        Assert.Equal(15580m, viaje.KilometrajeFinal);
+        Assert.Equal(100m, viaje.DistanciaRecorrida);
+        Assert.True(viaje.Corregido);
+    }
+
+    [Fact]
+    public void CorregirKilometraje_ViajeEnCurso_SoloCambiaElInicial()
+    {
+        var viaje = ConstruirViaje(kilometrajeInicial: 15480m);
+
+        viaje.CorregirKilometraje(15408m, null);
+
+        Assert.Equal(15408m, viaje.KilometrajeInicial);
+        Assert.Null(viaje.DistanciaRecorrida);
+        Assert.True(viaje.Corregido);
+    }
+
+    [Fact]
+    public void CorregirKilometraje_FinalEnViajeEnCurso_LanzaDomainException()
+    {
+        var viaje = ConstruirViaje();
+
+        Assert.Throws<DomainException>(() => viaje.CorregirKilometraje(15480m, 15600m));
+    }
+
+    [Fact]
+    public void CorregirKilometraje_FinalMenorAlInicial_LanzaDomainException()
+    {
+        var viaje = ConstruirViaje(kilometrajeInicial: 15480m);
+        viaje.Finalizar(Fin, null, null, 15580m);
+
+        Assert.Throws<DomainException>(() => viaje.CorregirKilometraje(15480m, 15400m));
+    }
+
+    [Fact]
+    public void CorregirKilometraje_SinCambios_LanzaDomainException()
+    {
+        var viaje = ConstruirViaje(kilometrajeInicial: 15480m);
+        viaje.Finalizar(Fin, null, null, 15580m);
+
+        Assert.Throws<DomainException>(() => viaje.CorregirKilometraje(15480m, 15580m));
+        Assert.False(viaje.Corregido);
+    }
+
+    [Fact]
+    public void CorregirKilometraje_BorrarElFinal_LanzaDomainException()
+    {
+        var viaje = ConstruirViaje(kilometrajeInicial: 15480m);
+        viaje.Finalizar(Fin, null, null, 15580m);
+
+        Assert.Throws<DomainException>(() => viaje.CorregirKilometraje(15480m, null));
     }
 
     private static Viaje ConstruirViaje(

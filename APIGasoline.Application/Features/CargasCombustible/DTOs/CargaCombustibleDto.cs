@@ -14,4 +14,9 @@ public record CargaCombustibleDto(
     DateTime FechaCarga,
     decimal? UbicacionLat,
     decimal? UbicacionLng,
-    bool Sincronizado);
+    /// <summary>Cuándo llegó el comprobante al almacenamiento. null = comprobante pendiente.</summary>
+    DateTime? FechaSubidaComprobante,
+    /// <summary>true si litros, monto o comprobante se corrigieron después de capturarse.</summary>
+    bool Corregido,
+    /// <summary>Hora del servidor en que llegó la carga.</summary>
+    DateTime? FechaRecepcion);

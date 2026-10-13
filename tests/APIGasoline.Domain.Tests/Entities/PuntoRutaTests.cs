@@ -86,7 +86,7 @@ public class PuntoRutaTests
     [Fact]
     public void Crear_ConCamposOpcionales_SeRedondeanA2Decimales()
     {
-        var punto = PuntoRuta.Crear(Id(1), Id(1), 16.753056m, -93.115556m, Captura, false,
+        var punto = PuntoRuta.Crear(Id(1), Id(1), 16.753056m, -93.115556m, Captura,
             precisionMetros: 4.567m, altitud: 532.126m, velocidad: 9.999m);
 
         Assert.Equal(4.57m, punto.PrecisionMetros);
@@ -99,7 +99,7 @@ public class PuntoRutaTests
     [InlineData(10000)]
     public void Crear_PrecisionFueraDeRango_LanzaDomainException(decimal precision)
     {
-        Assert.Throws<DomainException>(() => PuntoRuta.Crear(Id(1), Id(1), 16.75m, -93.11m, Captura, false, precisionMetros: precision));
+        Assert.Throws<DomainException>(() => PuntoRuta.Crear(Id(1), Id(1), 16.75m, -93.11m, Captura, precisionMetros: precision));
     }
 
     [Theory]
@@ -107,7 +107,7 @@ public class PuntoRutaTests
     [InlineData(9000.01)]
     public void Crear_AltitudFueraDeRango_LanzaDomainException(decimal altitud)
     {
-        Assert.Throws<DomainException>(() => PuntoRuta.Crear(Id(1), Id(1), 16.75m, -93.11m, Captura, false, altitud: altitud));
+        Assert.Throws<DomainException>(() => PuntoRuta.Crear(Id(1), Id(1), 16.75m, -93.11m, Captura, altitud: altitud));
     }
 
     [Theory]
@@ -116,7 +116,7 @@ public class PuntoRutaTests
     [InlineData(9000)]
     public void Crear_AltitudEnElBorde_SeAcepta(decimal altitud)
     {
-        var punto = PuntoRuta.Crear(Id(1), Id(1), 16.75m, -93.11m, Captura, false, altitud: altitud);
+        var punto = PuntoRuta.Crear(Id(1), Id(1), 16.75m, -93.11m, Captura, altitud: altitud);
 
         Assert.Equal(altitud, punto.Altitud);
     }
@@ -124,13 +124,13 @@ public class PuntoRutaTests
     [Fact]
     public void Crear_VelocidadNegativa_LanzaDomainException()
     {
-        Assert.Throws<DomainException>(() => PuntoRuta.Crear(Id(1), Id(1), 16.75m, -93.11m, Captura, false, velocidad: -1m));
+        Assert.Throws<DomainException>(() => PuntoRuta.Crear(Id(1), Id(1), 16.75m, -93.11m, Captura, velocidad: -1m));
     }
 
     [Fact]
     public void ToPuntoGps_ConvierteCoordenadasYCamposOpcionales()
     {
-        var punto = PuntoRuta.Crear(Id(1), Id(1), 16.753056m, -93.115556m, Captura, false,
+        var punto = PuntoRuta.Crear(Id(1), Id(1), 16.753056m, -93.115556m, Captura,
             precisionMetros: 8.5m, altitud: 530m, velocidad: 12.25m);
 
         var gps = punto.ToPuntoGps();
@@ -156,7 +156,6 @@ public class PuntoRutaTests
         int viajeId = 1,
         decimal latitud = 16.753056m,
         decimal longitud = -93.115556m,
-        DateTime? timestamp = null,
-        bool sincronizado = false)
-        => PuntoRuta.Crear(Id(empresaId), Id(viajeId), latitud, longitud, timestamp ?? Captura, sincronizado);
+        DateTime? timestamp = null)
+        => PuntoRuta.Crear(Id(empresaId), Id(viajeId), latitud, longitud, timestamp ?? Captura);
 }

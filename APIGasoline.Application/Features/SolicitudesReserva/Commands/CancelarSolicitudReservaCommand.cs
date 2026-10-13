@@ -54,7 +54,8 @@ public class CancelarSolicitudReservaCommandHandler : IRequestHandler<CancelarSo
                     solicitud.EmpleadoSolicitanteId,
                     EstadoCarro.Disponible,
                     $"Liberado por cancelación de la solicitud de reserva {solicitud.SolicitudReservaId}.",
-                    fechaCambio: ahora);
+                    fechaCambio: ahora,
+                    tipoMotivo: TipoMotivoCambio.Liberacion);
 
                 await _unitOfWork.CambiosEstatusCarro.AddAsync(cambio, cancellationToken);
             }

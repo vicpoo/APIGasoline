@@ -29,6 +29,9 @@ public class DeleteViajeCommandHandler : IRequestHandler<DeleteViajeCommand>
         if (await _unitOfWork.CargasCombustible.ExistsByViajeAsync(viaje.ViajeId, cancellationToken))
             throw new ConflictException("No se puede eliminar el viaje porque tiene cargas de combustible registradas.");
 
+        if (await _unitOfWork.RevisionesAuditoria.ExistsByViajeAsync(viaje.ViajeId, cancellationToken))
+            throw new ConflictException("No se puede eliminar el viaje porque tiene revisiones de auditoría.");
+
         if (await _unitOfWork.CambiosEstatusCarro.ExistsByViajeAsync(viaje.ViajeId, cancellationToken))
             throw new ConflictException("No se puede eliminar el viaje porque aparece en la bitácora de estatus del carro.");
 

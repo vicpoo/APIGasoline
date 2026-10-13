@@ -7,7 +7,8 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.Empresas.Commands;
 
-public record UpdateEmpresaCommand(Guid EmpresaId, string Nombre, Guid? CorporativoId, Guid? DivisionId) : IRequest<EmpresaDto>;
+/// <param name="Activo">HU-ADM-01: activa o inactiva. null = no cambia.</param>
+public record UpdateEmpresaCommand(Guid EmpresaId, string Nombre, Guid? CorporativoId, Guid? DivisionId, bool? Activo = null) : IRequest<EmpresaDto>;
 
 public class UpdateEmpresaCommandHandler : IRequestHandler<UpdateEmpresaCommand, EmpresaDto>
 {
@@ -28,6 +29,11 @@ public class UpdateEmpresaCommandHandler : IRequestHandler<UpdateEmpresaCommand,
         // El dominio valida y normaliza los datos
         empresa.CambiarNombre(request.Nombre);
         empresa.AsignarOrganizacion(request.CorporativoId, request.DivisionId);
+
+        if (request.Activo is true)
+            empresa.Activar();
+        else if (request.Activo is false)
+            empresa.Desactivar();
 
         await EmpresaOrganizacionValidator.ValidarAsync(_unitOfWork, empresa.CorporativoId, empresa.DivisionId, cancellationToken);
 

@@ -26,6 +26,10 @@ public class DeleteUsuarioCommandHandler : IRequestHandler<DeleteUsuarioCommand>
         if (await _unitOfWork.Empleados.UsuarioAsignadoAsync(usuario.UsuarioId, null, cancellationToken))
             throw new ConflictException("No se puede eliminar el usuario porque está asignado a un empleado.");
 
+        // El historial de auditoría referencia al usuario y no se puede perder
+        if (await _unitOfWork.AuditoriaEventos.ExistsByUsuarioAsync(usuario.UsuarioId, cancellationToken))
+            throw new ConflictException("No se puede eliminar el usuario porque tiene acciones en el historial de auditoría. Desactívalo en su lugar.");
+
         _unitOfWork.Usuarios.Remove(usuario);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }

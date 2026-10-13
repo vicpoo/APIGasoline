@@ -1,4 +1,6 @@
-﻿using APIGasoline.Application.Features.Viajes.Common;
+﻿using APIGasoline.Application.Common.Interfaces;
+using APIGasoline.Application.Common.Storage;
+using APIGasoline.Application.Features.Viajes.Common;
 using APIGasoline.Application.Features.Viajes.DTOs;
 using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Interfaces;
@@ -24,11 +26,13 @@ public class IniciarViajeCommandHandler : IRequestHandler<IniciarViajeCommand, V
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly IFileStorageService _storage;
 
-    public IniciarViajeCommandHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    public IniciarViajeCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IFileStorageService storage)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _storage = storage;
     }
 
     public async Task<ViajeDto> Handle(IniciarViajeCommand request, CancellationToken cancellationToken)
@@ -49,6 +53,6 @@ public class IniciarViajeCommandHandler : IRequestHandler<IniciarViajeCommand, V
         await _unitOfWork.Viajes.AddAsync(viaje, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return _mapper.Map<ViajeDto>(viaje);
+        return await _mapper.Map<ViajeDto>(viaje).ConUrlsAsync(_storage, cancellationToken);
     }
 }

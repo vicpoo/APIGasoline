@@ -32,9 +32,9 @@ public class PuntoRuta
     public DateTime TimestampCaptura { get; private set; }
 
     /// <summary>
-    /// true cuando el punto se capturó sin conexión y se subió después.
+    /// Hora del servidor en que llegó el punto (la pone la BD). Reemplaza al antiguo campo "sincronizado".
     /// </summary>
-    public bool Sincronizado { get; private set; }
+    public DateTime? FechaRecepcion { get; private set; }
 
     // Requerido por Entity Framework
     private PuntoRuta()
@@ -51,7 +51,6 @@ public class PuntoRuta
         decimal latitud,
         decimal longitud,
         DateTime timestampCaptura,
-        bool sincronizado,
         decimal? precisionMetros = null,
         decimal? altitud = null,
         decimal? velocidad = null)
@@ -91,8 +90,7 @@ public class PuntoRuta
             PrecisionMetros = precisionMetros is null ? null : Math.Round(precisionMetros.Value, 2),
             Altitud = altitud is null ? null : Math.Round(altitud.Value, 2),
             Velocidad = velocidad is null ? null : Math.Round(velocidad.Value, 2),
-            TimestampCaptura = TruncarASegundos(timestampCaptura),
-            Sincronizado = sincronizado
+            TimestampCaptura = TruncarASegundos(timestampCaptura)
         };
     }
 

@@ -17,6 +17,9 @@ public class Empleado
 
     public string? FotoLicencia { get; private set; }
 
+    /// <summary>Cuándo se subió la licencia (HU-LOG-01). null = licencia pendiente.</summary>
+    public DateTime? FechaCargaLicencia { get; private set; }
+
     public bool Eliminado { get; private set; }
 
 
@@ -71,8 +74,16 @@ public class Empleado
     public void CambiarFotoPerfil(string? fotoPerfil)
         => FotoPerfil = NormalizarFoto(fotoPerfil, "foto de perfil");
 
-    public void CambiarFotoLicencia(string? fotoLicencia)
-        => FotoLicencia = NormalizarFoto(fotoLicencia, "foto de licencia");
+    /// <param name="fechaCarga">
+    /// Cuándo se subió la licencia. Si se quita la licencia, la fecha se borra;
+    /// si se cambia sin indicar fecha, se conserva la anterior.
+    /// </param>
+    public void CambiarFotoLicencia(string? fotoLicencia, DateTime? fechaCarga = null)
+    {
+        FotoLicencia = NormalizarFoto(fotoLicencia, "foto de licencia");
+
+        FechaCargaLicencia = FotoLicencia is null ? null : fechaCarga ?? FechaCargaLicencia;
+    }
 
 
     public bool TieneLicencia => !string.IsNullOrWhiteSpace(FotoLicencia);

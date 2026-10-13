@@ -1,14 +1,18 @@
 ﻿using APIGasoline.Application.Features.CambiosEstatusCarro.Commands;
 using APIGasoline.Application.Features.CambiosEstatusCarro.DTOs;
 using APIGasoline.Application.Features.CambiosEstatusCarro.Queries;
+using APIGasoline.Contracts.Archivos;
 using APIGasoline.Contracts.CambiosEstatusCarro;
+using APIGasoline.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace APIGasoline.Controllers;
 
 /// <summary>
-/// Bitácora de estatus de carros. Solo se consulta y se agrega; no se edita ni se borra.
+/// Bitácora de estatus de carros. Solo se consulta y se agrega; no se edita ni se borra
+/// (la única excepción es agregar la foto de evidencia, que puede llegar después).
+/// Los registros con tipoMotivo fallaMecanica o choqueOGolpe forman el registro de percances.
 /// </summary>
 [ApiController]
 [Route("api/cambios-estatus-carro")]
@@ -56,10 +60,28 @@ public class CambiosEstatusCarroController : ControllerBase
             request.Motivo,
             request.ViajeAfectadoId,
             request.FechaCambio,
-            request.Sincronizado);
+            request.TipoMotivo);
 
         var cambio = await _sender.Send(command, cancellationToken);
 
         return CreatedAtAction(nameof(GetById), new { cambioEstatusCarroId = cambio.CambioEstatusCarroId }, cambio);
+    }
+
+    /// <summary>
+    /// HU-EST-02: agrega la foto de la falla o del daño (multipart/form-data, campo "archivo": jpg, png o webp, máx. 5 MB).
+    /// </summary>
+    [HttpPut("{cambioEstatusCarroId:guid}/foto-evidencia")]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(FormFileExtensions.LimiteCuerpoBytes)]
+    [RequestFormLimits(MultipartBodyLengthLimit = FormFileExtensions.LimiteCuerpoBytes)]
+    public async Task<ActionResult<CambioEstatusCarroDto>> SubirFotoEvidencia(Guid cambioEstatusCarroId, [FromForm] SubirArchivoRequest request, CancellationToken cancellationToken)
+    {
+        await using var contenido = request.Archivo!.OpenReadStream();
+
+        var cambio = await _sender.Send(
+            new SubirFotoEvidenciaCommand(cambioEstatusCarroId, request.Archivo.ToArchivoEntrada(contenido)),
+            cancellationToken);
+
+        return Ok(cambio);
     }
 }

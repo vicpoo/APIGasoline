@@ -50,7 +50,7 @@ public class EmpresasController : ControllerBase
     [HttpPut("{empresaId:guid}")]
     public async Task<ActionResult<EmpresaDto>> Update(Guid empresaId, UpdateEmpresaRequest request, CancellationToken cancellationToken)
     {
-        var command = new UpdateEmpresaCommand(empresaId, request.Nombre, request.CorporativoId, request.DivisionId);
+        var command = new UpdateEmpresaCommand(empresaId, request.Nombre, request.CorporativoId, request.DivisionId, request.Activo);
         var empresa = await _sender.Send(command, cancellationToken);
 
         return Ok(empresa);

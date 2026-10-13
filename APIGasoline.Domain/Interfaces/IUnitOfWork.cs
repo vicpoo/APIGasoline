@@ -22,6 +22,8 @@ public interface IUnitOfWork : IDisposable
     INotificacionRepository Notificaciones { get; }
     IOutboxMensajeRepository OutboxMensajes { get; }
     IDispositivoEmpleadoRepository Dispositivos { get; }
+    IAuditoriaEventoRepository AuditoriaEventos { get; }
+    IRevisionAuditoriaRepository RevisionesAuditoria { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task BeginTransactionAsync(CancellationToken cancellationToken = default);

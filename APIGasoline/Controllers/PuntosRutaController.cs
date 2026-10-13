@@ -43,7 +43,7 @@ public class PuntosRutaController : ControllerBase
             .Select(p => new PuntoRutaNuevoDto(p.Latitud, p.Longitud, p.TimestampCaptura!.Value, p.PrecisionMetros, p.Altitud, p.Velocidad))
             .ToList();
 
-        var resultado = await _sender.Send(new RegistrarLotePuntosRutaCommand(viajeId, request.Sincronizado, puntos), cancellationToken);
+        var resultado = await _sender.Send(new RegistrarLotePuntosRutaCommand(viajeId, puntos), cancellationToken);
         return Ok(resultado);
     }
 

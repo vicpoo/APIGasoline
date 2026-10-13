@@ -11,4 +11,7 @@ public record SolicitudReservaDto(
     EstadoSolicitudReserva Estado,
     Guid? EmpleadoConfirmadorId,
     DateTime? FechaResolucion,
-    string? MotivoResolucion);
+    string? MotivoResolucion,
+    /// <summary>Cuándo se liberó el carro (HU-USO-04).</summary>
+    DateTime? FechaLiberacion,
+    string? ObservacionesLiberacion);

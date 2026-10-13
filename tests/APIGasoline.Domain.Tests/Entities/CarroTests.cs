@@ -234,6 +234,68 @@ public class CarroTests
         Assert.Null(carro.FotoVehiculo);
     }
 
+    // --- Baja (HU-AST-03) ---
+
+    [Fact]
+    public void DarDeBaja_CarroDisponible_QuedaDadoDeBajaYNoDisponible()
+    {
+        var carro = ConstruirCarro();
+        var fecha = new DateTime(2026, 10, 13, 9, 0, 0, DateTimeKind.Utc);
+
+        carro.DarDeBaja(fecha, "  Venta de la unidad  ");
+
+        Assert.True(carro.DadoDeBaja);
+        Assert.Equal(fecha, carro.FechaBaja);
+        Assert.Equal("Venta de la unidad", carro.MotivoBaja);
+        Assert.False(carro.EstaDisponible);
+    }
+
+    [Fact]
+    public void DarDeBaja_CarroOcupado_LanzaDomainException()
+    {
+        var carro = ConstruirCarro(estado: EstadoCarro.Ocupado);
+
+        Assert.Throws<DomainException>(() => carro.DarDeBaja(DateTime.UtcNow, "Venta"));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("   ")]
+    public void DarDeBaja_SinMotivo_LanzaDomainException(string? motivo)
+    {
+        var carro = ConstruirCarro();
+
+        Assert.Throws<DomainException>(() => carro.DarDeBaja(DateTime.UtcNow, motivo!));
+    }
+
+    [Fact]
+    public void DarDeBaja_DosVeces_LanzaDomainException()
+    {
+        var carro = ConstruirCarro();
+        carro.DarDeBaja(DateTime.UtcNow, "Venta");
+
+        Assert.Throws<DomainException>(() => carro.DarDeBaja(DateTime.UtcNow, "Venta"));
+    }
+
+    [Fact]
+    public void Ocupar_CarroDadoDeBaja_LanzaDomainException()
+    {
+        var carro = ConstruirCarro();
+        carro.DarDeBaja(DateTime.UtcNow, "Siniestro total");
+
+        Assert.Throws<DomainException>(() => carro.Ocupar());
+    }
+
+    [Fact]
+    public void CorregirKilometraje_PuedeBajar()
+    {
+        var carro = ConstruirCarro(kilometraje: 15800m);
+
+        carro.CorregirKilometraje(15580m);
+
+        Assert.Equal(15580m, carro.KilometrajeActual);
+    }
+
     private static Carro ConstruirCarro(
         string marca = "Nissan",
         string modelo = "NP300",

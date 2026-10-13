@@ -6,6 +6,9 @@ public interface ICambioEstatusCarroRepository
 {
     Task<CambioEstatusCarro?> GetByIdAsync(Guid cambioEstatusCarroId, CancellationToken cancellationToken = default);
 
+    /// <summary>Con seguimiento de cambios: para agregar la foto de evidencia.</summary>
+    Task<CambioEstatusCarro?> GetByIdParaActualizarAsync(Guid cambioEstatusCarroId, CancellationToken cancellationToken = default);
+
     /// <summary>Ordenados del más reciente al más antiguo.</summary>
     Task<IReadOnlyList<CambioEstatusCarro>> GetAllAsync(
         Guid? empresaId = null,

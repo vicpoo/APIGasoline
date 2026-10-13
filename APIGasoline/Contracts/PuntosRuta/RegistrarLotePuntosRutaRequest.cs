@@ -4,9 +4,6 @@ namespace APIGasoline.Contracts.PuntosRuta;
 
 public class RegistrarLotePuntosRutaRequest
 {
-    /// <summary>true si los puntos se capturaron sin conexión.</summary>
-    public bool Sincronizado { get; set; }
-
     [Required]
     [MinLength(1)]
     [MaxLength(1000)]

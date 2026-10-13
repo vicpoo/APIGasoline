@@ -1,8 +1,11 @@
 ﻿using APIGasoline.Application.Features.Viajes.Commands;
+using APIGasoline.Application.Features.Viajes.Common;
 using APIGasoline.Application.Features.Viajes.DTOs;
 using APIGasoline.Application.Features.Viajes.Queries;
+using APIGasoline.Contracts.Archivos;
 using APIGasoline.Contracts.Viajes;
 using APIGasoline.Domain.Enums;
+using APIGasoline.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -94,7 +97,7 @@ public class ViajesController : ControllerBase
     }
 
     /// <summary>
-    /// Sube un viaje registrado sin conexión (queda con sincronizado = true).
+    /// Sube un viaje registrado sin conexión (la BD guarda la hora de llegada en fecha_recepcion).
     /// </summary>
     [HttpPost("sincronizar")]
     public async Task<ActionResult<ViajeDto>> Sincronizar(SincronizarViajeRequest request, CancellationToken cancellationToken)
@@ -118,6 +121,40 @@ public class ViajesController : ControllerBase
         var viaje = await _sender.Send(command, cancellationToken);
 
         return CreatedAtAction(nameof(GetById), new { viajeId = viaje.ViajeId }, viaje);
+    }
+
+    /// <summary>
+    /// Sube o reemplaza la foto del tablero (odómetro y gasolina) al iniciar o terminar el viaje.
+    /// Ruta: /foto-tablero/inicial o /foto-tablero/final. multipart/form-data, campo "archivo": jpg, png o webp, máx. 5 MB.
+    /// La foto anterior no se borra (es evidencia).
+    /// </summary>
+    [HttpPut("{viajeId:guid}/foto-tablero/{momento}")]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(FormFileExtensions.LimiteCuerpoBytes)]
+    [RequestFormLimits(MultipartBodyLengthLimit = FormFileExtensions.LimiteCuerpoBytes)]
+    public async Task<ActionResult<ViajeDto>> SubirFotoTablero(Guid viajeId, string momento, [FromForm] SubirArchivoRequest request, CancellationToken cancellationToken)
+    {
+        if (!Enum.TryParse<MomentoTablero>(momento, ignoreCase: true, out var momentoTablero) || !Enum.IsDefined(momentoTablero))
+            return BadRequest(new ProblemDetails { Title = "Solicitud inválida", Detail = "El momento debe ser 'inicial' o 'final'.", Status = StatusCodes.Status400BadRequest });
+
+        await using var contenido = request.Archivo!.OpenReadStream();
+
+        var viaje = await _sender.Send(
+            new SubirFotoTableroCommand(viajeId, momentoTablero, request.Archivo.ToArchivoEntrada(contenido)),
+            cancellationToken);
+
+        return Ok(viaje);
+    }
+
+    /// <summary>
+    /// Corrige el kilometraje capturado por error (con motivo). Requiere token.
+    /// El viaje queda marcado como corregido y el valor anterior se conserva en el historial de auditoría.
+    /// </summary>
+    [HttpPost("{viajeId:guid}/corregir-kilometraje")]
+    public async Task<ActionResult<ViajeDto>> CorregirKilometraje(Guid viajeId, CorregirKilometrajeViajeRequest request, CancellationToken cancellationToken)
+    {
+        var command = new CorregirKilometrajeViajeCommand(viajeId, request.KilometrajeInicial!.Value, request.KilometrajeFinal, request.Motivo);
+        return Ok(await _sender.Send(command, cancellationToken));
     }
 
     [HttpDelete("{viajeId:guid}")]

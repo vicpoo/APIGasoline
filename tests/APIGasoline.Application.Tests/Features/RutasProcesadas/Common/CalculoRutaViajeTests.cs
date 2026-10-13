@@ -124,6 +124,6 @@ public class CalculoRutaViajeTests
     private static List<PuntoRuta> Puntos(int cantidad)
         => Enumerable.Range(0, cantidad)
             .Select(i => PuntoRuta.Crear(EmpresaId, ViajeId, 16.75m + i * 0.0025m, -93.11m, Inicio.AddSeconds(30 * i),
-                sincronizado: false, precisionMetros: 8m))
+                precisionMetros: 8m))
             .ToList();
 }

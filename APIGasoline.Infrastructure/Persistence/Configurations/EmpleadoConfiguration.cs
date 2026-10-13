@@ -36,12 +36,17 @@ public class EmpleadoConfiguration : IEntityTypeConfiguration<Empleado>
             .HasColumnName("foto_licencia")
             .HasMaxLength(Empleado.FotoMaxLength);
 
+        // HU-LOG-01: null = licencia pendiente
+        builder.Property(e => e.FechaCargaLicencia)
+            .HasColumnName("fecha_carga_licencia")
+            .HasColumnType("timestamp");
+
         // Propiedad calculada en el dominio, no es columna
         builder.Ignore(e => e.TieneLicencia);
 
-        // Soft delete. "delete" es palabra reservada en MySQL; EF la escapa con `backticks`.
+        // Soft delete. v4: la columna se renombra de "delete" (palabra reservada) a "eliminado".
         builder.Property(e => e.Eliminado)
-            .HasColumnName("delete")
+            .HasColumnName("eliminado")
             .HasDefaultValue(false)
             .ValueGeneratedNever()
             .IsRequired();

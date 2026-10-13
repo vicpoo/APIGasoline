@@ -33,7 +33,7 @@ public class CargaCombustibleTests
     [Fact]
     public void Crear_ConIdGeneradoAntes_UsaEseId()
     {
-        var carga = CargaCombustible.Crear(Id(1), Id(1), 45.30m, null, Llave, FechaCarga, null, null, false, cargaCombustibleId: Id(40));
+        var carga = CargaCombustible.Crear(Id(1), Id(1), 45.30m, null, Llave, FechaCarga, null, null, cargaCombustibleId: Id(40));
 
         Assert.Equal(Id(40), carga.CargaCombustibleId);
     }
@@ -52,7 +52,7 @@ public class CargaCombustibleTests
     public void Crear_ConIdVacio_LanzaDomainException()
     {
         Assert.Throws<DomainException>(() =>
-            CargaCombustible.Crear(Id(1), Id(1), 45.30m, null, Llave, FechaCarga, null, null, false, cargaCombustibleId: Guid.Empty));
+            CargaCombustible.Crear(Id(1), Id(1), 45.30m, null, Llave, FechaCarga, null, null, cargaCombustibleId: Guid.Empty));
     }
 
     // --- Litros y monto ---
@@ -161,6 +161,38 @@ public class CargaCombustibleTests
         Assert.Throws<DomainException>(() => ConstruirCarga(lat: lat, lng: lng));
     }
 
+    // --- Auditoría ---
+
+    [Fact]
+    public void Crear_SinMarcarSubida_ComprobantePendienteYNoCorregida()
+    {
+        var carga = ConstruirCarga();
+
+        Assert.Null(carga.FechaSubidaComprobante);
+        Assert.False(carga.Corregido);
+    }
+
+    [Fact]
+    public void MarcarComprobanteSubido_GuardaLaFecha()
+    {
+        var carga = ConstruirCarga();
+        var fecha = FechaCarga.AddMinutes(3);
+
+        carga.MarcarComprobanteSubido(fecha);
+
+        Assert.Equal(fecha, carga.FechaSubidaComprobante);
+    }
+
+    [Fact]
+    public void MarcarCorregida_QuedaCorregida()
+    {
+        var carga = ConstruirCarga();
+
+        carga.MarcarCorregida();
+
+        Assert.True(carga.Corregido);
+    }
+
     private static CargaCombustible ConstruirCarga(
         int empresaId = 1,
         int viajeId = 1,
@@ -169,7 +201,6 @@ public class CargaCombustibleTests
         string foto = Llave,
         DateTime? fecha = null,
         decimal? lat = 16.750120m,
-        decimal? lng = -93.100340m,
-        bool sincronizado = false)
-        => CargaCombustible.Crear(Id(empresaId), Id(viajeId), litros, monto, foto, fecha ?? FechaCarga, lat, lng, sincronizado);
+        decimal? lng = -93.100340m)
+        => CargaCombustible.Crear(Id(empresaId), Id(viajeId), litros, monto, foto, fecha ?? FechaCarga, lat, lng);
 }

@@ -61,8 +61,7 @@ public class CargasCombustibleController : ControllerBase
             request.FotoComprobante.ToArchivoEntrada(contenido),
             request.FechaCarga!.Value,
             request.UbicacionLat,
-            request.UbicacionLng,
-            request.Sincronizado);
+            request.UbicacionLng);
 
         var carga = await _sender.Send(command, cancellationToken);
 
@@ -71,7 +70,8 @@ public class CargasCombustibleController : ControllerBase
 
     /// <summary>
     /// Corrige una carga. Se envía como multipart/form-data; "fotoComprobante" es opcional
-    /// (si no se manda, se conserva el comprobante actual).
+    /// (si no se manda, se conserva el comprobante actual) y "motivo" es obligatorio.
+    /// Requiere token. El valor anterior queda en el historial de auditoría.
     /// </summary>
     [HttpPut("{cargaCombustibleId:guid}")]
     [Consumes("multipart/form-data")]
@@ -88,7 +88,8 @@ public class CargasCombustibleController : ControllerBase
             request.FotoComprobante is null || contenido is null ? null : request.FotoComprobante.ToArchivoEntrada(contenido),
             request.FechaCarga!.Value,
             request.UbicacionLat,
-            request.UbicacionLng);
+            request.UbicacionLng,
+            request.Motivo);
 
         return Ok(await _sender.Send(command, cancellationToken));
     }

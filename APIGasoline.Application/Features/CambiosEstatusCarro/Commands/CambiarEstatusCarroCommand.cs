@@ -1,5 +1,7 @@
-﻿using APIGasoline.Application.Common.Exceptions;
+﻿using APIGasoline.Application.Common.Constants;
+using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Common.Interfaces;
+using APIGasoline.Application.Common.Storage;
 using APIGasoline.Application.Features.CambiosEstatusCarro.DTOs;
 using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Enums;
@@ -14,6 +16,9 @@ namespace APIGasoline.Application.Features.CambiosEstatusCarro.Commands;
 /// Cambio manual del estatus de un carro (ej. mandarlo a mantenimiento o regresarlo a disponible).
 /// Cambia el carro y registra la bitácora en un solo SaveChanges.
 /// Si se indica un viaje afectado que está en curso, el viaje se interrumpe.
+/// Si el operador que tiene el carro lo manda a mantenimiento (HU-EST-02), se avisa a los confirmadores.
+/// <see cref="TipoMotivo"/> clasifica el cambio: falla_mecanica y choque_o_golpe forman el registro de percances.
+/// La foto de evidencia se sube aparte (SubirFotoEvidenciaCommand).
 /// </summary>
 public record CambiarEstatusCarroCommand(
     Guid CarroId,
@@ -22,19 +27,21 @@ public record CambiarEstatusCarroCommand(
     string? Motivo,
     Guid? ViajeAfectadoId,
     DateTime? FechaCambio,
-    bool Sincronizado) : IRequest<CambioEstatusCarroDto>;
+    TipoMotivoCambio? TipoMotivo) : IRequest<CambioEstatusCarroDto>;
 
 public class CambiarEstatusCarroCommandHandler : IRequestHandler<CambiarEstatusCarroCommand, CambioEstatusCarroDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly IFileStorageService _storage;
     private readonly IDateTimeProvider _dateTime;
     private readonly NotificadorPush _notificador;
 
-    public CambiarEstatusCarroCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IDateTimeProvider dateTime, NotificadorPush notificador)
+    public CambiarEstatusCarroCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IFileStorageService storage, IDateTimeProvider dateTime, NotificadorPush notificador)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _storage = storage;
         _dateTime = dateTime;
         _notificador = notificador;
     }
@@ -78,7 +85,7 @@ public class CambiarEstatusCarroCommandHandler : IRequestHandler<CambiarEstatusC
             request.Motivo,
             request.ViajeAfectadoId,
             request.FechaCambio,
-            request.Sincronizado);
+            request.TipoMotivo);
 
         if (viajeAfectado is { EstaEnCurso: true })
         {
@@ -111,6 +118,25 @@ public class CambiarEstatusCarroCommandHandler : IRequestHandler<CambiarEstatusC
                     $"El carro {carro.Placas} cambió a {cambio.EstatusNuevo}. Motivo: {cambio.Motivo ?? "sin motivo"}"), cancellationToken);
             }
 
+            // HU-EST-02: el operador que tiene el carro reporta una falla → aviso a los confirmadores
+            if (cambio.EstatusNuevo == EstadoCarro.EnMantenimiento
+                && reservaVigente is not null
+                && reservaVigente.EmpleadoSolicitanteId == empleado.EmpleadoId)
+            {
+                var confirmadores = await _unitOfWork.Empleados.GetIdsConRolAsync(carro.EmpresaId, NombresRol.Confirmador, cancellationToken);
+
+                var avisos = confirmadores
+                    .Where(id => id != empleado.EmpleadoId)
+                    .Select(id => Notificacion.Crear(
+                        carro.EmpresaId,
+                        id,
+                        TipoNotificacion.ReporteMantenimiento,
+                        cambio.CambioEstatusCarroId,
+                        $"{empleado.NombreCompleto} reportó el carro {carro.Placas} a mantenimiento. Motivo: {cambio.Motivo}"));
+
+                await _notificador.AgregarAsync(avisos, cancellationToken);
+            }
+
             await _unitOfWork.CommitTransactionAsync(cancellationToken);
         }
         catch
@@ -119,6 +145,6 @@ public class CambiarEstatusCarroCommandHandler : IRequestHandler<CambiarEstatusC
             throw;
         }
 
-        return _mapper.Map<CambioEstatusCarroDto>(cambio);
+        return await _mapper.Map<CambioEstatusCarroDto>(cambio).ConUrlsAsync(_storage, cancellationToken);
     }
 }

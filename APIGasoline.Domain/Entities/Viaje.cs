@@ -7,6 +7,7 @@ namespace APIGasoline.Domain.Entities;
 public class Viaje
 {
     public const int MotivoMaxLength = 255;
+    public const int FotoMaxLength = 255;
     public const decimal KilometrajeMaximo = 99999999.99m; // decimal(10,2)
 
     public Guid ViajeId { get; private set; } = Guid.CreateVersion7();
@@ -20,10 +21,16 @@ public class Viaje
     public decimal? UbicacionInicioLng { get; private set; }
     public decimal KilometrajeInicial { get; private set; }
 
+    /// <summary>Llave en MinIO de la foto del odómetro al iniciar.</summary>
+    public string? FotoTableroInicial { get; private set; }
+
     public DateTime? FechaFin { get; private set; }
     public decimal? UbicacionFinLat { get; private set; }
     public decimal? UbicacionFinLng { get; private set; }
     public decimal? KilometrajeFinal { get; private set; }
+
+    /// <summary>Llave en MinIO de la foto del odómetro al terminar.</summary>
+    public string? FotoTableroFinal { get; private set; }
 
     /// Se calcula: kilometraje final - kilometraje inicial.
     public decimal? DistanciaRecorrida { get; private set; }
@@ -31,9 +38,14 @@ public class Viaje
     public EstadoViaje Estado { get; private set; } = EstadoViaje.EnCurso;
     public string? MotivoInterrupcion { get; private set; }
 
-    /// true cuando el viaje se registró desde la app en modo offline y se subió después.
+    /// <summary>true si el kilometraje se corrigió después de capturarse. El detalle está en auditoria_evento.</summary>
+    public bool Corregido { get; private set; }
 
-    public bool Sincronizado { get; private set; }
+    /// <summary>
+    /// Hora del servidor en que llegó el viaje (la pone la BD). Comparada con <see cref="FechaInicio"/>
+    /// indica cuánto tiempo estuvo sin sincronizar. Reemplaza al antiguo campo "sincronizado".
+    /// </summary>
+    public DateTime? FechaRecepcion { get; private set; }
 
     // Requerido por Entity Framework
     private Viaje()
@@ -113,7 +125,44 @@ public class Viaje
         MotivoInterrupcion = motivoNormalizado;
     }
 
-    public void MarcarSincronizado() => Sincronizado = true;
+    public void CambiarFotoTableroInicial(string? llave)
+        => FotoTableroInicial = NormalizarFoto(llave, "inicial");
+
+    public void CambiarFotoTableroFinal(string? llave)
+        => FotoTableroFinal = NormalizarFoto(llave, "final");
+
+    /// <summary>
+    /// Corrige el kilometraje capturado por error. Recalcula la distancia y marca el viaje como corregido.
+    /// Quién puede corregir (operador con viaje en curso o confirmador/gestor con viaje cerrado)
+    /// lo decide la capa de aplicación.
+    /// </summary>
+    public void CorregirKilometraje(decimal kilometrajeInicial, decimal? kilometrajeFinal)
+    {
+        ValidarKilometraje(kilometrajeInicial, "inicial");
+
+        if (kilometrajeFinal is not null)
+        {
+            if (EstaEnCurso)
+                throw new DomainException("Un viaje en curso todavía no tiene kilometraje final.");
+
+            ValidarKilometraje(kilometrajeFinal.Value, "final");
+
+            if (kilometrajeFinal < kilometrajeInicial)
+                throw new DomainException($"El kilometraje final no puede ser menor al inicial ({kilometrajeInicial}).");
+        }
+        else if (KilometrajeFinal is not null)
+        {
+            throw new DomainException("El kilometraje final no se puede borrar; indica el valor correcto.");
+        }
+
+        if (kilometrajeInicial == KilometrajeInicial && kilometrajeFinal == KilometrajeFinal)
+            throw new DomainException("No hay cambios que corregir.");
+
+        KilometrajeInicial = kilometrajeInicial;
+        KilometrajeFinal = kilometrajeFinal;
+        DistanciaRecorrida = kilometrajeFinal is null ? null : kilometrajeFinal - kilometrajeInicial;
+        Corregido = true;
+    }
 
     private void RegistrarCierre(DateTime fechaFin, decimal? lat, decimal? lng, decimal? kilometrajeFinal)
     {
@@ -148,6 +197,16 @@ public class Viaje
     {
         if (kilometraje < 0 || kilometraje > KilometrajeMaximo)
             throw new DomainException($"El kilometraje {cual} debe estar entre 0 y {KilometrajeMaximo}.");
+    }
+
+    private static string? NormalizarFoto(string? llave, string cual)
+    {
+        var normalizada = string.IsNullOrWhiteSpace(llave) ? null : llave.Trim();
+
+        if (normalizada is not null && normalizada.Length > FotoMaxLength)
+            throw new DomainException($"La ruta de la foto del tablero {cual} no puede exceder {FotoMaxLength} caracteres.");
+
+        return normalizada;
     }
 
     private static void ValidarUbicacion(decimal? lat, decimal? lng, string cual)

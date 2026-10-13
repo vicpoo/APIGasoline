@@ -3,10 +3,11 @@ using APIGasoline.Domain.Exceptions;
 
 namespace APIGasoline.Domain.Entities;
 
-/// Flujo: Pendiente → Aprobada | Rechazada | Cancelada.  Aprobada → Cancelada.
+/// Flujo: Pendiente → Aprobada | Rechazada | Cancelada.  Aprobada → Cancelada | Finalizada.
 public class SolicitudReserva
 {
     public const int MotivoMaxLength = 255;
+    public const int ObservacionesMaxLength = 500;
 
     public Guid SolicitudReservaId { get; private set; } = Guid.CreateVersion7();
     public Guid EmpresaId { get; private set; }
@@ -20,6 +21,12 @@ public class SolicitudReserva
     public Guid? EmpleadoConfirmadorId { get; private set; }
     public DateTime? FechaResolucion { get; private set; }
     public string? MotivoResolucion { get; private set; }
+
+    /// <summary>Cuándo el operador liberó el carro (HU-USO-04 / HU-EST-02).</summary>
+    public DateTime? FechaLiberacion { get; private set; }
+
+    /// <summary>Observaciones opcionales al devolver el carro (HU-USO-04).</summary>
+    public string? ObservacionesLiberacion { get; private set; }
 
     // Requerido por Entity Framework
     private SolicitudReserva()
@@ -82,6 +89,28 @@ public class SolicitudReserva
         Estado = EstadoSolicitudReserva.Cancelada;
         FechaResolucion = fecha;
         MotivoResolucion = NormalizarMotivo(motivo);
+    }
+
+    /// <summary>
+    /// El operador terminó de usar el carro y lo libera (HU-USO-04). Solo aplica a una reserva aprobada.
+    /// Quien llama debe liberar el carro.
+    /// </summary>
+    public void Finalizar(DateTime fechaLiberacion, string? observaciones = null)
+    {
+        if (!EstaAprobada)
+            throw new DomainException($"Solo se puede liberar una reserva aprobada (estado actual: {Estado}).");
+
+        if (fechaLiberacion == default)
+            throw new DomainException("La fecha de liberación es obligatoria.");
+
+        var observacionesNormalizadas = string.IsNullOrWhiteSpace(observaciones) ? null : observaciones.Trim();
+
+        if (observacionesNormalizadas is not null && observacionesNormalizadas.Length > ObservacionesMaxLength)
+            throw new DomainException($"Las observaciones no pueden exceder {ObservacionesMaxLength} caracteres.");
+
+        Estado = EstadoSolicitudReserva.Finalizada;
+        FechaLiberacion = fechaLiberacion;
+        ObservacionesLiberacion = observacionesNormalizadas;
     }
 
     private void ValidarResolucion(Guid empleadoConfirmadorId, string accion)

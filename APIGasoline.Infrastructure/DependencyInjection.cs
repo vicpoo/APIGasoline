@@ -1,6 +1,8 @@
 ﻿using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Common.Outbox;
+using APIGasoline.Application.Features.Auditoria.Common;
 using APIGasoline.Domain.Interfaces;
+using APIGasoline.Infrastructure.Auditoria;
 using APIGasoline.Infrastructure.Authentication;
 using APIGasoline.Infrastructure.Outbox;
 using APIGasoline.Infrastructure.Persistence;
@@ -25,10 +27,18 @@ public static class DependencyInjection
             GuidFormat = MySqlGuidFormat.Binary16
         }.ConnectionString;
 
-        services.AddDbContext<AppDbContext>(options =>
-            options.UseMySql(cadenaConexion, new MySqlServerVersion(new Version(8, 0, 36))));
+        // Auditoría: el interceptor agrega un auditoria_evento por cada cambio en el mismo SaveChanges.
+        // Requiere que la API registre IUsuarioActual (usuario del token).
+        services.AddScoped<IContextoAuditoria, ContextoAuditoria>();
+        services.AddScoped<AuditoriaInterceptor>();
+
+        services.AddDbContext<AppDbContext>((serviceProvider, options) =>
+            options
+                .UseMySql(cadenaConexion, new MySqlServerVersion(new Version(8, 0, 36)))
+                .AddInterceptors(serviceProvider.GetRequiredService<AuditoriaInterceptor>()));
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<IConsultasRevisionCombustible, ConsultasRevisionCombustible>();
         services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
 
         // Seguridad

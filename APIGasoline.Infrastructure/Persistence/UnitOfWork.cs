@@ -35,6 +35,8 @@ public class UnitOfWork : IUnitOfWork
         Notificaciones = new NotificacionRepository(context);
         OutboxMensajes = new OutboxMensajeRepository(context);
         Dispositivos = new DispositivoEmpleadoRepository(context);
+        AuditoriaEventos = new AuditoriaEventoRepository(context);
+        RevisionesAuditoria = new RevisionAuditoriaRepository(context);
     }
 
     public IUsuarioRepository Usuarios { get; }
@@ -57,6 +59,8 @@ public class UnitOfWork : IUnitOfWork
     public INotificacionRepository Notificaciones { get; }
     public IOutboxMensajeRepository OutboxMensajes { get; }
     public IDispositivoEmpleadoRepository Dispositivos { get; }
+    public IAuditoriaEventoRepository AuditoriaEventos { get; }
+    public IRevisionAuditoriaRepository RevisionesAuditoria { get; }
 
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         => _context.SaveChangesAsync(cancellationToken);

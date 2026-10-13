@@ -9,5 +9,8 @@ public enum TipoNotificacion
     ResultadoSolicitud = 1,
 
     /// <summary>Al empleado que tiene el carro: su estatus se cambió (ej. a mantenimiento).</summary>
-    CambioEstatusForzado = 2
+    CambioEstatusForzado = 2,
+
+    /// <summary>Al confirmador: un operador reportó una falla y mandó el carro a mantenimiento (HU-EST-02).</summary>
+    ReporteMantenimiento = 3
 }

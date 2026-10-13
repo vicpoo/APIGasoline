@@ -19,17 +19,19 @@ public class NotificacionConfiguration : IEntityTypeConfiguration<Notificacion>
         builder.Property(n => n.EmpresaId).HasColumnName("empresa_id").IsRequired();
         builder.Property(n => n.EmpleadoDestinatarioId).HasColumnName("empleado_destinatario_id").IsRequired();
 
-        // enum('nueva_solicitud','resultado_solicitud','cambio_estatus_forzado') en MySQL
+        // enum('nueva_solicitud','resultado_solicitud','cambio_estatus_forzado','reporte_mantenimiento') en MySQL
         builder.Property(n => n.Tipo)
             .HasColumnName("tipo")
-            .HasColumnType("enum('nueva_solicitud','resultado_solicitud','cambio_estatus_forzado')")
+            .HasColumnType("enum('nueva_solicitud','resultado_solicitud','cambio_estatus_forzado','reporte_mantenimiento')")
             .HasConversion(
                 v => v == TipoNotificacion.NuevaSolicitud ? "nueva_solicitud"
                    : v == TipoNotificacion.ResultadoSolicitud ? "resultado_solicitud"
-                   : "cambio_estatus_forzado",
+                   : v == TipoNotificacion.CambioEstatusForzado ? "cambio_estatus_forzado"
+                   : "reporte_mantenimiento",
                 v => v == "nueva_solicitud" ? TipoNotificacion.NuevaSolicitud
                    : v == "resultado_solicitud" ? TipoNotificacion.ResultadoSolicitud
-                   : TipoNotificacion.CambioEstatusForzado)
+                   : v == "cambio_estatus_forzado" ? TipoNotificacion.CambioEstatusForzado
+                   : TipoNotificacion.ReporteMantenimiento)
             .IsRequired();
 
         builder.Property(n => n.ReferenciaId).HasColumnName("referencia_id");

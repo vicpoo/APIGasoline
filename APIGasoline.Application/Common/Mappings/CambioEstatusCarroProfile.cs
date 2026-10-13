@@ -8,6 +8,9 @@ public class CambioEstatusCarroProfile : Profile
 {
     public CambioEstatusCarroProfile()
     {
-        CreateMap<CambioEstatusCarro, CambioEstatusCarroDto>();
+        // La URL no sale de la entidad: la genera el handler con IFileStorageService
+        CreateMap<CambioEstatusCarro, CambioEstatusCarroDto>()
+            .ForCtorParam(nameof(CambioEstatusCarroDto.FotoEvidenciaUrl), opt => opt.MapFrom(_ => (string?)null))
+            .ForMember(d => d.FotoEvidenciaUrl, opt => opt.Ignore());
     }
 }

@@ -1,7 +1,9 @@
 ﻿using APIGasoline.Application.Common.Interfaces;
+using APIGasoline.Application.Features.CambiosEstatusCarro.DTOs;
 using APIGasoline.Application.Features.CargasCombustible.DTOs;
 using APIGasoline.Application.Features.Carros.DTOs;
 using APIGasoline.Application.Features.Empleados.DTOs;
+using APIGasoline.Application.Features.Viajes.DTOs;
 
 namespace APIGasoline.Application.Common.Storage;
 
@@ -48,6 +50,40 @@ public static class UrlsArchivoExtensions
         var resultado = new List<CargaCombustibleDto>();
         foreach (var dto in dtos)
             resultado.Add(await dto.ConUrlsAsync(storage, cancellationToken));
+        return resultado;
+    }
+
+    // ---------- Viajes (fotos del tablero) ----------
+
+    public static async Task<ViajeDto> ConUrlsAsync(this ViajeDto dto, IFileStorageService storage, CancellationToken cancellationToken)
+        => dto with
+        {
+            FotoTableroInicialUrl = await storage.ObtenerUrlAsync(dto.FotoTableroInicial, cancellationToken),
+            FotoTableroFinalUrl = await storage.ObtenerUrlAsync(dto.FotoTableroFinal, cancellationToken)
+        };
+
+    public static async Task<IReadOnlyList<ViajeDto>> ConUrlsAsync(this IEnumerable<ViajeDto> dtos, IFileStorageService storage, CancellationToken cancellationToken)
+    {
+        var resultado = new List<ViajeDto>();
+
+        foreach (var dto in dtos)
+            resultado.Add(await dto.ConUrlsAsync(storage, cancellationToken));
+
+        return resultado;
+    }
+
+    // ---------- Cambios de estatus (foto de evidencia) ----------
+
+    public static async Task<CambioEstatusCarroDto> ConUrlsAsync(this CambioEstatusCarroDto dto, IFileStorageService storage, CancellationToken cancellationToken)
+        => dto with { FotoEvidenciaUrl = await storage.ObtenerUrlAsync(dto.FotoEvidencia, cancellationToken) };
+
+    public static async Task<IReadOnlyList<CambioEstatusCarroDto>> ConUrlsAsync(this IEnumerable<CambioEstatusCarroDto> dtos, IFileStorageService storage, CancellationToken cancellationToken)
+    {
+        var resultado = new List<CambioEstatusCarroDto>();
+
+        foreach (var dto in dtos)
+            resultado.Add(await dto.ConUrlsAsync(storage, cancellationToken));
+
         return resultado;
     }
 }

@@ -112,6 +112,30 @@ public class EmpleadoTests
         Assert.Throws<DomainException>(() => empleado.Eliminar());
     }
 
+    // --- Fecha de carga de la licencia (HU-LOG-01) ---
+
+    [Fact]
+    public void CambiarFotoLicencia_ConFecha_GuardaLaFechaDeCarga()
+    {
+        var empleado = ConstruirEmpleado();
+        var fecha = new DateTime(2026, 10, 13, 9, 0, 0, DateTimeKind.Utc);
+
+        empleado.CambiarFotoLicencia("empresa/1/empleado/1/documento/licencia.pdf", fecha);
+
+        Assert.Equal(fecha, empleado.FechaCargaLicencia);
+    }
+
+    [Fact]
+    public void CambiarFotoLicencia_Null_BorraLaFechaDeCarga()
+    {
+        var empleado = ConstruirEmpleado();
+        empleado.CambiarFotoLicencia("empresa/1/empleado/1/documento/licencia.pdf", DateTime.UtcNow);
+
+        empleado.CambiarFotoLicencia(null);
+
+        Assert.Null(empleado.FechaCargaLicencia);
+    }
+
     private static Empleado ConstruirEmpleado(int empresaId = 1, int usuarioId = 1, string nombre = "Víctor Alejandro Pérez López")
         => Empleado.Crear(Id(empresaId), Id(usuarioId), nombre);
 }

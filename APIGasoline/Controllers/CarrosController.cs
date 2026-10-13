@@ -104,6 +104,20 @@ public class CarrosController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>
+    /// HU-AST-03: da de baja el carro (no lo borra; su historial se conserva).
+    /// No se puede si está en uso. Las solicitudes pendientes del carro se cancelan.
+    /// </summary>
+    [HttpPost("{carroId:guid}/baja")]
+    public async Task<ActionResult<CarroDto>> DarDeBaja(Guid carroId, DarDeBajaCarroRequest request, CancellationToken cancellationToken)
+    {
+        var carro = await _sender.Send(new DarDeBajaCarroCommand(carroId, request.FechaBaja, request.Motivo!), cancellationToken);
+        return Ok(carro);
+    }
+
+    /// <summary>
+    /// Borra físicamente un carro sin historial (capturado por error). Para retirarlo de la flota usa /baja.
+    /// </summary>
     [HttpDelete("{carroId:guid}")]
     public async Task<IActionResult> Delete(Guid carroId, CancellationToken cancellationToken)
     {

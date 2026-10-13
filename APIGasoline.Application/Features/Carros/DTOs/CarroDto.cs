@@ -17,4 +17,8 @@ public record CarroDto(
     decimal? CapacidadTanque,
     decimal KilometrajeActual,
     EstadoCarro Estado,
+    /// <summary>Baja del carro (HU-AST-03).</summary>
+    bool DadoDeBaja,
+    DateTime? FechaBaja,
+    string? MotivoBaja,
     DateTime? FechaAlta);

@@ -33,11 +33,12 @@ public class PuntoRutaConfiguration : IEntityTypeConfiguration<PuntoRuta>
             .HasColumnType("timestamp")
             .IsRequired();
 
-        builder.Property(p => p.Sincronizado)
-            .HasColumnName("sincronizado")
-            .HasDefaultValue(false)
-            .ValueGeneratedNever()
-            .IsRequired();
+        // Hora del servidor en que llegó el punto. Reemplaza a "sincronizado" (v4).
+        builder.Property(p => p.FechaRecepcion)
+            .HasColumnName("fecha_recepcion")
+            .HasColumnType("timestamp")
+            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .ValueGeneratedOnAdd();
 
         // Datos opcionales del GPS del celular (sirven para limpiar la ruta en el servidor)
         builder.Property(p => p.PrecisionMetros)

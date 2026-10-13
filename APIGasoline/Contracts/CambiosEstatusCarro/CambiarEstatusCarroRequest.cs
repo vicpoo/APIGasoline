@@ -26,5 +26,9 @@ public class CambiarEstatusCarroRequest
     /// <summary>Solo para registros offline; si no viene, se usa la hora del servidor.</summary>
     public DateTime? FechaCambio { get; set; }
 
-    public bool Sincronizado { get; set; }
+    /// <summary>
+    /// Clasificación del cambio: liberacion, fallaMecanica, choqueOGolpe, servicio, emergencia u otro.
+    /// fallaMecanica y choqueOGolpe forman el registro de percances.
+    /// </summary>
+    public TipoMotivoCambio? TipoMotivo { get; set; }
 }
