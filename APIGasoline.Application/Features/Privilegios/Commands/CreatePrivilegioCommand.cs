@@ -1,13 +1,23 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Features.Privilegios.DTOs;
 using APIGasoline.Domain.Entities;
+using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
 using MediatR;
 
 namespace APIGasoline.Application.Features.Privilegios.Commands;
 
-public record CreatePrivilegioCommand(string Nombre, string? Descripcion, bool Activo) : IRequest<PrivilegioDto>;
+/// <summary>
+/// Clave = código inmutable modulo.accion (ej. carro.crear). Modulo null = primer segmento de la clave.
+/// </summary>
+public record CreatePrivilegioCommand(
+    string Clave,
+    string? Modulo,
+    string Nombre,
+    string? Descripcion,
+    AmbitoPrivilegio Ambito,
+    bool Activo) : IRequest<PrivilegioDto>;
 
 public class CreatePrivilegioCommandHandler : IRequestHandler<CreatePrivilegioCommand, PrivilegioDto>
 {
@@ -22,16 +32,21 @@ public class CreatePrivilegioCommandHandler : IRequestHandler<CreatePrivilegioCo
 
     public async Task<PrivilegioDto> Handle(CreatePrivilegioCommand request, CancellationToken cancellationToken)
     {
-        // El dominio valida y normaliza los datos
-        var privilegio = Privilegio.Crear(request.Nombre, request.Descripcion, request.Activo);
+        // El dominio valida y normaliza los datos (la clave queda en minúsculas)
+        var privilegio = Privilegio.Crear(
+            request.Clave,
+            request.Nombre,
+            request.Descripcion,
+            request.Ambito,
+            request.Activo,
+            request.Modulo);
 
-        if (await _unitOfWork.Privilegios.NombreExistsAsync(privilegio.Nombre, null, cancellationToken))
-            throw new ConflictException($"Ya existe un privilegio con el nombre '{privilegio.Nombre}'.");
+        if (await _unitOfWork.Privilegios.ClaveExistsAsync(privilegio.Clave, cancellationToken))
+            throw new ConflictException($"Ya existe un privilegio con la clave '{privilegio.Clave}'.");
 
         await _unitOfWork.Privilegios.AddAsync(privilegio, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // PrivilegioId ya viene asignado por la base de datos (autoincremento)
         return _mapper.Map<PrivilegioDto>(privilegio);
     }
 }

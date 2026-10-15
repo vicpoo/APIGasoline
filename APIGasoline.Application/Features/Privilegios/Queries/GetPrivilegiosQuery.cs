@@ -5,7 +5,8 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.Privilegios.Queries;
 
-public record GetPrivilegiosQuery : IRequest<IReadOnlyList<PrivilegioDto>>;
+/// <summary>Modulo opcional para filtrar (ej. carro).</summary>
+public record GetPrivilegiosQuery(string? Modulo = null) : IRequest<IReadOnlyList<PrivilegioDto>>;
 
 public class GetPrivilegiosQueryHandler : IRequestHandler<GetPrivilegiosQuery, IReadOnlyList<PrivilegioDto>>
 {
@@ -20,7 +21,7 @@ public class GetPrivilegiosQueryHandler : IRequestHandler<GetPrivilegiosQuery, I
 
     public async Task<IReadOnlyList<PrivilegioDto>> Handle(GetPrivilegiosQuery request, CancellationToken cancellationToken)
     {
-        var privilegios = await _unitOfWork.Privilegios.GetAllAsync(cancellationToken);
+        var privilegios = await _unitOfWork.Privilegios.GetAllAsync(request.Modulo, cancellationToken);
         return _mapper.Map<IReadOnlyList<PrivilegioDto>>(privilegios);
     }
 }

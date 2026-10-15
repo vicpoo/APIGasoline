@@ -7,19 +7,29 @@ using APIGasoline.Application.Features.Usuarios.DTOs;
 using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
+using CalculoVersion = APIGasoline.Application.Common.Security.VersionPrivilegios;
 
 namespace APIGasoline.Application.Features.Auth.Common;
 
+/// <summary>Empleado, roles activos y claves de privilegios efectivos de un usuario.</summary>
+internal record AccesoUsuario(Empleado? Empleado, IReadOnlyList<Rol> Roles, IReadOnlyList<string> Privilegios)
+{
+    public string VersionPrivilegios => CalculoVersion.Calcular(Privilegios);
+}
+
 /// <summary>
 /// Arma el perfil del usuario (empleado, roles y privilegios) y valida que pueda entrar.
-/// Se comparte entre el login y el endpoint de perfil.
+/// Se comparte entre el login, el endpoint de perfil y el de privilegios.
 /// </summary>
 internal static class PerfilUsuarioBuilder
 {
-    public static async Task<(PerfilUsuarioDto Perfil, Empleado? Empleado)> ConstruirAsync(
+    /// <summary>
+    /// Valida usuario/empleado/empresa y calcula los privilegios efectivos:
+    /// unión de los privilegios ACTIVOS de los roles ACTIVOS del usuario que sean globales
+    /// o de su propia empresa (un rol de otra empresa nunca da permisos, aunque esté asignado).
+    /// </summary>
+    public static async Task<AccesoUsuario> CargarAccesoAsync(
         IUnitOfWork unitOfWork,
-        IMapper mapper,
-        IFileStorageService storage,
         Usuario usuario,
         CancellationToken cancellationToken)
     {
@@ -37,19 +47,32 @@ internal static class PerfilUsuarioBuilder
 
         var roles = await unitOfWork.Roles.GetActivosByUsuarioAsync(usuario.UsuarioId, empleado?.EmpresaId, cancellationToken);
 
-        var privilegios = await unitOfWork.Privilegios.GetNombresActivosByRolesAsync(
+        var privilegios = await unitOfWork.Privilegios.GetClavesActivasByRolesAsync(
             roles.Select(r => r.RolId).ToList(), cancellationToken);
 
-        var empleadoDto = empleado is null
+        return new AccesoUsuario(empleado, roles, privilegios);
+    }
+
+    public static async Task<(PerfilUsuarioDto Perfil, Empleado? Empleado)> ConstruirAsync(
+        IUnitOfWork unitOfWork,
+        IMapper mapper,
+        IFileStorageService storage,
+        Usuario usuario,
+        CancellationToken cancellationToken)
+    {
+        var acceso = await CargarAccesoAsync(unitOfWork, usuario, cancellationToken);
+
+        var empleadoDto = acceso.Empleado is null
             ? null
-            : await mapper.Map<EmpleadoDto>(empleado).ConUrlsAsync(storage, cancellationToken);
+            : await mapper.Map<EmpleadoDto>(acceso.Empleado).ConUrlsAsync(storage, cancellationToken);
 
         var perfil = new PerfilUsuarioDto(
             mapper.Map<UsuarioDto>(usuario),
             empleadoDto,
-            roles.Select(r => r.Nombre).ToList(),
-            privilegios);
+            acceso.Roles.Select(r => r.Nombre).ToList(),
+            acceso.Privilegios,
+            acceso.VersionPrivilegios);
 
-        return (perfil, empleado);
+        return (perfil, acceso.Empleado);
     }
 }

@@ -232,6 +232,10 @@ public sealed class AuditoriaInterceptor : SaveChangesInterceptor
 
         foreach (var propiedad in entrada.Properties)
         {
+            // Las columnas generadas por MySQL (ej. rol.empresa_clave) no son datos del usuario
+            if (propiedad.Metadata.GetComputedColumnSql() is not null)
+                continue;
+
             var valor = original ? propiedad.OriginalValue : propiedad.CurrentValue;
 
             // Los valores que pone la BD (fechas por defecto) todavía no existen al insertar

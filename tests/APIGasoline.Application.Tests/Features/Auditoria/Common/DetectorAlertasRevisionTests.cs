@@ -118,7 +118,7 @@ public class DetectorAlertasRevisionTests
 
         var alerta = Assert.Single(alertas);
         Assert.Equal(TipoAlertaRevision.PosibleDuplicado, alerta.Tipo);
-        Assert.Equal(Id(2), alerta.EntidadId);
+        Assert.Equal(Id(102), alerta.EntidadId); // la segunda carga (Carga usa Id(100 + id))
     }
 
     [Fact]

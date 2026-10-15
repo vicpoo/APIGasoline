@@ -100,7 +100,7 @@ public class RegistroViajeEscenariosTests
         => Enumerable.Range(0, cantidad).Select(i => ConstruirPunto(desde.AddSeconds(30 * i))).ToList();
 
     private static PuntoRuta ConstruirPunto(DateTime timestamp)
-        => PuntoRuta.Crear(Id(1), Id(1), 16.753056m, -93.115556m, timestamp, false);
+        => PuntoRuta.Crear(Id(1), Id(1), 16.753056m, -93.115556m, timestamp);
 
     private static CargaCombustible ConstruirCarga(decimal litros = 45.30m, DateTime? fecha = null)
         => CargaCombustible.Crear(Id(1), Id(1), litros, 1087.20m, "empresa/1/viaje/1/carga/1/comprobante.jpg", fecha ?? Inicio, null, null);

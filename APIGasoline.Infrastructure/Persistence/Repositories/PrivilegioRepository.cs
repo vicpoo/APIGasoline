@@ -16,21 +16,29 @@ public class PrivilegioRepository : IPrivilegioRepository
     public Task<Privilegio?> GetByIdAsync(Guid privilegioId, CancellationToken cancellationToken = default)
         => _context.Privilegios.FirstOrDefaultAsync(p => p.PrivilegioId == privilegioId, cancellationToken);
 
-    public async Task<IReadOnlyList<Privilegio>> GetAllAsync(CancellationToken cancellationToken = default)
-        => await _context.Privilegios
-            .AsNoTracking()
-            .OrderBy(p => p.PrivilegioId)
+    public async Task<IReadOnlyList<Privilegio>> GetAllAsync(string? modulo = null, CancellationToken cancellationToken = default)
+    {
+        var query = _context.Privilegios.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(modulo))
+        {
+            var normalizado = modulo.Trim().ToLowerInvariant();
+            query = query.Where(p => p.Modulo == normalizado);
+        }
+
+        return await query
+            .OrderBy(p => p.Modulo)
+            .ThenBy(p => p.Clave)
             .ToListAsync(cancellationToken);
+    }
 
     public Task<bool> ExistsAsync(Guid privilegioId, CancellationToken cancellationToken = default)
         => _context.Privilegios.AnyAsync(p => p.PrivilegioId == privilegioId, cancellationToken);
 
-    public Task<bool> NombreExistsAsync(string nombre, Guid? excludePrivilegioId = null, CancellationToken cancellationToken = default)
-        => _context.Privilegios.AnyAsync(
-            p => p.Nombre == nombre && (excludePrivilegioId == null || p.PrivilegioId != excludePrivilegioId),
-            cancellationToken);
+    public Task<bool> ClaveExistsAsync(string clave, CancellationToken cancellationToken = default)
+        => _context.Privilegios.AnyAsync(p => p.Clave == clave, cancellationToken);
 
-    public async Task<IReadOnlyList<string>> GetNombresActivosByRolesAsync(IReadOnlyList<Guid> rolIds, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<string>> GetClavesActivasByRolesAsync(IReadOnlyList<Guid> rolIds, CancellationToken cancellationToken = default)
     {
         if (rolIds.Count == 0)
             return Array.Empty<string>();
@@ -41,9 +49,9 @@ public class PrivilegioRepository : IPrivilegioRepository
             .AsNoTracking()
             .Where(p => p.Activo
                         && _context.RolPrivilegios.Any(rp => ids.Contains(rp.RolId) && rp.PrivilegioId == p.PrivilegioId))
-            .Select(p => p.Nombre)
+            .Select(p => p.Clave)
             .Distinct()
-            .OrderBy(nombre => nombre)
+            .OrderBy(clave => clave)
             .ToListAsync(cancellationToken);
     }
 

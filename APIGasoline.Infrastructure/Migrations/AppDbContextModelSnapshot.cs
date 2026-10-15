@@ -770,10 +770,28 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasDefaultValue(true)
                         .HasColumnName("activo");
 
+                    b.Property<string>("Ambito")
+                        .IsRequired()
+                        .HasColumnType("enum('plataforma','empresa')")
+                        .HasColumnName("ambito")
+                        .HasDefaultValueSql("'empresa'");
+
+                    b.Property<string>("Clave")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("clave");
+
                     b.Property<string>("Descripcion")
                         .HasMaxLength(255)
                         .HasColumnType("varchar(255)")
                         .HasColumnName("descripcion");
+
+                    b.Property<string>("Modulo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)")
+                        .HasColumnName("modulo");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
@@ -783,9 +801,12 @@ namespace APIGasoline.Infrastructure.Migrations
 
                     b.HasKey("PrivilegioId");
 
-                    b.HasIndex("Nombre")
+                    b.HasIndex("Clave")
                         .IsUnique()
-                        .HasDatabaseName("uq_privilegio_nombre");
+                        .HasDatabaseName("uq_privilegio_clave");
+
+                    b.HasIndex("Modulo")
+                        .HasDatabaseName("ix_privilegio_modulo");
 
                     b.ToTable("privilegio", (string)null);
                 });
@@ -951,6 +972,12 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasColumnType("varchar(255)")
                         .HasColumnName("descripcion");
 
+                    b.Property<Guid>("EmpresaClave")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("empresa_clave")
+                        .HasComputedColumnSql("COALESCE(`empresa_id`, 0x00000000000000000000000000000000)", true);
+
                     b.Property<Guid?>("EmpresaId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("empresa_id");
@@ -966,9 +993,9 @@ namespace APIGasoline.Infrastructure.Migrations
                     b.HasIndex("EmpresaId")
                         .HasDatabaseName("ix_rol_empresa_id");
 
-                    b.HasIndex("EmpresaId", "Nombre")
+                    b.HasIndex("EmpresaClave", "Nombre")
                         .IsUnique()
-                        .HasDatabaseName("uq_rol_empresa_id_nombre");
+                        .HasDatabaseName("uq_rol_empresa_clave_nombre");
 
                     b.ToTable("rol", (string)null);
                 });

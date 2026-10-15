@@ -1,7 +1,12 @@
-Archivos de prueba para APIGasoline.http (subidas a MinIO).
+Archivos de prueba para la colección de Postman (postman/APIGasoline.postman_collection.json)
+y para APIGasoline.http (subidas a MinIO).
 Son imágenes generadas, no contienen datos reales.
 
-  ticket.jpg    -> comprobante de carga de combustible (CG3, CG5a, CG6, CG7)
-  carro.jpg     -> foto del vehículo (CA5a)
-  perfil.png    -> foto de perfil del empleado (EM6b)
-  licencia.pdf  -> licencia del empleado (EM6a, EM6c)
+En el Collection Runner de Postman, el "Working directory" debe apuntar a esta carpeta.
+
+  ticket.jpg    -> comprobante de carga de combustible
+  carro.jpg     -> foto del vehículo
+  perfil.png    -> foto de perfil del empleado
+  licencia.pdf  -> licencia del empleado
+  tablero.jpg   -> foto del tablero (odómetro) al iniciar y terminar el viaje (v4)
+  falla.jpg     -> foto de evidencia de un percance / cambio de estatus (v4)

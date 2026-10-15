@@ -1,17 +1,17 @@
 {
   "info": {
     "_postman_id": "071cfa48-5cb7-4e03-9ee6-4efb351fbdf5",
-    "name": "APIGasoline - Evidencias",
-    "description": "Flujo completo de la API de control de combustible (PolarSoft).\n\nEjecutar EN ORDEN (Collection Runner) con el entorno 'APIGasoline - Local'.\nCada corrida crea datos nuevos (sufijo {{run}}), así que se puede repetir.\n\nArchivos: en Postman → Settings → General → Working directory, elegir la carpeta APIGasoline\\pruebas.",
+    "name": "APIGasoline - Evidencias v5",
+    "description": "Flujo completo de la API de control de combustible (PolarSoft), modelo v4: viajes tipo Strava, combustible y el módulo secundario de auditoría y trazabilidad.\n\nEjecutar EN ORDEN (Collection Runner) con el entorno 'APIGasoline - Local'. Cada corrida crea datos nuevos (sufijo {{run}}), así que se puede repetir.\n\nArchivos: en Postman → Settings → General → Working directory, elegir la carpeta APIGasoline\\pruebas (ticket.jpg, carro.jpg, perfil.png, licencia.pdf, tablero.jpg y falla.jpg).\n\nUsuarios del flujo: operador (maneja), confirmador (aprueba y corrige registros cerrados) y consultor (rol Consultor/Reportes, revisa la auditoría). Las peticiones que requieren token usan {{tokenOperador}}, {{tokenConfirmador}} o {{tokenConsultor}}. Las de la app móvil mandan el header X-Origen: movil.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
       "name": "01 Usuarios",
-      "description": "Alta de los dos usuarios del flujo: el solicitante (operador) y el confirmador (jefe que aprueba).",
+      "description": "Alta de los tres usuarios del flujo: el operador (solicita el carro y maneja), el confirmador (aprueba y corrige registros cerrados) y el consultor (revisa la auditoría).",
       "item": [
         {
-          "name": "01.1 Crear usuario solicitante",
+          "name": "01.1 Crear usuario operador",
           "request": {
             "method": "POST",
             "header": [
@@ -23,12 +23,15 @@
             "url": "{{host}}/api/usuarios",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"solicitante.{{run}}@ejemplo.com\",\n  \"password\": \"Gasolina2026\",\n  \"estado\": \"activo\"\n}",
+              "raw": "{\n  \"email\": \"operador.{{run}}@ejemplo.com\",\n  \"password\": \"Gasolina2026\",\n  \"estado\": \"activo\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "event": [
@@ -48,7 +51,8 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Código de estado 201', () => pm.response.to.have.status(201));",
-                  "if (pm.response.code < 300) { const j = pm.response.json(); pm.collectionVariables.set('usuarioSolicitanteId', j.usuarioId); console.log('usuarioSolicitanteId =', j.usuarioId); }",
+                  "if (pm.response.code < 300) { const j = pm.response.json(); pm.collectionVariables.set('usuarioOperadorId', j.usuarioId); console.log('usuarioOperadorId =', j.usuarioId); }",
+                  "pm.test('El id es un UUID', () => pm.expect(pm.response.json().usuarioId).to.match(/^[0-9a-f-]{36}$/));",
                   "pm.test('No devuelve la contraseña', () => pm.expect(pm.response.text()).to.not.include('Gasolina2026'));"
                 ]
               }
@@ -74,6 +78,9 @@
                   "language": "json"
                 }
               }
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "event": [
@@ -90,11 +97,51 @@
           ]
         },
         {
-          "name": "01.3 Listar usuarios",
+          "name": "01.3 Crear usuario consultor (auditoría)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{host}}/api/usuarios",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"consultor.{{run}}@ejemplo.com\",\n  \"password\": \"Gasolina2026\",\n  \"estado\": \"activo\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 201', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code < 300) { const j = pm.response.json(); pm.collectionVariables.set('usuarioConsultorId', j.usuarioId); console.log('usuarioConsultorId =', j.usuarioId); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01.4 Listar usuarios",
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{host}}/api/usuarios"
+            "url": "{{host}}/api/usuarios",
+            "auth": {
+              "type": "noauth"
+            }
           },
           "event": [
             {
@@ -110,11 +157,14 @@
           ]
         },
         {
-          "name": "01.4 Obtener usuario por id",
+          "name": "01.5 Obtener usuario por id",
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{host}}/api/usuarios/{{usuarioSolicitanteId}}"
+            "url": "{{host}}/api/usuarios/{{usuarioOperadorId}}",
+            "auth": {
+              "type": "noauth"
+            }
           },
           "event": [
             {
@@ -123,7 +173,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Es el usuario solicitado', () => pm.expect(pm.response.json().usuarioId).to.eql(Number(pm.collectionVariables.get('usuarioSolicitanteId'))));"
+                  "pm.test('Es el usuario solicitado', () => pm.expect(pm.response.json().usuarioId).to.eql(pm.collectionVariables.get('usuarioOperadorId')));"
                 ]
               }
             }
@@ -133,7 +183,7 @@
     },
     {
       "name": "02 Roles y privilegios",
-      "description": "Rol 'Confirmador' (recibe las notificaciones de nuevas solicitudes), un privilegio y sus asignaciones.",
+      "description": "Roles globales que usa la lógica: 'Confirmador' (aprueba reservas y corrige registros cerrados) y 'Consultor/Reportes' (consulta el módulo de auditoría).",
       "item": [
         {
           "name": "02.1 Crear rol Confirmador (o reutilizarlo)",
@@ -148,12 +198,15 @@
             "url": "{{host}}/api/roles",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Confirmador\",\n  \"descripcion\": \"Aprueba o rechaza solicitudes de reserva\",\n  \"activo\": true\n}",
+              "raw": "{\n  \"nombre\": \"Confirmador\",\n  \"descripcion\": \"Aprueba o rechaza solicitudes y corrige registros cerrados\",\n  \"activo\": true\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "event": [
@@ -166,9 +219,9 @@
                   "if (pm.response.code === 201) {",
                   "  pm.collectionVariables.set('rolConfirmadorId', pm.response.json().rolId);",
                   "} else {",
-                  "  // Ya existía de una corrida anterior: se busca su id",
+                  "  // Ya existía de una corrida anterior (rol global): se busca su id",
                   "  pm.sendRequest(pm.collectionVariables.replaceIn('{{host}}') + '/api/roles', (err, res) => {",
-                  "    const rol = res.json().find(r => r.nombre === 'Confirmador');",
+                  "    const rol = res.json().find(r => r.nombre === 'Confirmador' && !r.empresaId);",
                   "    pm.collectionVariables.set('rolConfirmadorId', rol.rolId);",
                   "  });",
                   "}"
@@ -178,7 +231,52 @@
           ]
         },
         {
-          "name": "02.2 Crear privilegio",
+          "name": "02.2 Crear rol Consultor/Reportes (o reutilizarlo)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{host}}/api/roles",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Consultor/Reportes\",\n  \"descripcion\": \"Consulta reportes y el módulo de auditoría y trazabilidad\",\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 201 o 409', () => pm.expect(pm.response.code).to.be.oneOf([201, 409]));",
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('rolConsultorId', pm.response.json().rolId);",
+                  "} else {",
+                  "  // Ya existía de una corrida anterior (rol global): se busca su id",
+                  "  pm.sendRequest(pm.collectionVariables.replaceIn('{{host}}') + '/api/roles', (err, res) => {",
+                  "    const rol = res.json().find(r => r.nombre === 'Consultor/Reportes' && !r.empresaId);",
+                  "    pm.collectionVariables.set('rolConsultorId', rol.rolId);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02.3 Crear privilegio",
           "request": {
             "method": "POST",
             "header": [
@@ -190,12 +288,15 @@
             "url": "{{host}}/api/privilegios",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nombre\": \"aprobar_reservas_{{run}}\",\n  \"descripcion\": \"Aprobar o rechazar solicitudes de reserva\",\n  \"activo\": true\n}",
+              "raw": "{\n  \"clave\": \"auditoria.consultar_{{run}}\",\n  \"nombre\": \"Consultar auditoría\",\n  \"descripcion\": \"Consultar el historial de cambios y las revisiones\",\n  \"ambito\": \"empresa\",\n  \"activo\": true\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "event": [
@@ -205,6 +306,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Código de estado 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Devuelve la clave y el módulo', () => { const j = pm.response.json(); pm.expect(j.clave).to.eql('auditoria.consultar_' + pm.collectionVariables.get('run')); pm.expect(j.modulo).to.eql('auditoria'); pm.expect(j.ambito).to.eql('empresa'); });",
                   "if (pm.response.code < 300) { const j = pm.response.json(); pm.collectionVariables.set('privilegioId', j.privilegioId); console.log('privilegioId =', j.privilegioId); }"
                 ]
               }
@@ -212,7 +314,7 @@
           ]
         },
         {
-          "name": "02.3 Asignar privilegio al rol",
+          "name": "02.4 Asignar privilegio al rol Consultor",
           "request": {
             "method": "POST",
             "header": [
@@ -224,12 +326,15 @@
             "url": "{{host}}/api/rol-privilegios",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"rolId\": {{rolConfirmadorId}},\n  \"privilegioId\": {{privilegioId}}\n}",
+              "raw": "{\n  \"rolId\": \"{{rolConsultorId}}\",\n  \"privilegioId\": \"{{privilegioId}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "event": [
@@ -238,15 +343,14 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Código de estado 201', () => pm.response.to.have.status(201));",
-                  "if (pm.response.code < 300) { const j = pm.response.json(); pm.collectionVariables.set('rolPrivilegioId', j.rolPrivilegioId); console.log('rolPrivilegioId =', j.rolPrivilegioId); }"
+                  "pm.test('Código de estado 201', () => pm.response.to.have.status(201));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "02.4 Asignar rol Confirmador al usuario confirmador",
+          "name": "02.5 Asignar rol Confirmador al usuario confirmador",
           "request": {
             "method": "POST",
             "header": [
@@ -258,12 +362,15 @@
             "url": "{{host}}/api/usuario-roles",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"usuarioId\": {{usuarioConfirmadorId}},\n  \"rolId\": {{rolConfirmadorId}}\n}",
+              "raw": "{\n  \"usuarioId\": \"{{usuarioConfirmadorId}}\",\n  \"rolId\": \"{{rolConfirmadorId}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "event": [
@@ -272,19 +379,57 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Código de estado 201', () => pm.response.to.have.status(201));",
-                  "if (pm.response.code < 300) { const j = pm.response.json(); pm.collectionVariables.set('usuarioRolId', j.usuarioRolId); console.log('usuarioRolId =', j.usuarioRolId); }"
+                  "pm.test('Código de estado 201', () => pm.response.to.have.status(201));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "02.5 Roles del usuario confirmador",
+          "name": "02.6 Asignar rol Consultor al usuario consultor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{host}}/api/usuario-roles",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuarioId\": \"{{usuarioConsultorId}}\",\n  \"rolId\": \"{{rolConsultorId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02.7 Roles del usuario confirmador",
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{host}}/api/usuario-roles?usuarioId={{usuarioConfirmadorId}}"
+            "url": "{{host}}/api/usuario-roles?usuarioId={{usuarioConfirmadorId}}",
+            "auth": {
+              "type": "noauth"
+            }
           },
           "event": [
             {
@@ -298,31 +443,12 @@
               }
             }
           ]
-        },
-        {
-          "name": "02.6 Privilegios del rol",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": "{{host}}/api/rol-privilegios?rolId={{rolConfirmadorId}}"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));"
-                ]
-              }
-            }
-          ]
         }
       ]
     },
     {
       "name": "03 Organización",
-      "description": "Corporativo → división → empresa → centro de costo.",
+      "description": "Corporativo → división → empresa → centro de costo. La empresa nace activa y se puede desactivar (HU-ADM-01).",
       "item": [
         {
           "name": "03.1 Crear corporativo",
@@ -343,6 +469,9 @@
                   "language": "json"
                 }
               }
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "event": [
@@ -371,12 +500,15 @@
             "url": "{{host}}/api/divisiones",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"corporativoId\": {{corporativoId}},\n  \"nombre\": \"División Transporte {{run}}\",\n  \"activo\": true\n}",
+              "raw": "{\n  \"corporativoId\": \"{{corporativoId}}\",\n  \"nombre\": \"División Transporte {{run}}\",\n  \"activo\": true\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "event": [
@@ -405,12 +537,15 @@
             "url": "{{host}}/api/empresas",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Gasolinera Tuxtla Centro {{run}}\",\n  \"corporativoId\": {{corporativoId}},\n  \"divisionId\": {{divisionId}}\n}",
+              "raw": "{\n  \"nombre\": \"Gasolinera Tuxtla Centro {{run}}\",\n  \"corporativoId\": \"{{corporativoId}}\",\n  \"divisionId\": \"{{divisionId}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "event": [
@@ -420,14 +555,89 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Código de estado 201', () => pm.response.to.have.status(201));",
-                  "if (pm.response.code < 300) { const j = pm.response.json(); pm.collectionVariables.set('empresaId', j.empresaId); console.log('empresaId =', j.empresaId); }"
+                  "if (pm.response.code < 300) { const j = pm.response.json(); pm.collectionVariables.set('empresaId', j.empresaId); console.log('empresaId =', j.empresaId); }",
+                  "pm.test('Nace activa', () => pm.expect(pm.response.json().activo).to.be.true);"
                 ]
               }
             }
           ]
         },
         {
-          "name": "03.4 Crear centro de costo",
+          "name": "03.4 Desactivar empresa",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{host}}/api/empresas/{{empresaId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Gasolinera Tuxtla Centro {{run}}\",\n  \"corporativoId\": \"{{corporativoId}}\",\n  \"divisionId\": \"{{divisionId}}\",\n  \"activo\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Queda inactiva', () => pm.expect(pm.response.json().activo).to.be.false);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03.5 Reactivar empresa",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{host}}/api/empresas/{{empresaId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Gasolinera Tuxtla Centro {{run}}\",\n  \"corporativoId\": \"{{corporativoId}}\",\n  \"divisionId\": \"{{divisionId}}\",\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Queda activa otra vez', () => pm.expect(pm.response.json().activo).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03.6 Crear centro de costo",
           "request": {
             "method": "POST",
             "header": [
@@ -439,12 +649,15 @@
             "url": "{{host}}/api/centros-costo",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"empresaId\": {{empresaId}},\n  \"nombre\": \"Logística\",\n  \"clave\": \"CC-LOG-{{run}}\",\n  \"activo\": true\n}",
+              "raw": "{\n  \"empresaId\": \"{{empresaId}}\",\n  \"nombre\": \"Logística\",\n  \"clave\": \"CC-LOG-{{run}}\",\n  \"activo\": true\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "event": [
@@ -461,11 +674,14 @@
           ]
         },
         {
-          "name": "03.5 Empresas del corporativo",
+          "name": "03.7 Empresas del corporativo",
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{host}}/api/empresas?corporativoId={{corporativoId}}"
+            "url": "{{host}}/api/empresas?corporativoId={{corporativoId}}",
+            "auth": {
+              "type": "noauth"
+            }
           },
           "event": [
             {
@@ -474,7 +690,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Aparece la empresa creada', () => pm.expect(pm.response.json().some(e => e.empresaId == pm.collectionVariables.get('empresaId'))).to.be.true);"
+                  "pm.test('Aparece la empresa creada', () => pm.expect(pm.response.json().some(e => e.empresaId === pm.collectionVariables.get('empresaId'))).to.be.true);"
                 ]
               }
             }
@@ -483,11 +699,11 @@
       ]
     },
     {
-      "name": "04 Empleados y archivos (MinIO)",
-      "description": "Empleados ligados a los usuarios. La licencia y la foto de perfil se suben a MinIO; en la BD solo queda la llave.",
+      "name": "04 Empleados y licencia (MinIO)",
+      "description": "Empleados ligados a los usuarios. La licencia se sube a MinIO y queda la fecha de carga (HU-LOG-01).",
       "item": [
         {
-          "name": "04.1 Crear empleado solicitante",
+          "name": "04.1 Crear empleado operador",
           "request": {
             "method": "POST",
             "header": [
@@ -499,12 +715,15 @@
             "url": "{{host}}/api/empleados",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"empresaId\": {{empresaId}},\n  \"usuarioId\": {{usuarioSolicitanteId}},\n  \"nombreCompleto\": \"Víctor Alejandro Pérez López\"\n}",
+              "raw": "{\n  \"empresaId\": \"{{empresaId}}\",\n  \"usuarioId\": \"{{usuarioOperadorId}}\",\n  \"nombreCompleto\": \"Víctor Alejandro Pérez López\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "event": [
@@ -514,8 +733,9 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Código de estado 201', () => pm.response.to.have.status(201));",
-                  "if (pm.response.code < 300) { const j = pm.response.json(); pm.collectionVariables.set('empleadoSolicitanteId', j.empleadoId); console.log('empleadoSolicitanteId =', j.empleadoId); }",
-                  "pm.test('Todavía no tiene licencia', () => pm.expect(pm.response.json().tieneLicencia).to.be.false);"
+                  "if (pm.response.code < 300) { const j = pm.response.json(); pm.collectionVariables.set('empleadoOperadorId', j.empleadoId); console.log('empleadoOperadorId =', j.empleadoId); }",
+                  "pm.test('Todavía no tiene licencia', () => pm.expect(pm.response.json().tieneLicencia).to.be.false);",
+                  "pm.test('Sin fecha de carga de licencia', () => pm.expect(pm.response.json().fechaCargaLicencia).to.be.null);"
                 ]
               }
             }
@@ -534,12 +754,15 @@
             "url": "{{host}}/api/empleados",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"empresaId\": {{empresaId}},\n  \"usuarioId\": {{usuarioConfirmadorId}},\n  \"nombreCompleto\": \"Katherine Romina Espinoza\"\n}",
+              "raw": "{\n  \"empresaId\": \"{{empresaId}}\",\n  \"usuarioId\": \"{{usuarioConfirmadorId}}\",\n  \"nombreCompleto\": \"Katherine Romina Espinoza\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "event": [
@@ -556,11 +779,48 @@
           ]
         },
         {
-          "name": "04.3 Subir licencia (PDF) a MinIO",
+          "name": "04.3 Crear empleado consultor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{host}}/api/empleados",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"empresaId\": \"{{empresaId}}\",\n  \"usuarioId\": \"{{usuarioConsultorId}}\",\n  \"nombreCompleto\": \"Edwin de Jesús Díaz García\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 201', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code < 300) { const j = pm.response.json(); pm.collectionVariables.set('empleadoConsultorId', j.empleadoId); console.log('empleadoConsultorId =', j.empleadoId); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04.4 Subir licencia del operador (PDF)",
           "request": {
             "method": "PUT",
             "header": [],
-            "url": "{{host}}/api/empleados/{{empleadoSolicitanteId}}/foto-licencia",
+            "url": "{{host}}/api/empleados/{{empleadoOperadorId}}/foto-licencia",
             "body": {
               "mode": "formdata",
               "formdata": [
@@ -571,6 +831,9 @@
                   "contentType": "application/pdf"
                 }
               ]
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "event": [
@@ -580,20 +843,21 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
-                  "pm.test('fotoLicencia: en BD solo se guarda la llave (empresas/...)', () => pm.expect(pm.response.json().fotoLicencia).to.match(/^empresas\\//));",
+                  "pm.test('fotoLicencia: en BD solo se guarda la llave (empresa/.../documento/...)', () => pm.expect(pm.response.json().fotoLicencia).to.match(/^empresa\\/.*\\/documento\\//));",
                   "pm.test('fotoLicenciaUrl: URL prefirmada de MinIO', () => pm.expect(pm.response.json().fotoLicenciaUrl).to.include('X-Amz-Signature'));",
-                  "pm.test('Ahora sí tiene licencia', () => pm.expect(pm.response.json().tieneLicencia).to.be.true);"
+                  "pm.test('Ahora sí tiene licencia', () => pm.expect(pm.response.json().tieneLicencia).to.be.true);",
+                  "pm.test('Guarda la fecha de carga (HU-LOG-01)', () => pm.expect(pm.response.json().fechaCargaLicencia).to.not.be.null);"
                 ]
               }
             }
           ]
         },
         {
-          "name": "04.4 Subir foto de perfil a MinIO",
+          "name": "04.5 Subir foto de perfil del operador",
           "request": {
             "method": "PUT",
             "header": [],
-            "url": "{{host}}/api/empleados/{{empleadoSolicitanteId}}/foto-perfil",
+            "url": "{{host}}/api/empleados/{{empleadoOperadorId}}/foto-perfil",
             "body": {
               "mode": "formdata",
               "formdata": [
@@ -604,6 +868,9 @@
                   "contentType": "image/png"
                 }
               ]
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "event": [
@@ -613,30 +880,9 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
-                  "pm.test('fotoPerfil: en BD solo se guarda la llave (empresas/...)', () => pm.expect(pm.response.json().fotoPerfil).to.match(/^empresas\\//));",
+                  "pm.test('fotoPerfil: en BD solo se guarda la llave (empresa/.../perfil/...)', () => pm.expect(pm.response.json().fotoPerfil).to.match(/^empresa\\/.*\\/perfil\\//));",
                   "pm.test('fotoPerfilUrl: URL prefirmada de MinIO', () => pm.expect(pm.response.json().fotoPerfilUrl).to.include('X-Amz-Signature'));",
                   "pm.collectionVariables.set('fotoPerfilUrl', pm.response.json().fotoPerfilUrl);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "04.5 Obtener empleado (con URLs de archivos)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": "{{host}}/api/empleados/{{empleadoSolicitanteId}}"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
-                  "pm.test('fotoPerfil: en BD solo se guarda la llave (empresas/...)', () => pm.expect(pm.response.json().fotoPerfil).to.match(/^empresas\\//));",
-                  "pm.test('fotoPerfilUrl: URL prefirmada de MinIO', () => pm.expect(pm.response.json().fotoPerfilUrl).to.include('X-Amz-Signature'));"
                 ]
               }
             }
@@ -670,7 +916,10 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{host}}/api/empleados/por-usuario/{{usuarioSolicitanteId}}"
+            "url": "{{host}}/api/empleados/por-usuario/{{usuarioOperadorId}}",
+            "auth": {
+              "type": "noauth"
+            }
           },
           "event": [
             {
@@ -678,7 +927,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));"
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Es el empleado del operador', () => pm.expect(pm.response.json().empleadoId).to.eql(pm.collectionVariables.get('empleadoOperadorId')));"
                 ]
               }
             }
@@ -687,11 +937,295 @@
       ]
     },
     {
-      "name": "05 Carros",
+      "name": "05 Autenticación (JWT)",
+      "description": "Login de los tres usuarios. El token lleva el usuario, su empresa y sus roles: la auditoría y las correcciones lo usan (nunca se confía en ids que mande el cliente).",
+      "item": [
+        {
+          "name": "05.1 Login del operador",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{host}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"operador.{{run}}@ejemplo.com\",\n  \"password\": \"Gasolina2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('Devuelve un token JWT', () => pm.expect(j.token.split('.').length).to.eql(3));",
+                  "pm.collectionVariables.set('tokenOperador', j.token);",
+                  "pm.test('El token trae al empleado (su empresa va en el token)', () => pm.expect(j.perfil.empleado).to.not.be.null);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05.2 Login del confirmador",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{host}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"confirmador.{{run}}@ejemplo.com\",\n  \"password\": \"Gasolina2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('Devuelve un token JWT', () => pm.expect(j.token.split('.').length).to.eql(3));",
+                  "pm.collectionVariables.set('tokenConfirmador', j.token);",
+                  "pm.test('El token trae al empleado (su empresa va en el token)', () => pm.expect(j.perfil.empleado).to.not.be.null);",
+                  "pm.test('Tiene el rol Confirmador', () => pm.expect(j.perfil.roles).to.include('Confirmador'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05.3 Login del consultor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{host}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"consultor.{{run}}@ejemplo.com\",\n  \"password\": \"Gasolina2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('Devuelve un token JWT', () => pm.expect(j.token.split('.').length).to.eql(3));",
+                  "pm.collectionVariables.set('tokenConsultor', j.token);",
+                  "pm.test('El token trae al empleado (su empresa va en el token)', () => pm.expect(j.perfil.empleado).to.not.be.null);",
+                  "pm.test('Tiene el rol Consultor/Reportes', () => pm.expect(j.perfil.roles).to.include('Consultor/Reportes'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05.4 Perfil con token (Bearer)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{host}}/api/auth/perfil",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenOperador}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Incluye el empleado con su foto', () => pm.expect(pm.response.json().empleado.fotoPerfilUrl).to.include('X-Amz-Signature'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05.4a Privilegios del usuario (offline-first)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{host}}/api/auth/privilegios",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenConsultor}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Trae claves y versión', () => { const j = pm.response.json(); pm.expect(j.claves).to.be.an('array'); pm.expect(j.version).to.match(/^[0-9a-f]{64}$/); });",
+                  "pm.test('Incluye el privilegio asignado al rol Consultor', () => pm.expect(pm.response.json().claves).to.include('auditoria.consultar_' + pm.collectionVariables.get('run')));",
+                  "pm.test('La versión viene en el header ETag', () => pm.expect(pm.response.headers.get('ETag')).to.eql('\"' + pm.response.json().version + '\"'));",
+                  "if (pm.response.code === 200) { pm.collectionVariables.set('versionPrivilegios', pm.response.json().version); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05.4b Privilegios sin cambios (304)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "If-None-Match",
+                "value": "\"{{versionPrivilegios}}\""
+              }
+            ],
+            "url": "{{host}}/api/auth/privilegios",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenConsultor}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 304 (la app conserva su copia local)', () => pm.response.to.have.status(304));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05.5 Perfil sin token (401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{host}}/api/auth/perfil",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05.6 Login con contraseña incorrecta (401)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{host}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"operador.{{run}}@ejemplo.com\",\n  \"password\": \"incorrecta123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 401', () => pm.response.to.have.status(401));",
+                  "pm.test('Respuesta con formato ProblemDetails', () => { const j = pm.response.json(); pm.expect(j).to.have.property('title'); pm.expect(j).to.have.property('detail'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06 Carros",
       "description": "Alta del vehículo y su foto (MinIO).",
       "item": [
         {
-          "name": "05.1 Crear carro",
+          "name": "06.1 Crear carro",
           "request": {
             "method": "POST",
             "header": [
@@ -703,12 +1237,15 @@
             "url": "{{host}}/api/carros",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"empresaId\": {{empresaId}},\n  \"marca\": \"Nissan\",\n  \"modelo\": \"NP300\",\n  \"anio\": 2023,\n  \"color\": \"Blanco\",\n  \"placas\": \"TST-{{run}}\",\n  \"capacidadTanque\": 80.0,\n  \"kilometrajeActual\": 15230.5,\n  \"estado\": \"disponible\"\n}",
+              "raw": "{\n  \"empresaId\": \"{{empresaId}}\",\n  \"marca\": \"Nissan\",\n  \"modelo\": \"NP300\",\n  \"anio\": 2023,\n  \"color\": \"Blanco\",\n  \"placas\": \"TST-{{run}}\",\n  \"capacidadTanque\": 80.0,\n  \"kilometrajeActual\": 15230.5,\n  \"estado\": \"disponible\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "event": [
@@ -719,14 +1256,15 @@
                 "exec": [
                   "pm.test('Código de estado 201', () => pm.response.to.have.status(201));",
                   "if (pm.response.code < 300) { const j = pm.response.json(); pm.collectionVariables.set('carroId', j.carroId); console.log('carroId =', j.carroId); }",
-                  "pm.test('Placas en mayúsculas', () => pm.expect(pm.response.json().placas).to.eql(pm.response.json().placas.toUpperCase()));"
+                  "pm.test('Placas en mayúsculas', () => pm.expect(pm.response.json().placas).to.eql(pm.response.json().placas.toUpperCase()));",
+                  "pm.test('No está dado de baja', () => pm.expect(pm.response.json().dadoDeBaja).to.be.false);"
                 ]
               }
             }
           ]
         },
         {
-          "name": "05.2 Subir foto del carro a MinIO",
+          "name": "06.2 Subir foto del carro",
           "request": {
             "method": "PUT",
             "header": [],
@@ -741,6 +1279,9 @@
                   "contentType": "image/jpeg"
                 }
               ]
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "event": [
@@ -750,7 +1291,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
-                  "pm.test('fotoVehiculo: en BD solo se guarda la llave (empresas/...)', () => pm.expect(pm.response.json().fotoVehiculo).to.match(/^empresas\\//));",
+                  "pm.test('fotoVehiculo: en BD solo se guarda la llave (empresa/.../foto/...)', () => pm.expect(pm.response.json().fotoVehiculo).to.match(/^empresa\\/.*\\/foto\\//));",
                   "pm.test('fotoVehiculoUrl: URL prefirmada de MinIO', () => pm.expect(pm.response.json().fotoVehiculoUrl).to.include('X-Amz-Signature'));"
                 ]
               }
@@ -758,11 +1299,14 @@
           ]
         },
         {
-          "name": "05.3 Obtener carro",
+          "name": "06.3 Obtener carro",
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{host}}/api/carros/{{carroId}}"
+            "url": "{{host}}/api/carros/{{carroId}}",
+            "auth": {
+              "type": "noauth"
+            }
           },
           "event": [
             {
@@ -771,7 +1315,6 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
-                  "pm.test('fotoVehiculo: en BD solo se guarda la llave (empresas/...)', () => pm.expect(pm.response.json().fotoVehiculo).to.match(/^empresas\\//));",
                   "pm.test('fotoVehiculoUrl: URL prefirmada de MinIO', () => pm.expect(pm.response.json().fotoVehiculoUrl).to.include('X-Amz-Signature'));"
                 ]
               }
@@ -779,11 +1322,14 @@
           ]
         },
         {
-          "name": "05.4 Carros disponibles de la empresa",
+          "name": "06.4 Carros disponibles de la empresa",
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{host}}/api/carros?empresaId={{empresaId}}&estado=disponible"
+            "url": "{{host}}/api/carros?empresaId={{empresaId}}&estado=disponible",
+            "auth": {
+              "type": "noauth"
+            }
           },
           "event": [
             {
@@ -792,7 +1338,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
-                  "pm.test('El carro está disponible', () => pm.expect(pm.response.json().some(c => c.carroId == pm.collectionVariables.get('carroId'))).to.be.true);"
+                  "pm.test('El carro está disponible', () => pm.expect(pm.response.json().some(c => c.carroId === pm.collectionVariables.get('carroId'))).to.be.true);"
                 ]
               }
             }
@@ -801,11 +1347,11 @@
       ]
     },
     {
-      "name": "06 Solicitudes de reserva",
-      "description": "El solicitante pide el carro y el confirmador la aprueba (el carro pasa a 'ocupado').",
+      "name": "07 Solicitudes de reserva",
+      "description": "El operador pide el carro y el confirmador la aprueba (el carro pasa a 'ocupado').",
       "item": [
         {
-          "name": "06.1 Crear solicitud de reserva",
+          "name": "07.1 Crear solicitud de reserva",
           "request": {
             "method": "POST",
             "header": [
@@ -817,12 +1363,15 @@
             "url": "{{host}}/api/solicitudes-reserva",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"empresaId\": {{empresaId}},\n  \"carroId\": {{carroId}},\n  \"empleadoSolicitanteId\": {{empleadoSolicitanteId}}\n}",
+              "raw": "{\n  \"empresaId\": \"{{empresaId}}\",\n  \"carroId\": \"{{carroId}}\",\n  \"empleadoSolicitanteId\": \"{{empleadoOperadorId}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "event": [
@@ -840,11 +1389,14 @@
           ]
         },
         {
-          "name": "06.2 Cola de pendientes de la empresa",
+          "name": "07.2 Cola de pendientes de la empresa",
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{host}}/api/solicitudes-reserva?empresaId={{empresaId}}&estado=pendiente"
+            "url": "{{host}}/api/solicitudes-reserva?empresaId={{empresaId}}&estado=pendiente",
+            "auth": {
+              "type": "noauth"
+            }
           },
           "event": [
             {
@@ -852,14 +1404,15 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));"
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Aparece la solicitud', () => pm.expect(pm.response.json().some(s => s.solicitudReservaId === pm.collectionVariables.get('solicitudReservaId'))).to.be.true);"
                 ]
               }
             }
           ]
         },
         {
-          "name": "06.3 Aprobar solicitud",
+          "name": "07.3 Aprobar solicitud",
           "request": {
             "method": "POST",
             "header": [
@@ -871,12 +1424,15 @@
             "url": "{{host}}/api/solicitudes-reserva/{{solicitudReservaId}}/aprobar",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"empleadoConfirmadorId\": {{empleadoConfirmadorId}},\n  \"motivo\": \"Viaje a sucursal Tapachula\"\n}",
+              "raw": "{\n  \"empleadoConfirmadorId\": \"{{empleadoConfirmadorId}}\",\n  \"motivo\": \"Viaje a sucursal Tapachula\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "event": [
@@ -893,11 +1449,14 @@
           ]
         },
         {
-          "name": "06.4 El carro quedó ocupado",
+          "name": "07.4 El carro quedó ocupado",
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{host}}/api/carros/{{carroId}}"
+            "url": "{{host}}/api/carros/{{carroId}}",
+            "auth": {
+              "type": "noauth"
+            }
           },
           "event": [
             {
@@ -915,28 +1474,42 @@
       ]
     },
     {
-      "name": "07 Viaje, ruta GPS y carga de combustible",
-      "description": "Inicia el viaje, registra puntos GPS, una carga con su ticket (MinIO) y finaliza.",
+      "name": "08 Viaje tipo Strava, combustible y foto del tablero",
+      "description": "Inicia el viaje con foto del tablero, registra la ruta GPS, una carga con su ticket, el operador corrige un dato mientras el viaje sigue en curso y finaliza con foto del tablero.",
       "item": [
         {
-          "name": "07.1 Iniciar viaje",
+          "name": "08.1 Iniciar viaje",
           "request": {
             "method": "POST",
             "header": [
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "X-Origen",
+                "value": "movil"
               }
             ],
             "url": "{{host}}/api/viajes",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"empresaId\": {{empresaId}},\n  \"carroId\": {{carroId}},\n  \"solicitudReservaId\": {{solicitudReservaId}},\n  \"empleadoOperadorId\": {{empleadoSolicitanteId}},\n  \"fechaInicio\": \"{{fechaInicio}}\",\n  \"ubicacionInicioLat\": 16.753056,\n  \"ubicacionInicioLng\": -93.115556,\n  \"kilometrajeInicial\": 15230.5\n}",
+              "raw": "{\n  \"empresaId\": \"{{empresaId}}\",\n  \"carroId\": \"{{carroId}}\",\n  \"solicitudReservaId\": \"{{solicitudReservaId}}\",\n  \"empleadoOperadorId\": \"{{empleadoOperadorId}}\",\n  \"fechaInicio\": \"{{fechaInicio}}\",\n  \"ubicacionInicioLat\": 16.753056,\n  \"ubicacionInicioLng\": -93.115556,\n  \"kilometrajeInicial\": 15230.5\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenOperador}}",
+                  "type": "string"
+                }
+              ]
             }
           },
           "event": [
@@ -965,31 +1538,95 @@
                 "exec": [
                   "pm.test('Código de estado 201', () => pm.response.to.have.status(201));",
                   "if (pm.response.code < 300) { const j = pm.response.json(); pm.collectionVariables.set('viajeId', j.viajeId); console.log('viajeId =', j.viajeId); }",
-                  "pm.test('Viaje en curso', () => pm.expect(pm.response.json().estado).to.eql('enCurso'));"
+                  "pm.test('Viaje en curso', () => pm.expect(pm.response.json().estado).to.eql('enCurso'));",
+                  "pm.test('No está corregido', () => pm.expect(pm.response.json().corregido).to.be.false);",
+                  "pm.test('El servidor guardó la hora de recepción', () => pm.expect(pm.response.json().fechaRecepcion).to.not.be.null);"
                 ]
               }
             }
           ]
         },
         {
-          "name": "07.2 Registrar lote de puntos GPS",
+          "name": "08.2 Foto del tablero al iniciar",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-Origen",
+                "value": "movil"
+              }
+            ],
+            "url": "{{host}}/api/viajes/{{viajeId}}/foto-tablero/inicial",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "archivo",
+                  "type": "file",
+                  "src": "tablero.jpg",
+                  "contentType": "image/jpeg"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenOperador}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('fotoTableroInicial: en BD solo se guarda la llave (empresa/.../tablero/...)', () => pm.expect(pm.response.json().fotoTableroInicial).to.match(/^empresa\\/.*\\/tablero\\//));",
+                  "pm.test('fotoTableroInicialUrl: URL prefirmada de MinIO', () => pm.expect(pm.response.json().fotoTableroInicialUrl).to.include('X-Amz-Signature'));",
+                  "pm.test('Todavía no hay foto final', () => pm.expect(pm.response.json().fotoTableroFinal).to.be.null);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08.3 Registrar lote de puntos GPS",
           "request": {
             "method": "POST",
             "header": [
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "X-Origen",
+                "value": "movil"
               }
             ],
             "url": "{{host}}/api/viajes/{{viajeId}}/puntos-ruta",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"sincronizado\": false,\n  \"puntos\": [\n    {\n      \"latitud\": 16.753056,\n      \"longitud\": -93.115556,\n      \"timestampCaptura\": \"{{punto1}}\"\n    },\n    {\n      \"latitud\": 16.75012,\n      \"longitud\": -93.10034,\n      \"timestampCaptura\": \"{{punto2}}\"\n    },\n    {\n      \"latitud\": 16.74587,\n      \"longitud\": -93.08521,\n      \"timestampCaptura\": \"{{punto3}}\"\n    }\n  ]\n}",
+              "raw": "{\n  \"puntos\": [\n    {\n      \"latitud\": 16.753056,\n      \"longitud\": -93.115556,\n      \"timestampCaptura\": \"{{punto1}}\",\n      \"precisionMetros\": 8,\n      \"velocidad\": 9.5\n    },\n    {\n      \"latitud\": 16.75012,\n      \"longitud\": -93.10034,\n      \"timestampCaptura\": \"{{punto2}}\",\n      \"precisionMetros\": 6,\n      \"velocidad\": 11.2\n    },\n    {\n      \"latitud\": 16.74587,\n      \"longitud\": -93.08521,\n      \"timestampCaptura\": \"{{punto3}}\",\n      \"precisionMetros\": 7,\n      \"velocidad\": 10.1\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenOperador}}",
+                  "type": "string"
+                }
+              ]
             }
           },
           "event": [
@@ -1006,24 +1643,38 @@
           ]
         },
         {
-          "name": "07.3 Reenviar el mismo lote (no duplica)",
+          "name": "08.4 Reenviar el mismo lote (no duplica)",
           "request": {
             "method": "POST",
             "header": [
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "X-Origen",
+                "value": "movil"
               }
             ],
             "url": "{{host}}/api/viajes/{{viajeId}}/puntos-ruta",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"sincronizado\": true,\n  \"puntos\": [\n    {\n      \"latitud\": 16.753056,\n      \"longitud\": -93.115556,\n      \"timestampCaptura\": \"{{punto1}}\"\n    },\n    {\n      \"latitud\": 16.75012,\n      \"longitud\": -93.10034,\n      \"timestampCaptura\": \"{{punto2}}\"\n    },\n    {\n      \"latitud\": 16.74587,\n      \"longitud\": -93.08521,\n      \"timestampCaptura\": \"{{punto3}}\"\n    }\n  ]\n}",
+              "raw": "{\n  \"puntos\": [\n    {\n      \"latitud\": 16.753056,\n      \"longitud\": -93.115556,\n      \"timestampCaptura\": \"{{punto1}}\",\n      \"precisionMetros\": 8,\n      \"velocidad\": 9.5\n    },\n    {\n      \"latitud\": 16.75012,\n      \"longitud\": -93.10034,\n      \"timestampCaptura\": \"{{punto2}}\",\n      \"precisionMetros\": 6,\n      \"velocidad\": 11.2\n    },\n    {\n      \"latitud\": 16.74587,\n      \"longitud\": -93.08521,\n      \"timestampCaptura\": \"{{punto3}}\",\n      \"precisionMetros\": 7,\n      \"velocidad\": 10.1\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenOperador}}",
+                  "type": "string"
+                }
+              ]
             }
           },
           "event": [
@@ -1040,11 +1691,14 @@
           ]
         },
         {
-          "name": "07.4 Ruta del viaje",
+          "name": "08.5 Ruta del viaje",
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{host}}/api/viajes/{{viajeId}}/puntos-ruta"
+            "url": "{{host}}/api/viajes/{{viajeId}}/puntos-ruta",
+            "auth": {
+              "type": "noauth"
+            }
           },
           "event": [
             {
@@ -1053,17 +1707,23 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
-                  "pm.test('3 puntos en la ruta', () => pm.expect(pm.response.json().length).to.eql(3));"
+                  "pm.test('3 puntos en la ruta', () => pm.expect(pm.response.json().length).to.eql(3));",
+                  "pm.test('Cada punto tiene su hora de recepción', () => pm.expect(pm.response.json().every(p => p.fechaRecepcion)).to.be.true);"
                 ]
               }
             }
           ]
         },
         {
-          "name": "07.5 Registrar carga de combustible con ticket (MinIO)",
+          "name": "08.6 Registrar carga de combustible con ticket",
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "X-Origen",
+                "value": "movil"
+              }
+            ],
             "url": "{{host}}/api/cargas-combustible",
             "body": {
               "mode": "formdata",
@@ -1099,15 +1759,20 @@
                   "type": "text"
                 },
                 {
-                  "key": "sincronizado",
-                  "value": "false",
-                  "type": "text"
-                },
-                {
                   "key": "fotoComprobante",
                   "type": "file",
                   "src": "ticket.jpg",
                   "contentType": "image/jpeg"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenOperador}}",
+                  "type": "string"
                 }
               ]
             }
@@ -1120,9 +1785,11 @@
                 "exec": [
                   "pm.test('Código de estado 201', () => pm.response.to.have.status(201));",
                   "if (pm.response.code < 300) { const j = pm.response.json(); pm.collectionVariables.set('cargaCombustibleId', j.cargaCombustibleId); console.log('cargaCombustibleId =', j.cargaCombustibleId); }",
-                  "pm.test('fotoComprobante: en BD solo se guarda la llave (empresas/...)', () => pm.expect(pm.response.json().fotoComprobante).to.match(/^empresas\\//));",
+                  "pm.test('fotoComprobante: en BD solo se guarda la llave (empresa/.../carga/...)', () => pm.expect(pm.response.json().fotoComprobante).to.match(/^empresa\\/.*\\/carga\\//));",
                   "pm.test('fotoComprobanteUrl: URL prefirmada de MinIO', () => pm.expect(pm.response.json().fotoComprobanteUrl).to.include('X-Amz-Signature'));",
                   "pm.test('Calcula el precio por litro', () => pm.expect(pm.response.json().precioPorLitro).to.eql(24));",
+                  "pm.test('El comprobante ya está en el servidor', () => pm.expect(pm.response.json().fechaSubidaComprobante).to.not.be.null);",
+                  "pm.test('No está corregida', () => pm.expect(pm.response.json().corregido).to.be.false);",
                   "pm.collectionVariables.set('fotoComprobanteUrl', pm.response.json().fotoComprobanteUrl);"
                 ]
               }
@@ -1130,7 +1797,7 @@
           ]
         },
         {
-          "name": "07.6 Ver el ticket desde MinIO (URL prefirmada)",
+          "name": "08.7 Ver el ticket desde MinIO (URL prefirmada)",
           "request": {
             "method": "GET",
             "header": [],
@@ -1153,11 +1820,86 @@
           ]
         },
         {
-          "name": "07.7 Cargas del viaje",
+          "name": "08.8 El operador corrige los litros (viaje en curso)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-Origen",
+                "value": "movil"
+              }
+            ],
+            "url": "{{host}}/api/cargas-combustible/{{cargaCombustibleId}}",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "litros",
+                  "value": "44.80",
+                  "type": "text"
+                },
+                {
+                  "key": "monto",
+                  "value": "1075.20",
+                  "type": "text"
+                },
+                {
+                  "key": "fechaCarga",
+                  "value": "{{fechaCarga}}",
+                  "type": "text"
+                },
+                {
+                  "key": "ubicacionLat",
+                  "value": "16.750120",
+                  "type": "text"
+                },
+                {
+                  "key": "ubicacionLng",
+                  "value": "-93.100340",
+                  "type": "text"
+                },
+                {
+                  "key": "motivo",
+                  "value": "Escribí 45.30 en vez de 44.80; el ticket dice 44.80 L",
+                  "type": "text"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenOperador}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Queda marcada como corregida', () => pm.expect(pm.response.json().corregido).to.be.true);",
+                  "pm.test('Litros corregidos', () => pm.expect(Number(pm.response.json().litros)).to.eql(44.8));",
+                  "pm.test('Conserva el comprobante', () => pm.expect(pm.response.json().fotoComprobante).to.match(/^empresa\\//));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08.9 Cargas del viaje",
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{host}}/api/cargas-combustible?viajeId={{viajeId}}"
+            "url": "{{host}}/api/cargas-combustible?viajeId={{viajeId}}",
+            "auth": {
+              "type": "noauth"
+            }
           },
           "event": [
             {
@@ -1173,13 +1915,17 @@
           ]
         },
         {
-          "name": "07.8 Finalizar viaje",
+          "name": "08.10 Finalizar viaje",
           "request": {
             "method": "POST",
             "header": [
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "X-Origen",
+                "value": "movil"
               }
             ],
             "url": "{{host}}/api/viajes/{{viajeId}}/finalizar",
@@ -1191,6 +1937,16 @@
                   "language": "json"
                 }
               }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenOperador}}",
+                  "type": "string"
+                }
+              ]
             }
           },
           "event": [
@@ -1212,18 +1968,70 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Viaje finalizado', () => pm.expect(pm.response.json().estado).to.eql('finalizado'));"
+                  "pm.test('Viaje finalizado', () => pm.expect(pm.response.json().estado).to.eql('finalizado'));",
+                  "pm.test('Distancia por odómetro = 79.5 km', () => pm.expect(Number(pm.response.json().distanciaRecorrida)).to.eql(79.5));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "07.9 El carro actualizó su kilometraje",
+          "name": "08.11 Foto del tablero al terminar",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-Origen",
+                "value": "movil"
+              }
+            ],
+            "url": "{{host}}/api/viajes/{{viajeId}}/foto-tablero/final",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "archivo",
+                  "type": "file",
+                  "src": "tablero.jpg",
+                  "contentType": "image/jpeg"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenOperador}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('fotoTableroFinal: en BD solo se guarda la llave (empresa/.../tablero/...)', () => pm.expect(pm.response.json().fotoTableroFinal).to.match(/^empresa\\/.*\\/tablero\\//));",
+                  "pm.test('fotoTableroFinalUrl: URL prefirmada de MinIO', () => pm.expect(pm.response.json().fotoTableroFinalUrl).to.include('X-Amz-Signature'));",
+                  "pm.test('Conserva la foto inicial', () => pm.expect(pm.response.json().fotoTableroInicial).to.match(/inicial-/));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08.12 El carro actualizó su kilometraje",
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{host}}/api/carros/{{carroId}}"
+            "url": "{{host}}/api/carros/{{carroId}}",
+            "auth": {
+              "type": "noauth"
+            }
           },
           "event": [
             {
@@ -1237,210 +2045,13 @@
               }
             }
           ]
-        }
-      ]
-    },
-    {
-      "name": "08 Cambios de estatus del carro",
-      "description": "Bitácora: mandar a mantenimiento y regresar a disponible.",
-      "item": [
-        {
-          "name": "08.1 Mandar el carro a mantenimiento",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": "{{host}}/api/cambios-estatus-carro",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"carroId\": {{carroId}},\n  \"empleadoId\": {{empleadoConfirmadorId}},\n  \"estatusNuevo\": \"enMantenimiento\",\n  \"motivo\": \"Servicio de los 20,000 km\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Código de estado 201', () => pm.response.to.have.status(201));",
-                  "if (pm.response.code < 300) { const j = pm.response.json(); pm.collectionVariables.set('cambioEstatusCarroId', j.cambioEstatusCarroId); console.log('cambioEstatusCarroId =', j.cambioEstatusCarroId); }"
-                ]
-              }
-            }
-          ]
         },
         {
-          "name": "08.2 Regresar el carro a disponible",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": "{{host}}/api/cambios-estatus-carro",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"carroId\": {{carroId}},\n  \"empleadoId\": {{empleadoConfirmadorId}},\n  \"estatusNuevo\": \"disponible\",\n  \"motivo\": \"Mantenimiento terminado\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Código de estado 201', () => pm.response.to.have.status(201));"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "08.3 Historial del carro",
+          "name": "08.13 Ruta procesada (GPS contra odómetro)",
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{host}}/api/cambios-estatus-carro?carroId={{carroId}}"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Tiene registros en la bitácora', () => pm.expect(pm.response.json().length).to.be.above(1));"
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "09 Notificaciones",
-      "description": "Generadas automáticamente: nueva solicitud (al confirmador) y resultado (al solicitante).",
-      "item": [
-        {
-          "name": "09.1 Bandeja del confirmador",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": "{{host}}/api/notificaciones?empleadoDestinatarioId={{empleadoConfirmadorId}}"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Recibió la notificación de nueva solicitud', () => pm.expect(pm.response.json().some(n => n.tipo === 'nuevaSolicitud')).to.be.true);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "09.2 Bandeja del solicitante",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": "{{host}}/api/notificaciones?empleadoDestinatarioId={{empleadoSolicitanteId}}"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Recibió el resultado de su solicitud', () => pm.expect(pm.response.json().some(n => n.tipo === 'resultadoSolicitud')).to.be.true);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "09.3 Contador de no leídas (badge)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": "{{host}}/api/notificaciones/no-leidas/{{empleadoConfirmadorId}}"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "09.4 Marcar todas como leídas",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": "{{host}}/api/notificaciones/marcar-todas-leidas/{{empleadoConfirmadorId}}"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Código de estado 200 o 204', () => pm.expect(pm.response.code).to.be.oneOf([200, 204]));"
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "10 Autenticación (JWT)",
-      "description": "Login con el usuario solicitante y consulta del perfil con el token.",
-      "item": [
-        {
-          "name": "10.1 Login",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": "{{host}}/api/auth/login",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"solicitante.{{run}}@ejemplo.com\",\n  \"password\": \"Gasolina2026\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
+            "url": "{{host}}/api/viajes/{{viajeId}}/ruta-procesada",
             "auth": {
               "type": "noauth"
             }
@@ -1452,26 +2063,50 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
-                  "const j = pm.response.json();",
-                  "pm.test('Devuelve un token JWT', () => pm.expect(j.token.split('.').length).to.eql(3));",
-                  "pm.collectionVariables.set('token', j.token);"
+                  "const r = pm.response.json();",
+                  "pm.test('Calculó la distancia GPS', () => pm.expect(Number(r.distanciaGpsKm)).to.be.above(0));",
+                  "pm.test('Alerta: el odómetro declara mucho más que el GPS (79.5 km vs ~3.5 km)', () => pm.expect(r.alertaKilometraje).to.be.true);"
                 ]
               }
             }
           ]
-        },
+        }
+      ]
+    },
+    {
+      "name": "09 Correcciones de un viaje cerrado",
+      "description": "Con el viaje cerrado, solo un Confirmador o Gestor de activos puede corregir, siempre con motivo. El valor anterior queda en el historial de auditoría.",
+      "item": [
         {
-          "name": "10.2 Perfil con token (Bearer)",
+          "name": "09.1 El operador ya no puede corregir (403)",
           "request": {
-            "method": "GET",
-            "header": [],
-            "url": "{{host}}/api/auth/perfil",
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Origen",
+                "value": "movil"
+              }
+            ],
+            "url": "{{host}}/api/viajes/{{viajeId}}/corregir-kilometraje",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"kilometrajeInicial\": 15230.5,\n  \"kilometrajeFinal\": 15300.0,\n  \"motivo\": \"El operador tecleó 15310; la foto del tablero dice 15300\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "auth": {
               "type": "bearer",
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{token}}",
+                  "value": "{{tokenOperador}}",
                   "type": "string"
                 }
               ]
@@ -1483,37 +2118,15 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Incluye el empleado con su foto', () => pm.expect(pm.response.json().empleado.fotoPerfilUrl).to.include('X-Amz-Signature'));"
+                  "pm.test('Código de estado 403', () => pm.response.to.have.status(403));",
+                  "pm.test('Respuesta con formato ProblemDetails', () => { const j = pm.response.json(); pm.expect(j).to.have.property('title'); pm.expect(j).to.have.property('detail'); });"
                 ]
               }
             }
           ]
         },
         {
-          "name": "10.3 Perfil sin token (401)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": "{{host}}/api/auth/perfil",
-            "auth": {
-              "type": "noauth"
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Código de estado 401', () => pm.response.to.have.status(401));"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "10.4 Login con contraseña incorrecta (401)",
+          "name": "09.2 Corregir sin token (401)",
           "request": {
             "method": "POST",
             "header": [
@@ -1522,10 +2135,10 @@
                 "value": "application/json"
               }
             ],
-            "url": "{{host}}/api/auth/login",
+            "url": "{{host}}/api/viajes/{{viajeId}}/corregir-kilometraje",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"solicitante.{{run}}@ejemplo.com\",\n  \"password\": \"incorrecta123\"\n}",
+              "raw": "{\n  \"kilometrajeInicial\": 15230.5,\n  \"kilometrajeFinal\": 15300.0,\n  \"motivo\": \"El operador tecleó 15310; la foto del tablero dice 15300\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1548,49 +2161,9 @@
               }
             }
           ]
-        }
-      ]
-    },
-    {
-      "name": "11 Validaciones y errores",
-      "description": "Evidencia de que la API rechaza datos inválidos con el código correcto.",
-      "item": [
-        {
-          "name": "11.1 Email repetido (409)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": "{{host}}/api/usuarios",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"solicitante.{{run}}@ejemplo.com\",\n  \"password\": \"OtraClave123\",\n  \"estado\": \"activo\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Código de estado 409', () => pm.response.to.have.status(409));",
-                  "pm.test('Respuesta con formato ProblemDetails', () => { const j = pm.response.json(); pm.expect(j).to.have.property('title'); pm.expect(j).to.have.property('detail'); });"
-                ]
-              }
-            }
-          ]
         },
         {
-          "name": "11.2 Email inválido (400)",
+          "name": "09.3 Corregir sin motivo (400)",
           "request": {
             "method": "POST",
             "header": [
@@ -1599,15 +2172,25 @@
                 "value": "application/json"
               }
             ],
-            "url": "{{host}}/api/usuarios",
+            "url": "{{host}}/api/viajes/{{viajeId}}/corregir-kilometraje",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"esto-no-es-email\",\n  \"password\": \"Gasolina2026\",\n  \"estado\": \"activo\"\n}",
+              "raw": "{\n  \"kilometrajeInicial\": 15230.5,\n  \"kilometrajeFinal\": 15300.0\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenConfirmador}}",
+                  "type": "string"
+                }
+              ]
             }
           },
           "event": [
@@ -1623,27 +2206,7 @@
           ]
         },
         {
-          "name": "11.3 Usuario inexistente (404)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": "{{host}}/api/usuarios/999999"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Código de estado 404', () => pm.response.to.have.status(404));",
-                  "pm.test('Respuesta con formato ProblemDetails', () => { const j = pm.response.json(); pm.expect(j).to.have.property('title'); pm.expect(j).to.have.property('detail'); });"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "11.4 Placas repetidas (409)",
+          "name": "09.4 El confirmador corrige el kilometraje final",
           "request": {
             "method": "POST",
             "header": [
@@ -1652,15 +2215,327 @@
                 "value": "application/json"
               }
             ],
-            "url": "{{host}}/api/carros",
+            "url": "{{host}}/api/viajes/{{viajeId}}/corregir-kilometraje",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"empresaId\": {{empresaId}},\n  \"marca\": \"Toyota\",\n  \"modelo\": \"Hilux\",\n  \"placas\": \"TST-{{run}}\",\n  \"kilometrajeActual\": 0\n}",
+              "raw": "{\n  \"kilometrajeInicial\": 15230.5,\n  \"kilometrajeFinal\": 15300.0,\n  \"motivo\": \"El operador tecleó 15310; la foto del tablero dice 15300\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenConfirmador}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "const v = pm.response.json();",
+                  "pm.test('Queda marcado como corregido', () => pm.expect(v.corregido).to.be.true);",
+                  "pm.test('Kilometraje final corregido', () => pm.expect(Number(v.kilometrajeFinal)).to.eql(15300));",
+                  "pm.test('Recalcula la distancia (69.5 km)', () => pm.expect(Number(v.distanciaRecorrida)).to.eql(69.5));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "09.5 El carro ajustó su kilometraje",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{host}}/api/carros/{{carroId}}",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Kilometraje = 15300 (este viaje lo había dejado en 15310)', () => pm.expect(Number(pm.response.json().kilometrajeActual)).to.eql(15300));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "10 Liberar el carro (HU-USO-04)",
+      "description": "El operador termina sus viajes y libera el carro: la reserva queda 'finalizada' y el carro 'disponible'.",
+      "item": [
+        {
+          "name": "10.1 Liberar la reserva",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Origen",
+                "value": "movil"
+              }
+            ],
+            "url": "{{host}}/api/solicitudes-reserva/{{solicitudReservaId}}/liberar",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"observaciones\": \"Se entrega limpio, con medio tanque\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenOperador}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "const s = pm.response.json();",
+                  "pm.test('Reserva finalizada', () => pm.expect(s.estado).to.eql('finalizada'));",
+                  "pm.test('Guarda fecha y observaciones de liberación', () => { pm.expect(s.fechaLiberacion).to.not.be.null; pm.expect(s.observacionesLiberacion).to.include('medio tanque'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10.2 El carro volvió a estar disponible",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{host}}/api/carros/{{carroId}}",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Estado disponible', () => pm.expect(pm.response.json().estado).to.eql('disponible'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10.3 La bitácora registra la liberación",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{host}}/api/cambios-estatus-carro?carroId={{carroId}}",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Hay un cambio con tipoMotivo liberacion', () => pm.expect(pm.response.json().some(c => c.tipoMotivo === 'liberacion')).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10.4 Liberar otra vez (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{host}}/api/solicitudes-reserva/{{solicitudReservaId}}/liberar",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenOperador}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Respuesta con formato ProblemDetails', () => { const j = pm.response.json(); pm.expect(j).to.have.property('title'); pm.expect(j).to.have.property('detail'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "11 Cambios de estatus y percances (HU-EST)",
+      "description": "Una falla manda el carro a mantenimiento con tipoMotivo y foto de evidencia. Las fallas y golpes forman el registro de percances, sin tabla aparte.",
+      "item": [
+        {
+          "name": "11.1 Mandar el carro a mantenimiento por una falla",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{host}}/api/cambios-estatus-carro",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"carroId\": \"{{carroId}}\",\n  \"empleadoId\": \"{{empleadoConfirmadorId}}\",\n  \"estatusNuevo\": \"enMantenimiento\",\n  \"tipoMotivo\": \"fallaMecanica\",\n  \"motivo\": \"Ruido en los frenos delanteros\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenConfirmador}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 201', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code < 300) { const j = pm.response.json(); pm.collectionVariables.set('cambioEstatusCarroId', j.cambioEstatusCarroId); console.log('cambioEstatusCarroId =', j.cambioEstatusCarroId); }",
+                  "pm.test('Clasificado como falla mecánica', () => pm.expect(pm.response.json().tipoMotivo).to.eql('fallaMecanica'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "11.2 Subir la foto de la falla",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": "{{host}}/api/cambios-estatus-carro/{{cambioEstatusCarroId}}/foto-evidencia",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "archivo",
+                  "type": "file",
+                  "src": "falla.jpg",
+                  "contentType": "image/jpeg"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenConfirmador}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('fotoEvidencia: en BD solo se guarda la llave (empresa/.../estatus/...)', () => pm.expect(pm.response.json().fotoEvidencia).to.match(/^empresa\\/.*\\/estatus\\//));",
+                  "pm.test('fotoEvidenciaUrl: URL prefirmada de MinIO', () => pm.expect(pm.response.json().fotoEvidenciaUrl).to.include('X-Amz-Signature'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "11.3 Un carro en mantenimiento no se puede reservar (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{host}}/api/solicitudes-reserva",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"empresaId\": \"{{empresaId}}\",\n  \"carroId\": \"{{carroId}}\",\n  \"empleadoSolicitanteId\": \"{{empleadoOperadorId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "event": [
@@ -1677,24 +2552,34 @@
           ]
         },
         {
-          "name": "11.5 Kilometraje menor al actual (400)",
+          "name": "11.4 Regresar el carro a disponible",
           "request": {
-            "method": "PUT",
+            "method": "POST",
             "header": [
               {
                 "key": "Content-Type",
                 "value": "application/json"
               }
             ],
-            "url": "{{host}}/api/carros/{{carroId}}",
+            "url": "{{host}}/api/cambios-estatus-carro",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"empresaId\": {{empresaId}},\n  \"marca\": \"Nissan\",\n  \"modelo\": \"NP300\",\n  \"placas\": \"TST-{{run}}\",\n  \"kilometrajeActual\": 100\n}",
+              "raw": "{\n  \"carroId\": \"{{carroId}}\",\n  \"empleadoId\": \"{{empleadoConfirmadorId}}\",\n  \"estatusNuevo\": \"disponible\",\n  \"tipoMotivo\": \"servicio\",\n  \"motivo\": \"Se cambiaron las balatas\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenConfirmador}}",
+                  "type": "string"
+                }
+              ]
             }
           },
           "event": [
@@ -1703,7 +2588,67 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Código de estado 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Código de estado 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "11.5 Percances del carro",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{host}}/api/cambios-estatus-carro?carroId={{carroId}}",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "const percances = pm.response.json().filter(c => c.tipoMotivo === 'fallaMecanica' || c.tipoMotivo === 'choqueOGolpe');",
+                  "pm.test('Aparece la falla registrada', () => pm.expect(percances.length).to.eql(1));",
+                  "pm.test('Con su foto de evidencia', () => pm.expect(percances[0].fotoEvidenciaUrl).to.include('X-Amz-Signature'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "12 Auditoría y trazabilidad",
+      "description": "Módulo secundario. Requiere token con rol Administrador, Consultor/Reportes, Confirmador o Gestor de activos. A. Historial de cambios, B. Revisión de combustible, C. Revisiones.",
+      "item": [
+        {
+          "name": "12.1 El operador no tiene acceso (403)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{host}}/api/auditoria/eventos",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenOperador}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 403', () => pm.response.to.have.status(403));",
                   "pm.test('Respuesta con formato ProblemDetails', () => { const j = pm.response.json(); pm.expect(j).to.have.property('title'); pm.expect(j).to.have.property('detail'); });"
                 ]
               }
@@ -1711,19 +2656,249 @@
           ]
         },
         {
-          "name": "11.6 Foto de perfil en PDF (400)",
+          "name": "12.2 Sin token (401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{host}}/api/auditoria/eventos",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12.3 A. Historial de la carga corregida",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{host}}/api/auditoria/eventos?entidad=carga_combustible&entidadId={{cargaCombustibleId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenConsultor}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "const eventos = pm.response.json();",
+                  "const correccion = eventos.find(e => e.accion === 'corregir');",
+                  "pm.test('Registra la creación y la corrección', () => { pm.expect(eventos.some(e => e.accion === 'crear')).to.be.true; pm.expect(correccion).to.exist; });",
+                  "pm.test('Conserva el valor anterior y el nuevo', () => { pm.expect(Number(correccion.valoresAnteriores.litros)).to.eql(45.3); pm.expect(Number(correccion.valoresNuevos.litros)).to.eql(44.8); });",
+                  "pm.test('Con motivo, usuario y origen móvil', () => { pm.expect(correccion.motivo).to.include('44.80'); pm.expect(correccion.usuarioId).to.eql(pm.collectionVariables.get('usuarioOperadorId')); pm.expect(correccion.origen).to.eql('movil'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12.4 A. Historial del viaje (corrección del confirmador)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{host}}/api/auditoria/eventos?entidad=viaje&entidadId={{viajeId}}&accion=corregir",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenConsultor}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "const e = pm.response.json()[0];",
+                  "pm.test('Kilometraje final: 15310 → 15300', () => { pm.expect(Number(e.valoresAnteriores.kilometraje_final)).to.eql(15310); pm.expect(Number(e.valoresNuevos.kilometraje_final)).to.eql(15300); });",
+                  "pm.test('Lo corrigió el confirmador', () => pm.expect(e.usuarioId).to.eql(pm.collectionVariables.get('usuarioConfirmadorId')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12.5 A. Historial del carro",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{host}}/api/auditoria/eventos?entidad=carro&entidadId={{carroId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenConsultor}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Registra los cambios de estado del carro', () => pm.expect(pm.response.json().some(e => e.accion === 'cambiarEstado')).to.be.true);",
+                  "pm.test('Nunca muestra datos de otra empresa', () => pm.expect(pm.response.json().every(e => e.empresaId === pm.collectionVariables.get('empresaId'))).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12.6 B. Revisión de combustible del carro",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{host}}/api/auditoria/revision-combustible?carroId={{carroId}}&desde={{revisionDesde}}&hasta={{revisionHasta}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenConsultor}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const pad = n => String(n).padStart(2, '0');",
+                  "// Fecha LOCAL sin zona (la API usa DateTime.Now del servidor)",
+                  "const fmt = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;",
+                  "const ahora = new Date();",
+                  "pm.collectionVariables.set('revisionDesde', fmt(new Date(ahora.getTime() - 24 * 3600000)));",
+                  "pm.collectionVariables.set('revisionHasta', fmt(new Date(ahora.getTime() + 24 * 3600000)));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test('1 viaje y 1 carga en el periodo', () => { pm.expect(r.viajesRegistrados).to.eql(1); pm.expect(r.cargasRegistradas).to.eql(1); });",
+                  "pm.test('Consumo = suma de litros (44.8 L)', () => pm.expect(Number(r.litrosRegistrados)).to.eql(44.8));",
+                  "pm.test('La carga tiene comprobante', () => pm.expect(r.cargasConComprobante).to.eql(1));",
+                  "const tipos = r.alertas.map(a => a.tipo);",
+                  "pm.test('Alerta: registros corregidos', () => pm.expect(tipos).to.include('registroCorregido'));",
+                  "pm.test('Alerta: kilometraje contra GPS', () => pm.expect(tipos).to.include('kilometrajeContraGps'));",
+                  "pm.test('Sin comprobantes pendientes', () => pm.expect(tipos).to.not.include('comprobantePendiente'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12.7 C. Abrir revisión del viaje",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{host}}/api/auditoria/revisiones",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"viajeId\": \"{{viajeId}}\",\n  \"observaciones\": \"Revisar diferencia entre odómetro y GPS\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenConsultor}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 201', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code < 300) { const j = pm.response.json(); pm.collectionVariables.set('revisionViajeId', j.revisionAuditoriaId); console.log('revisionViajeId =', j.revisionAuditoriaId); }",
+                  "const r = pm.response.json();",
+                  "pm.test('Nace pendiente de información', () => pm.expect(r.estadoRevision).to.eql('pendienteInformacion'));",
+                  "pm.test('El revisor es el empleado del token', () => pm.expect(r.empleadoRevisorId).to.eql(pm.collectionVariables.get('empleadoConsultorId')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12.8 C. Con observaciones pero sin texto (400)",
           "request": {
             "method": "PUT",
-            "header": [],
-            "url": "{{host}}/api/empleados/{{empleadoSolicitanteId}}/foto-perfil",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{host}}/api/auditoria/revisiones/{{revisionViajeId}}/resultado",
             "body": {
-              "mode": "formdata",
-              "formdata": [
+              "mode": "raw",
+              "raw": "{\n  \"estadoRevision\": \"conObservaciones\",\n  \"cerrar\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
                 {
-                  "key": "archivo",
-                  "type": "file",
-                  "src": "licencia.pdf",
-                  "contentType": "application/pdf"
+                  "key": "token",
+                  "value": "{{tokenConsultor}}",
+                  "type": "string"
                 }
               ]
             }
@@ -1742,7 +2917,794 @@
           ]
         },
         {
-          "name": "11.7 Carga sin comprobante (400)",
+          "name": "12.9 C. Registrar resultado y cerrar",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{host}}/api/auditoria/revisiones/{{revisionViajeId}}/resultado",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estadoRevision\": \"conObservaciones\",\n  \"observaciones\": \"El GPS registró 3.5 km y el odómetro 69.5 km. Se pidió aclaración al operador.\",\n  \"cerrar\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenConsultor}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test('Queda con observaciones y cerrada', () => { pm.expect(r.estadoRevision).to.eql('conObservaciones'); pm.expect(r.estaCerrada).to.be.true; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12.10 C. Una revisión cerrada ya no cambia (400)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{host}}/api/auditoria/revisiones/{{revisionViajeId}}/resultado",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estadoRevision\": \"revisado\",\n  \"cerrar\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenConsultor}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Respuesta con formato ProblemDetails', () => { const j = pm.response.json(); pm.expect(j).to.have.property('title'); pm.expect(j).to.have.property('detail'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12.11 C. Abrir revisión del carro en el mes",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{host}}/api/auditoria/revisiones",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"carroId\": \"{{carroId}}\",\n  \"periodoDesde\": \"{{periodoDesde}}\",\n  \"periodoHasta\": \"{{periodoHasta}}\",\n  \"observaciones\": \"Gasto de combustible del mes\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenConsultor}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const pad = n => String(n).padStart(2, '0');",
+                  "const dia = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;",
+                  "const hoy = new Date();",
+                  "pm.collectionVariables.set('periodoDesde', dia(new Date(hoy.getFullYear(), hoy.getMonth(), 1)));",
+                  "pm.collectionVariables.set('periodoHasta', dia(hoy));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 201', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code < 300) { const j = pm.response.json(); pm.collectionVariables.set('revisionCarroId', j.revisionAuditoriaId); console.log('revisionCarroId =', j.revisionAuditoriaId); }",
+                  "pm.test('Alcance: carro en un periodo', () => { const r = pm.response.json(); pm.expect(r.carroId).to.eql(pm.collectionVariables.get('carroId')); pm.expect(r.viajeId).to.be.null; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12.12 C. Revisión sin alcance (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{host}}/api/auditoria/revisiones",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"observaciones\": \"Sin viaje ni carro\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenConsultor}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Respuesta con formato ProblemDetails', () => { const j = pm.response.json(); pm.expect(j).to.have.property('title'); pm.expect(j).to.have.property('detail'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12.13 C. Revisiones abiertas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{host}}/api/auditoria/revisiones?abiertas=true",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenConsultor}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "const ids = pm.response.json().map(r => r.revisionAuditoriaId);",
+                  "pm.test('Aparece la del carro', () => pm.expect(ids).to.include(pm.collectionVariables.get('revisionCarroId')));",
+                  "pm.test('No aparece la del viaje (ya se cerró)', () => pm.expect(ids).to.not.include(pm.collectionVariables.get('revisionViajeId')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12.14 A. Historial de la revisión",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{host}}/api/auditoria/eventos?entidad=revision_auditoria&entidadId={{revisionViajeId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenConsultor}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Registra la creación y el cambio de estado', () => { const a = pm.response.json().map(e => e.accion); pm.expect(a).to.include('crear'); pm.expect(a).to.include('cambiarEstado'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "13 Baja de carro (HU-AST-03)",
+      "description": "El carro se da de baja sin borrarlo: su historial se conserva y ya no se puede reservar.",
+      "item": [
+        {
+          "name": "13.1 Crear un segundo carro",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{host}}/api/carros",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"empresaId\": \"{{empresaId}}\",\n  \"marca\": \"Chevrolet\",\n  \"modelo\": \"Aveo\",\n  \"anio\": 2018,\n  \"color\": \"Gris\",\n  \"placas\": \"BAJ-{{run}}\",\n  \"capacidadTanque\": 45.0,\n  \"kilometrajeActual\": 98000,\n  \"estado\": \"disponible\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 201', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code < 300) { const j = pm.response.json(); pm.collectionVariables.set('carroBajaId', j.carroId); console.log('carroBajaId =', j.carroId); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "13.2 Dar de baja sin motivo (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{host}}/api/carros/{{carroBajaId}}/baja",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "13.3 Dar de baja el carro",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{host}}/api/carros/{{carroBajaId}}/baja",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"motivo\": \"Venta de la unidad\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenConfirmador}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "const c = pm.response.json();",
+                  "pm.test('Queda dado de baja con fecha y motivo', () => { pm.expect(c.dadoDeBaja).to.be.true; pm.expect(c.fechaBaja).to.not.be.null; pm.expect(c.motivoBaja).to.eql('Venta de la unidad'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "13.4 Un carro dado de baja no se puede reservar (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{host}}/api/solicitudes-reserva",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"empresaId\": \"{{empresaId}}\",\n  \"carroId\": \"{{carroBajaId}}\",\n  \"empleadoSolicitanteId\": \"{{empleadoOperadorId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 409', () => pm.response.to.have.status(409));",
+                  "pm.test('Respuesta con formato ProblemDetails', () => { const j = pm.response.json(); pm.expect(j).to.have.property('title'); pm.expect(j).to.have.property('detail'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "13.5 Dar de baja otra vez (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{host}}/api/carros/{{carroBajaId}}/baja",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"motivo\": \"Otra vez\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Respuesta con formato ProblemDetails', () => { const j = pm.response.json(); pm.expect(j).to.have.property('title'); pm.expect(j).to.have.property('detail'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "13.6 La baja quedó en el historial",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{host}}/api/auditoria/eventos?entidad=carro&entidadId={{carroBajaId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenConsultor}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Cambio de estado con el motivo de la baja', () => pm.expect(pm.response.json().some(e => e.accion === 'cambiarEstado' && e.motivo === 'Venta de la unidad')).to.be.true);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "14 Notificaciones",
+      "description": "Generadas automáticamente: nueva solicitud (al confirmador) y resultado (al operador).",
+      "item": [
+        {
+          "name": "14.1 Bandeja del confirmador",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{host}}/api/notificaciones?empleadoDestinatarioId={{empleadoConfirmadorId}}",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Recibió la notificación de nueva solicitud', () => pm.expect(pm.response.json().some(n => n.tipo === 'nuevaSolicitud')).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "14.2 Bandeja del operador",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{host}}/api/notificaciones?empleadoDestinatarioId={{empleadoOperadorId}}",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Recibió el resultado de su solicitud', () => pm.expect(pm.response.json().some(n => n.tipo === 'resultadoSolicitud')).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "14.3 Contador de no leídas (badge)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{host}}/api/notificaciones/no-leidas/{{empleadoConfirmadorId}}",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "14.4 Marcar todas como leídas",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{host}}/api/notificaciones/marcar-todas-leidas/{{empleadoConfirmadorId}}",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 200 o 204', () => pm.expect(pm.response.code).to.be.oneOf([200, 204]));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "15 Validaciones y errores",
+      "description": "Evidencia de que la API rechaza datos inválidos con el código correcto.",
+      "item": [
+        {
+          "name": "15.1 Email repetido (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{host}}/api/usuarios",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"operador.{{run}}@ejemplo.com\",\n  \"password\": \"OtraClave123\",\n  \"estado\": \"activo\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 409', () => pm.response.to.have.status(409));",
+                  "pm.test('Respuesta con formato ProblemDetails', () => { const j = pm.response.json(); pm.expect(j).to.have.property('title'); pm.expect(j).to.have.property('detail'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "15.2 Email inválido (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{host}}/api/usuarios",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"esto-no-es-email\",\n  \"password\": \"Gasolina2026\",\n  \"estado\": \"activo\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "15.3 Usuario inexistente (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{host}}/api/usuarios/00000000-0000-7000-8000-000000000000",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 404', () => pm.response.to.have.status(404));",
+                  "pm.test('Respuesta con formato ProblemDetails', () => { const j = pm.response.json(); pm.expect(j).to.have.property('title'); pm.expect(j).to.have.property('detail'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "15.4 Placas repetidas (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{host}}/api/carros",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"empresaId\": \"{{empresaId}}\",\n  \"marca\": \"Toyota\",\n  \"modelo\": \"Hilux\",\n  \"placas\": \"TST-{{run}}\",\n  \"kilometrajeActual\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 409', () => pm.response.to.have.status(409));",
+                  "pm.test('Respuesta con formato ProblemDetails', () => { const j = pm.response.json(); pm.expect(j).to.have.property('title'); pm.expect(j).to.have.property('detail'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "15.5 Kilometraje menor al actual (400)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{host}}/api/carros/{{carroId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"empresaId\": \"{{empresaId}}\",\n  \"marca\": \"Nissan\",\n  \"modelo\": \"NP300\",\n  \"placas\": \"TST-{{run}}\",\n  \"kilometrajeActual\": 100\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Respuesta con formato ProblemDetails', () => { const j = pm.response.json(); pm.expect(j).to.have.property('title'); pm.expect(j).to.have.property('detail'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "15.6 Foto de perfil en PDF (400)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": "{{host}}/api/empleados/{{empleadoOperadorId}}/foto-perfil",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "archivo",
+                  "type": "file",
+                  "src": "licencia.pdf",
+                  "contentType": "application/pdf"
+                }
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Respuesta con formato ProblemDetails', () => { const j = pm.response.json(); pm.expect(j).to.have.property('title'); pm.expect(j).to.have.property('detail'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "15.7 Carga sin comprobante (400)",
           "request": {
             "method": "POST",
             "header": [],
@@ -1766,6 +3728,9 @@
                   "type": "text"
                 }
               ]
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "event": [
@@ -1781,7 +3746,7 @@
           ]
         },
         {
-          "name": "11.8 Más litros que la capacidad del tanque (400)",
+          "name": "15.8 Más litros que la capacidad del tanque (400)",
           "request": {
             "method": "POST",
             "header": [],
@@ -1811,6 +3776,9 @@
                   "contentType": "image/jpeg"
                 }
               ]
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "event": [
@@ -1827,7 +3795,83 @@
           ]
         },
         {
-          "name": "11.9 Usuario ya asignado a otro empleado (409)",
+          "name": "15.9 Corregir una carga sin token (401)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": "{{host}}/api/cargas-combustible/{{cargaCombustibleId}}",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "litros",
+                  "value": "40",
+                  "type": "text"
+                },
+                {
+                  "key": "fechaCarga",
+                  "value": "{{fechaCarga}}",
+                  "type": "text"
+                },
+                {
+                  "key": "motivo",
+                  "value": "Prueba",
+                  "type": "text"
+                }
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 401', () => pm.response.to.have.status(401));",
+                  "pm.test('Respuesta con formato ProblemDetails', () => { const j = pm.response.json(); pm.expect(j).to.have.property('title'); pm.expect(j).to.have.property('detail'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "15.10 Foto del tablero con momento inválido (400)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": "{{host}}/api/viajes/{{viajeId}}/foto-tablero/intermedia",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "archivo",
+                  "type": "file",
+                  "src": "tablero.jpg",
+                  "contentType": "image/jpeg"
+                }
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "15.11 Usuario ya asignado a otro empleado (409)",
           "request": {
             "method": "POST",
             "header": [
@@ -1839,12 +3883,15 @@
             "url": "{{host}}/api/empleados",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"empresaId\": {{empresaId}},\n  \"usuarioId\": {{usuarioSolicitanteId}},\n  \"nombreCompleto\": \"Otra Persona\"\n}",
+              "raw": "{\n  \"empresaId\": \"{{empresaId}}\",\n  \"usuarioId\": \"{{usuarioOperadorId}}\",\n  \"nombreCompleto\": \"Otra Persona\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
+            },
+            "auth": {
+              "type": "noauth"
             }
           },
           "event": [
@@ -1869,11 +3916,7 @@
       "value": ""
     },
     {
-      "key": "token",
-      "value": ""
-    },
-    {
-      "key": "usuarioSolicitanteId",
+      "key": "usuarioOperadorId",
       "value": ""
     },
     {
@@ -1881,19 +3924,23 @@
       "value": ""
     },
     {
+      "key": "usuarioConsultorId",
+      "value": ""
+    },
+    {
       "key": "rolConfirmadorId",
       "value": ""
     },
     {
+      "key": "empresaId",
+      "value": ""
+    },
+    {
+      "key": "rolConsultorId",
+      "value": ""
+    },
+    {
       "key": "privilegioId",
-      "value": ""
-    },
-    {
-      "key": "rolPrivilegioId",
-      "value": ""
-    },
-    {
-      "key": "usuarioRolId",
       "value": ""
     },
     {
@@ -1905,15 +3952,15 @@
       "value": ""
     },
     {
-      "key": "empresaId",
-      "value": ""
-    },
-    {
       "key": "centroCostoId",
       "value": ""
     },
     {
-      "key": "empleadoSolicitanteId",
+      "key": "empleadoOperadorId",
+      "value": ""
+    },
+    {
+      "key": "fechaCarga",
       "value": ""
     },
     {
@@ -1921,7 +3968,23 @@
       "value": ""
     },
     {
+      "key": "empleadoConsultorId",
+      "value": ""
+    },
+    {
       "key": "fotoPerfilUrl",
+      "value": ""
+    },
+    {
+      "key": "tokenOperador",
+      "value": ""
+    },
+    {
+      "key": "tokenConfirmador",
+      "value": ""
+    },
+    {
+      "key": "tokenConsultor",
       "value": ""
     },
     {
@@ -1930,10 +3993,6 @@
     },
     {
       "key": "solicitudReservaId",
-      "value": ""
-    },
-    {
-      "key": "viajeId",
       "value": ""
     },
     {
@@ -1953,11 +4012,7 @@
       "value": ""
     },
     {
-      "key": "fechaCarga",
-      "value": ""
-    },
-    {
-      "key": "fechaFin",
+      "key": "viajeId",
       "value": ""
     },
     {
@@ -1969,7 +4024,43 @@
       "value": ""
     },
     {
+      "key": "fechaFin",
+      "value": ""
+    },
+    {
       "key": "cambioEstatusCarroId",
+      "value": ""
+    },
+    {
+      "key": "revisionDesde",
+      "value": ""
+    },
+    {
+      "key": "revisionHasta",
+      "value": ""
+    },
+    {
+      "key": "revisionViajeId",
+      "value": ""
+    },
+    {
+      "key": "periodoDesde",
+      "value": ""
+    },
+    {
+      "key": "periodoHasta",
+      "value": ""
+    },
+    {
+      "key": "revisionCarroId",
+      "value": ""
+    },
+    {
+      "key": "carroBajaId",
+      "value": ""
+    },
+    {
+      "key": "versionPrivilegios",
       "value": ""
     }
   ]

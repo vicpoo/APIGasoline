@@ -38,6 +38,12 @@ public class RolPrivilegioRepository : IRolPrivilegioRepository
                   && (excludeRolPrivilegioId == null || rp.RolPrivilegioId != excludeRolPrivilegioId),
             cancellationToken);
 
+    public Task<bool> AsignadoARolDeEmpresaAsync(Guid privilegioId, CancellationToken cancellationToken = default)
+        => _context.RolPrivilegios.AnyAsync(
+            rp => rp.PrivilegioId == privilegioId
+                  && _context.Roles.Any(r => r.RolId == rp.RolId && r.EmpresaId != null),
+            cancellationToken);
+
     public async Task AddAsync(RolPrivilegio rolPrivilegio, CancellationToken cancellationToken = default)
         => await _context.RolPrivilegios.AddAsync(rolPrivilegio, cancellationToken);
 

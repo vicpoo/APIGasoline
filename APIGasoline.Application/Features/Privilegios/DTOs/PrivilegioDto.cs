@@ -1,3 +1,12 @@
-﻿namespace APIGasoline.Application.Features.Privilegios.DTOs;
+﻿using APIGasoline.Domain.Enums;
 
-public record PrivilegioDto(Guid PrivilegioId, string Nombre, string? Descripcion, bool Activo);
+namespace APIGasoline.Application.Features.Privilegios.DTOs;
+
+public record PrivilegioDto(
+    Guid PrivilegioId,
+    string Clave,
+    string Modulo,
+    string Nombre,
+    string? Descripcion,
+    AmbitoPrivilegio Ambito,
+    bool Activo);

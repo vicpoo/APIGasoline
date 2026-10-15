@@ -47,4 +47,35 @@ public class AuthController : ControllerBase
         var perfil = await _sender.Send(new GetPerfilQuery(usuarioId), cancellationToken);
         return Ok(perfil);
     }
+
+    /// <summary>
+    /// Privilegios efectivos del usuario del token (claves) y su versión, para la app offline-first.
+    /// Manda la versión guardada en el header If-None-Match: si no cambió responde 304 sin cuerpo
+    /// y la app conserva su copia local; si cambió responde 200 con las claves nuevas.
+    /// La versión también va en el header ETag.
+    /// </summary>
+    [Authorize]
+    [HttpGet("privilegios")]
+    [ProducesResponseType<PrivilegiosUsuarioDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status304NotModified)]
+    public async Task<ActionResult<PrivilegiosUsuarioDto>> Privilegios(CancellationToken cancellationToken)
+    {
+        var sub = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+
+        if (!Guid.TryParse(sub, out var usuarioId))
+            return Unauthorized();
+
+        var privilegios = await _sender.Send(new GetPrivilegiosUsuarioQuery(usuarioId), cancellationToken);
+
+        var etag = $"\"{privilegios.Version}\"";
+        Response.Headers.ETag = etag;
+        Response.Headers.CacheControl = "no-cache";
+
+        var versionCliente = Request.Headers.IfNoneMatch.ToString().Trim();
+
+        if (versionCliente == etag || versionCliente.Trim('"') == privilegios.Version)
+            return StatusCode(StatusCodes.Status304NotModified);
+
+        return Ok(privilegios);
+    }
 }

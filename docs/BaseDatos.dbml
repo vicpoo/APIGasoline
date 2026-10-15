@@ -1,6 +1,7 @@
 // ============================================================
 // BASE DE DATOS — APP DE COMBUSTIBLE
-// Versión 4: viajes tipo Strava + combustible, con módulo secundario de auditoría y trazabilidad
+// Versión 5: viajes tipo Strava + combustible, con módulo secundario de auditoría y trazabilidad
+// 🔐 v5 = RBAC listo para el front: privilegios por clave, ámbito y roles globales únicos
 // ============================================================
 //
 // ENFOQUE
@@ -10,6 +11,13 @@
 //   A. Historial de cambios      → auditoria_evento
 //   B. Revisión de combustible   → alertas calculadas al consultar (sin tabla)
 //   C. Revisiones y observaciones → revision_auditoria
+//
+// CAMBIOS RESPECTO A v4  (🔐 v5)
+//   - privilegio.clave: código técnico inmutable modulo.accion (ej. carro.crear). Lo usan la API y el front.
+//   - privilegio.modulo: agrupa la pantalla de roles. privilegio.nombre deja de ser único (solo texto visible).
+//   - privilegio.ambito: plataforma (solo roles globales) | empresa (cualquier rol).
+//   - rol.empresa_clave: columna generada para que (empresa_clave, nombre) sea único también en roles globales.
+//   - GET /api/auth/privilegios devuelve las claves efectivas y su versión (hash) para la app offline-first.
 //
 // CAMBIOS RESPECTO A v3  (🆕 = nuevo, ✏️ = modificado)
 // Tablas nuevas (2):
@@ -29,7 +37,7 @@
 // CONVENCIÓN DE IDENTIFICADORES
 // - Todas las llaves primarias y foráneas son UUID v7 guardados como binary(16), generados por la app.
 // - Leer:     SELECT BIN_TO_UUID(usuario_id) AS usuario_id, email FROM usuario;
-// - Insertar: INSERT INTO privilegio (privilegio_id, nombre) VALUES (UUID_TO_BIN(UUID()), 'x');
+// - Insertar: INSERT INTO privilegio (privilegio_id, clave, modulo, nombre) VALUES (UUID_TO_BIN(UUID()), 'carro.crear', 'carro', 'Agregar carro');
 // - Buscar:   WHERE usuario_id = UUID_TO_BIN('0192f3a4-...');
 //
 // CONVENCIÓN DE ARCHIVOS EN MINIO
@@ -56,7 +64,7 @@ Table usuario {
   estado enum('activo', 'inactivo') [not null, default: 'activo']
   fecha_registro timestamp [default: `now()`]
 
-  Note: 'Credenciales de acceso. El login se valida contra esta tabla (email + password_hash). Un usuario pertenece a una sola empresa a través de su registro en empleado.'
+  Note: 'Credenciales de acceso. El login se valida contra esta tabla (email + password_hash). Un usuario pertenece a una sola empresa a través de su registro en empleado. Un usuario sin empleado es un Administrador de plataforma (solo puede tener roles globales).'
 }
 
 
@@ -67,16 +75,17 @@ Table usuario {
 Table rol {
   rol_id binary(16) [primary key]
   empresa_id binary(16) [note: 'NULL = rol global (disponible para todas las empresas). Con valor = rol exclusivo de esa empresa.']
+  empresa_clave binary(16) [not null, note: '🔐 v5. Columna GENERADA (STORED) en MySQL: COALESCE(empresa_id, 0x00000000000000000000000000000000). No se escribe desde la API. Existe solo para que el índice único funcione también con roles globales.']
   nombre varchar(100) [not null]
   descripcion varchar(255)
   activo boolean [not null, default: true]
 
   indexes {
     empresa_id
-    (empresa_id, nombre) [unique]
+    (empresa_clave, nombre) [unique, note: '🔐 v5. Reemplaza (empresa_id, nombre): en MySQL varios NULL no chocan en un índice único, así se evitan dos roles globales con el mismo nombre.']
   }
 
-  Note: 'Rol de autorización. Puede ser global (empresa_id NULL) o exclusivo de una empresa.'
+  Note: 'Rol de autorización. Puede ser global (empresa_id NULL) o exclusivo de una empresa. 🔐 v5: un rol de empresa solo puede tener privilegios con ambito = empresa (validado en la API).'
 }
 
 
@@ -86,11 +95,18 @@ Table rol {
 
 Table privilegio {
   privilegio_id binary(16) [primary key]
-  nombre varchar(100) [not null, unique]
+  clave varchar(100) [not null, unique, note: '🔐 v5. Código técnico INMUTABLE con formato modulo.accion. Ej.: carro.crear, carro.eliminar, viaje.ver_propios, viaje.ver_todos, solicitud.aprobar. Es lo que usan la API y el front (enum Permission en Kotlin).']
+  modulo varchar(50) [not null, note: '🔐 v5. Agrupa los privilegios en la pantalla de roles: carro, viaje, combustible, solicitud, auditoria, empresa...']
+  nombre varchar(100) [not null, note: '✏️ v5. Ahora es solo el texto visible; se puede cambiar sin afectar permisos. Deja de ser unique.']
   descripcion varchar(255)
+  ambito enum('plataforma', 'empresa') [not null, default: 'empresa', note: '🔐 v5. plataforma = solo asignable a roles globales (ej. empresa.crear). empresa = asignable a cualquier rol.']
   activo boolean [not null, default: true]
 
-  Note: 'Acción que puede ejecutar un rol dentro del sistema.'
+  indexes {
+    modulo
+  }
+
+  Note: 'Acción que puede ejecutar un rol dentro del sistema. Los privilegios los define el sistema (se cargan por seed/migración), no los crean las empresas. Para limitar SOBRE QUÉ registros actúa alguien se usan privilegios separados (viaje.ver_propios vs viaje.ver_todos).'
 }
 
 
@@ -109,7 +125,7 @@ Table usuario_rol {
     (usuario_id, rol_id) [unique]
   }
 
-  Note: 'Relación N:M entre usuarios y roles. Un usuario solo puede recibir roles globales o roles de su propia empresa. Quién asignó cada rol queda en auditoria_evento.'
+  Note: 'Relación N:M entre usuarios y roles. Un usuario solo puede recibir roles globales o roles de su propia empresa. 🔐 v5: la regla se valida en el servicio que asigna roles y además se filtra en la consulta de privilegios efectivos, así un dato incorrecto nunca da permisos. Quién asignó cada rol queda en auditoria_evento.'
 }
 
 
@@ -128,7 +144,7 @@ Table rol_privilegio {
     (rol_id, privilegio_id) [unique]
   }
 
-  Note: 'Relación N:M entre roles y privilegios.'
+  Note: 'Relación N:M entre roles y privilegios. 🔐 v5: si el rol tiene empresa_id, el privilegio debe tener ambito = empresa (validado en la API). Los cambios quedan en auditoria_evento.'
 }
 
 
@@ -766,3 +782,28 @@ Ref: revision_auditoria.(empresa_id, empleado_revisor_id) > empleado.(empresa_id
 
 // outbox_mensaje.agregado_id apunta a notificacion.notificacion_id de forma lógica (sin FK).
 // auditoria_evento.entidad_id apunta de forma lógica (sin FK) a la tabla indicada en auditoria_evento.entidad.
+
+
+// ============================================================
+// 🔐 v5 — NOTA: PRIVILEGIOS EFECTIVOS Y VERSIÓN PARA OFFLINE-FIRST
+// ============================================================
+
+Note rbac_privilegios_efectivos {
+'''
+## Privilegios efectivos de un usuario
+Unión de los privilegios ACTIVOS de los roles ACTIVOS del usuario que sean globales
+o de su propia empresa. En la API: PerfilUsuarioBuilder.CargarAccesoAsync.
+
+## Versión de permisos (offline-first)
+GET /api/auth/privilegios responde { claves: [...], version: "<SHA-256 de las claves ordenadas>" }
+y manda la versión en el header ETag. La app guarda claves + version en su BD local y en la
+siguiente sincronización manda If-None-Match con su versión: 304 = no cambió; 200 = claves nuevas.
+Detecta también privilegios QUITADOS (filas borradas de rol_privilegio o usuario_rol).
+
+## Reglas que valida la API (no la BD)
+1. usuario_rol: el rol debe ser global o de la empresa del empleado.
+2. Un usuario sin empleado (Administrador de plataforma) solo recibe roles globales.
+3. rol_privilegio: si rol.empresa_id no es NULL, privilegio.ambito debe ser 'empresa'.
+4. privilegio.clave nunca se modifica; si una acción deja de existir se pone activo = false.
+'''
+}
