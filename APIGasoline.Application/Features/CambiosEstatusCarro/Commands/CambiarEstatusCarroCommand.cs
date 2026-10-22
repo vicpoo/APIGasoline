@@ -1,4 +1,4 @@
-﻿using APIGasoline.Application.Common.Constants;
+﻿using APIGasoline.Application.Common.Security;
 using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Common.Storage;
@@ -89,12 +89,16 @@ public class CambiarEstatusCarroCommandHandler : IRequestHandler<CambiarEstatusC
 
         if (viajeAfectado is { EstaEnCurso: true })
         {
+            // Si el viaje estaba en pausa, la pausa se cierra a la misma hora
+            var pausaAbierta = await _unitOfWork.ViajePausas.GetAbiertaByViajeAsync(viajeAfectado.ViajeId, cancellationToken);
+
             viajeAfectado.Interrumpir(
                 cambio.Motivo ?? $"El carro cambió a estatus {cambio.EstatusNuevo}.",
                 request.FechaCambio ?? _dateTime.Now,
                 null,
                 null,
-                null);
+                null,
+                pausaAbierta);
         }
 
         // Quién tiene el carro asignado (reserva aprobada vigente), para avisarle
@@ -123,7 +127,7 @@ public class CambiarEstatusCarroCommandHandler : IRequestHandler<CambiarEstatusC
                 && reservaVigente is not null
                 && reservaVigente.EmpleadoSolicitanteId == empleado.EmpleadoId)
             {
-                var confirmadores = await _unitOfWork.Empleados.GetIdsConRolAsync(carro.EmpresaId, NombresRol.Confirmador, cancellationToken);
+                var confirmadores = await _unitOfWork.Empleados.GetIdsConPrivilegioAsync(carro.EmpresaId, Permisos.SolicitudAprobar, cancellationToken);
 
                 var avisos = confirmadores
                     .Where(id => id != empleado.EmpleadoId)

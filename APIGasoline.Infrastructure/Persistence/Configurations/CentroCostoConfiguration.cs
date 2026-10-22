@@ -54,9 +54,9 @@ public class CentroCostoConfiguration : IEntityTypeConfiguration<CentroCosto>
         builder.HasIndex(cc => cc.EmpresaId)
             .HasDatabaseName("ix_centro_costo_empresa_id");
 
-        builder.HasIndex(cc => new { cc.EmpresaId, cc.CentroCostoId })
-            .IsUnique()
-            .HasDatabaseName("uq_centro_costo_empresa_id_centro_costo_id");
+        // Llave alterna: la referencian viaje y carga_combustible con FK compuesta (tenant-safe)
+        builder.HasAlternateKey(cc => new { cc.EmpresaId, cc.CentroCostoId })
+            .HasName("uq_centro_costo_empresa_id_centro_costo_id");
 
         builder.HasIndex(cc => new { cc.EmpresaId, cc.Clave })
             .IsUnique()

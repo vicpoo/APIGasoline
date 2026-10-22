@@ -1363,7 +1363,7 @@
             "url": "{{host}}/api/solicitudes-reserva",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"empresaId\": \"{{empresaId}}\",\n  \"carroId\": \"{{carroId}}\",\n  \"empleadoSolicitanteId\": \"{{empleadoOperadorId}}\"\n}",
+              "raw": "{\n  \"empresaId\": \"{{empresaId}}\",\n  \"carroId\": \"{{carroId}}\",\n  \"empleadoSolicitanteId\": \"{{empleadoOperadorId}}\",\n  \"motivo\": \"Entrega a cliente en ruta\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2527,7 +2527,7 @@
             "url": "{{host}}/api/solicitudes-reserva",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"empresaId\": \"{{empresaId}}\",\n  \"carroId\": \"{{carroId}}\",\n  \"empleadoSolicitanteId\": \"{{empleadoOperadorId}}\"\n}",
+              "raw": "{\n  \"empresaId\": \"{{empresaId}}\",\n  \"carroId\": \"{{carroId}}\",\n  \"empleadoSolicitanteId\": \"{{empleadoOperadorId}}\",\n  \"motivo\": \"Entrega a cliente en ruta\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -3306,7 +3306,7 @@
             "url": "{{host}}/api/solicitudes-reserva",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"empresaId\": \"{{empresaId}}\",\n  \"carroId\": \"{{carroBajaId}}\",\n  \"empleadoSolicitanteId\": \"{{empleadoOperadorId}}\"\n}",
+              "raw": "{\n  \"empresaId\": \"{{empresaId}}\",\n  \"carroId\": \"{{carroBajaId}}\",\n  \"empleadoSolicitanteId\": \"{{empleadoOperadorId}}\",\n  \"motivo\": \"Entrega a cliente en ruta\"\n}",
               "options": {
                 "raw": {
                   "language": "json"

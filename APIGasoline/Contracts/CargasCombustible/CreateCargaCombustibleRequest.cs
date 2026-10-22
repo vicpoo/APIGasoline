@@ -24,4 +24,8 @@ public class CreateCargaCombustibleRequest
 
     public decimal? UbicacionLat { get; set; }
     public decimal? UbicacionLng { get; set; }
+
+    /// <summary>Centro de costos del gasto (opcional, de la misma empresa).</summary>
+    [GuidNoVacio]
+    public Guid? CentroCostoId { get; set; }
 }

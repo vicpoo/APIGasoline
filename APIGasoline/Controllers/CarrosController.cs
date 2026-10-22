@@ -7,6 +7,8 @@ using APIGasoline.Domain.Enums;
 using APIGasoline.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using APIGasoline.Application.Common.Security;
+using APIGasoline.Authorization;
 
 namespace APIGasoline.Controllers;
 
@@ -24,6 +26,7 @@ public class CarrosController : ControllerBase
     /// <summary>
     /// Lista los carros. Filtros opcionales: ?empresaId=1 y/o ?estado=disponible
     /// </summary>
+    [RequierePrivilegio(Permisos.CarroVer)]
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<CarroDto>>> GetAll(
         [FromQuery] Guid? empresaId,
@@ -34,6 +37,7 @@ public class CarrosController : ControllerBase
         return Ok(carros);
     }
 
+    [RequierePrivilegio(Permisos.CarroVerDetalle, Permisos.ViajeRegistrar)]
     [HttpGet("{carroId:guid}")]
     public async Task<ActionResult<CarroDto>> GetById(Guid carroId, CancellationToken cancellationToken)
     {
@@ -41,6 +45,7 @@ public class CarrosController : ControllerBase
         return Ok(carro);
     }
 
+    [RequierePrivilegio(Permisos.CarroCrear)]
     [HttpPost]
     public async Task<ActionResult<CarroDto>> Create(CreateCarroRequest request, CancellationToken cancellationToken)
     {
@@ -60,6 +65,7 @@ public class CarrosController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { carroId = carro.CarroId }, carro);
     }
 
+    [RequierePrivilegio(Permisos.CarroEditar)]
     [HttpPut("{carroId:guid}")]
     public async Task<ActionResult<CarroDto>> Update(Guid carroId, UpdateCarroRequest request, CancellationToken cancellationToken)
     {
@@ -82,6 +88,7 @@ public class CarrosController : ControllerBase
     /// <summary>
     /// Sube o reemplaza la foto del vehículo (multipart/form-data, campo "archivo": jpg, png o webp, máx. 5 MB).
     /// </summary>
+    [RequierePrivilegio(Permisos.CarroEditar)]
     [HttpPut("{carroId:guid}/foto")]
     [Consumes("multipart/form-data")]
     [RequestSizeLimit(FormFileExtensions.LimiteCuerpoBytes)]
@@ -97,6 +104,7 @@ public class CarrosController : ControllerBase
         return Ok(carro);
     }
 
+    [RequierePrivilegio(Permisos.CarroEditar)]
     [HttpDelete("{carroId:guid}/foto")]
     public async Task<IActionResult> EliminarFoto(Guid carroId, CancellationToken cancellationToken)
     {
@@ -108,6 +116,7 @@ public class CarrosController : ControllerBase
     /// HU-AST-03: da de baja el carro (no lo borra; su historial se conserva).
     /// No se puede si está en uso. Las solicitudes pendientes del carro se cancelan.
     /// </summary>
+    [RequierePrivilegio(Permisos.CarroEliminar)]
     [HttpPost("{carroId:guid}/baja")]
     public async Task<ActionResult<CarroDto>> DarDeBaja(Guid carroId, DarDeBajaCarroRequest request, CancellationToken cancellationToken)
     {
@@ -118,6 +127,7 @@ public class CarrosController : ControllerBase
     /// <summary>
     /// Borra físicamente un carro sin historial (capturado por error). Para retirarlo de la flota usa /baja.
     /// </summary>
+    [RequierePrivilegio(Permisos.CarroEliminar)]
     [HttpDelete("{carroId:guid}")]
     public async Task<IActionResult> Delete(Guid carroId, CancellationToken cancellationToken)
     {

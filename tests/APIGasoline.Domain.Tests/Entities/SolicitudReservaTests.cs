@@ -32,7 +32,43 @@ public class SolicitudReservaTests
     [InlineData(1, 1, 0)]
     public void Crear_IdsInvalidos_LanzaDomainException(int empresaId, int carroId, int solicitanteId)
     {
-        Assert.Throws<DomainException>(() => SolicitudReserva.Crear(Id(empresaId), Id(carroId), Id(solicitanteId)));
+        Assert.Throws<DomainException>(() => SolicitudReserva.Crear(Id(empresaId), Id(carroId), Id(solicitanteId), "Visita a cliente"));
+    }
+
+    // --- Motivo de la solicitud (v8) ---
+
+    [Fact]
+    public void Crear_ConMotivo_LoGuardaSinEspacios()
+    {
+        var solicitud = SolicitudReserva.Crear(Id(1), Id(1), Solicitante, "  Entrega en Tapachula  ");
+
+        Assert.Equal("Entrega en Tapachula", solicitud.MotivoSolicitud);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData(null)]
+    public void Crear_SinMotivo_LanzaDomainException(string? motivo)
+    {
+        Assert.Throws<DomainException>(() => SolicitudReserva.Crear(Id(1), Id(1), Solicitante, motivo!));
+    }
+
+    [Fact]
+    public void Crear_MotivoDeMasDe255_LanzaDomainException()
+    {
+        Assert.Throws<DomainException>(() => SolicitudReserva.Crear(Id(1), Id(1), Solicitante, new string('a', 256)));
+    }
+
+    [Fact]
+    public void Resolver_NoCambiaElMotivoDeLaSolicitud()
+    {
+        var solicitud = ConstruirSolicitud();
+
+        solicitud.Rechazar(Confirmador, Fecha, "Carro reservado");
+
+        Assert.Equal("Visita a cliente", solicitud.MotivoSolicitud);
+        Assert.Equal("Carro reservado", solicitud.MotivoResolucion);
     }
 
     // --- Aprobar ---
@@ -219,5 +255,5 @@ public class SolicitudReservaTests
     }
 
     private static SolicitudReserva ConstruirSolicitud(int empresaId = 1, int carroId = 1)
-        => SolicitudReserva.Crear(Id(empresaId), Id(carroId), Solicitante);
+        => SolicitudReserva.Crear(Id(empresaId), Id(carroId), Solicitante, "Visita a cliente");
 }

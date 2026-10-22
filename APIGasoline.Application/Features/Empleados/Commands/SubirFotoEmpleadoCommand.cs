@@ -1,4 +1,5 @@
-﻿using APIGasoline.Application.Common.Exceptions;
+﻿using APIGasoline.Application.Common.Security;
+using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Common.Models;
 using APIGasoline.Application.Common.Storage;
@@ -14,7 +15,14 @@ namespace APIGasoline.Application.Features.Empleados.Commands;
 /// Sube (o reemplaza) la foto de perfil o la licencia del empleado.
 /// En la BD solo se guarda la llave del archivo.
 /// </summary>
-public record SubirFotoEmpleadoCommand(Guid EmpleadoId, TipoFotoEmpleado Tipo, ArchivoEntrada Archivo) : IRequest<EmpleadoDto>;
+public record SubirFotoEmpleadoCommand(Guid EmpleadoId, TipoFotoEmpleado Tipo, ArchivoEntrada Archivo) : IRequest<EmpleadoDto>, IRecursoPropio
+{
+    /// <summary>Sus propias fotos (perfil / licencia), o las de cualquiera con empleado.gestionar.</summary>
+    public bool EsPropio(IUsuarioActual usuario)
+        => EmpleadoId == usuario.EmpleadoId;
+
+    public string PrivilegioParaOtros => Permisos.EmpleadoGestionar;
+}
 
 public class SubirFotoEmpleadoCommandHandler : IRequestHandler<SubirFotoEmpleadoCommand, EmpleadoDto>
 {

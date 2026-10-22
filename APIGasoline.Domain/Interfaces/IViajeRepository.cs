@@ -19,6 +19,7 @@ public interface IViajeRepository
     Task<bool> ExisteEnCursoPorCarroAsync(Guid carroId, CancellationToken cancellationToken = default);
     Task<bool> ExisteEnCursoPorSolicitudAsync(Guid solicitudReservaId, CancellationToken cancellationToken = default);
     Task<bool> ExistsByCarroAsync(Guid carroId, CancellationToken cancellationToken = default);
+    Task<bool> ExistsByCentroCostoAsync(Guid centroCostoId, CancellationToken cancellationToken = default);
     Task<bool> ExistsBySolicitudAsync(Guid solicitudReservaId, CancellationToken cancellationToken = default);
     Task AddAsync(Viaje viaje, CancellationToken cancellationToken = default);
     void Remove(Viaje viaje);

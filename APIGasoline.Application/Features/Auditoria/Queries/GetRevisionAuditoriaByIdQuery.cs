@@ -25,7 +25,7 @@ public class GetRevisionAuditoriaByIdQueryHandler : IRequestHandler<GetRevisionA
 
     public async Task<RevisionAuditoriaDto> Handle(GetRevisionAuditoriaByIdQuery request, CancellationToken cancellationToken)
     {
-        var empresaPermitida = PermisosAuditoria.ResolverEmpresa(_usuarioActual, null);
+        var empresaPermitida = await PermisosAuditoria.ResolverEmpresaAsync(_usuarioActual, null, cancellationToken);
 
         var revision = await _unitOfWork.RevisionesAuditoria.GetByIdAsync(request.RevisionAuditoriaId, cancellationToken);
 

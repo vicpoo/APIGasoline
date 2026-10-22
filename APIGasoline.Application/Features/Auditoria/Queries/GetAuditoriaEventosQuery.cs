@@ -37,7 +37,7 @@ public class GetAuditoriaEventosQueryHandler : IRequestHandler<GetAuditoriaEvent
 
     public async Task<IReadOnlyList<AuditoriaEventoDto>> Handle(GetAuditoriaEventosQuery request, CancellationToken cancellationToken)
     {
-        var empresaId = PermisosAuditoria.ResolverEmpresa(_usuarioActual, request.EmpresaId);
+        var empresaId = await PermisosAuditoria.ResolverEmpresaAsync(_usuarioActual, request.EmpresaId, cancellationToken);
 
         if (request.Maximo is < 1 or > MaximoPermitido)
             throw new BadRequestException($"El máximo de eventos debe estar entre 1 y {MaximoPermitido}.");

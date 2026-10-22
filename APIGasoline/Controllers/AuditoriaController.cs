@@ -6,6 +6,8 @@ using APIGasoline.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using APIGasoline.Application.Common.Security;
+using APIGasoline.Authorization;
 
 namespace APIGasoline.Controllers;
 
@@ -35,6 +37,7 @@ public class AuditoriaController : ControllerBase
     /// Historial del más reciente al más antiguo.
     /// Filtros: ?entidad=carga_combustible&amp;entidadId=, ?usuarioId=, ?accion=corregir, ?desde=, ?hasta=, ?maximo=500
     /// </summary>
+    [RequierePrivilegio(Permisos.AuditoriaVer)]
     [HttpGet("eventos")]
     public async Task<ActionResult<IReadOnlyList<AuditoriaEventoDto>>> GetEventos(
         [FromQuery] Guid? empresaId,
@@ -54,6 +57,7 @@ public class AuditoriaController : ControllerBase
         return Ok(eventos);
     }
 
+    [RequierePrivilegio(Permisos.AuditoriaVer)]
     [HttpGet("eventos/{auditoriaEventoId:guid}")]
     public async Task<ActionResult<AuditoriaEventoDto>> GetEvento(Guid auditoriaEventoId, CancellationToken cancellationToken)
         => Ok(await _sender.Send(new GetAuditoriaEventoByIdQuery(auditoriaEventoId), cancellationToken));
@@ -65,6 +69,7 @@ public class AuditoriaController : ControllerBase
     /// Ejemplo: ?carroId=...&amp;desde=2026-09-01&amp;hasta=2026-09-30T23:59:59
     /// Una alerta no significa fraude ni error: indica que alguien debería revisar el registro.
     /// </summary>
+    [RequierePrivilegio(Permisos.AuditoriaVer)]
     [HttpGet("revision-combustible")]
     public async Task<ActionResult<RevisionCombustibleDto>> GetRevisionCombustible(
         [FromQuery] Guid? empresaId,
@@ -80,6 +85,7 @@ public class AuditoriaController : ControllerBase
     // ---------- C. Revisiones y observaciones ----------
 
     /// <summary>Filtros: ?viajeId=, ?carroId=, ?estado=conObservaciones, ?abiertas=true</summary>
+    [RequierePrivilegio(Permisos.AuditoriaVer)]
     [HttpGet("revisiones")]
     public async Task<ActionResult<IReadOnlyList<RevisionAuditoriaDto>>> GetRevisiones(
         [FromQuery] Guid? empresaId,
@@ -93,11 +99,13 @@ public class AuditoriaController : ControllerBase
         return Ok(revisiones);
     }
 
+    [RequierePrivilegio(Permisos.AuditoriaVer)]
     [HttpGet("revisiones/{revisionAuditoriaId:guid}")]
     public async Task<ActionResult<RevisionAuditoriaDto>> GetRevision(Guid revisionAuditoriaId, CancellationToken cancellationToken)
         => Ok(await _sender.Send(new GetRevisionAuditoriaByIdQuery(revisionAuditoriaId), cancellationToken));
 
     /// <summary>Abre una revisión de un viaje, o de un carro en un periodo. El revisor es el empleado del token.</summary>
+    [RequierePrivilegio(Permisos.AuditoriaRevisar)]
     [HttpPost("revisiones")]
     public async Task<ActionResult<RevisionAuditoriaDto>> CrearRevision(CrearRevisionAuditoriaRequest request, CancellationToken cancellationToken)
     {
@@ -109,6 +117,7 @@ public class AuditoriaController : ControllerBase
     }
 
     /// <summary>Registra el resultado (revisado, con observaciones o pendiente de información) y opcionalmente la cierra.</summary>
+    [RequierePrivilegio(Permisos.AuditoriaRevisar)]
     [HttpPut("revisiones/{revisionAuditoriaId:guid}/resultado")]
     public async Task<ActionResult<RevisionAuditoriaDto>> RegistrarResultado(
         Guid revisionAuditoriaId,

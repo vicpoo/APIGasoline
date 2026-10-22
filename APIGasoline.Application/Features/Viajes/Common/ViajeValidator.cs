@@ -1,4 +1,5 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
+using APIGasoline.Application.Features.CentrosCosto.Common;
 using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
@@ -52,6 +53,8 @@ internal static class ViajeValidator
             // Sin reserva, el carro debe estar libre
             throw new ConflictException($"El carro {carro.CarroId} no está disponible (estado actual: {carro.Estado}).");
         }
+
+        await CentroCostoValidator.ValidarAsync(unitOfWork, viaje.EmpresaId, viaje.CentroCostoId, cancellationToken);
 
         if (viaje.EstaEnCurso && await unitOfWork.Viajes.ExisteEnCursoPorCarroAsync(viaje.CarroId, cancellationToken))
             throw new ConflictException($"El carro {viaje.CarroId} ya tiene un viaje en curso.");

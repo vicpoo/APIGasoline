@@ -14,6 +14,12 @@ public class SolicitudReserva
     public Guid CarroId { get; private set; }
     public Guid EmpleadoSolicitanteId { get; private set; }
 
+    /// <summary>
+    /// v8. Para qué necesita el carro el solicitante (lo escribe al enviar la solicitud).
+    /// Obligatorio en solicitudes nuevas; las anteriores a v8 lo tienen en NULL.
+    /// </summary>
+    public string? MotivoSolicitud { get; private set; }
+
     /// La asigna la base de datos al insertar (default now()).
     public DateTime? FechaSolicitud { get; private set; }
 
@@ -33,7 +39,7 @@ public class SolicitudReserva
     {
     }
 
-    public static SolicitudReserva Crear(Guid empresaId, Guid carroId, Guid empleadoSolicitanteId)
+    public static SolicitudReserva Crear(Guid empresaId, Guid carroId, Guid empleadoSolicitanteId, string motivo)
     {
         if (empresaId == Guid.Empty)
             throw new DomainException("El id de la empresa es obligatorio.");
@@ -44,11 +50,15 @@ public class SolicitudReserva
         if (empleadoSolicitanteId == Guid.Empty)
             throw new DomainException("El id del empleado solicitante es obligatorio.");
 
+        var motivoNormalizado = NormalizarMotivo(motivo)
+            ?? throw new DomainException("El motivo de la solicitud es obligatorio.");
+
         return new SolicitudReserva
         {
             EmpresaId = empresaId,
             CarroId = carroId,
             EmpleadoSolicitanteId = empleadoSolicitanteId,
+            MotivoSolicitud = motivoNormalizado,
             Estado = EstadoSolicitudReserva.Pendiente
         };
     }

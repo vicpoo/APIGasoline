@@ -1,15 +1,15 @@
-﻿using APIGasoline.Application.Features.Auditoria.Common;
-using APIGasoline.Infrastructure.Persistence;
+﻿using APIGasoline.Domain.Interfaces;
+using APIGasoline.Domain.ReadModels;
 using Microsoft.EntityFrameworkCore;
 
-namespace APIGasoline.Infrastructure.Auditoria;
+namespace APIGasoline.Infrastructure.Persistence.Repositories;
 
 /// <summary>Consultas de solo lectura para la revisión de combustible.</summary>
-public sealed class ConsultasRevisionCombustible : IConsultasRevisionCombustible
+public sealed class RevisionCombustibleRepository : IRevisionCombustibleRepository
 {
     private readonly AppDbContext _context;
 
-    public ConsultasRevisionCombustible(AppDbContext context)
+    public RevisionCombustibleRepository(AppDbContext context)
     {
         _context = context;
     }

@@ -12,4 +12,9 @@ public class CreateSolicitudReservaRequest
 
     [GuidNoVacio]
     public Guid EmpleadoSolicitanteId { get; set; }
+
+    /// <summary>v8. Para qué necesita el carro (se ve en el detalle de la solicitud).</summary>
+    [Required(AllowEmptyStrings = false)]
+    [StringLength(255)]
+    public string Motivo { get; set; } = string.Empty;
 }

@@ -1,4 +1,5 @@
-﻿using APIGasoline.Application.Common.Interfaces;
+﻿using APIGasoline.Application.Common.Security;
+using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Common.Storage;
 using APIGasoline.Application.Features.Viajes.Common;
 using APIGasoline.Application.Features.Viajes.DTOs;
@@ -20,7 +21,15 @@ public record IniciarViajeCommand(
     DateTime FechaInicio,
     decimal? UbicacionInicioLat,
     decimal? UbicacionInicioLng,
-    decimal KilometrajeInicial) : IRequest<ViajeDto>;
+    decimal KilometrajeInicial,
+    Guid? CentroCostoId = null) : IRequest<ViajeDto>, IRecursoPropio
+{
+    /// <summary>El operador registra SUS viajes; a nombre de otro, solo con viaje.corregir_cerrado.</summary>
+    public bool EsPropio(IUsuarioActual usuario)
+        => EmpleadoOperadorId == usuario.EmpleadoId;
+
+    public string PrivilegioParaOtros => Permisos.ViajeCorregirCerrado;
+}
 
 public class IniciarViajeCommandHandler : IRequestHandler<IniciarViajeCommand, ViajeDto>
 {
@@ -46,7 +55,8 @@ public class IniciarViajeCommandHandler : IRequestHandler<IniciarViajeCommand, V
             request.FechaInicio,
             request.UbicacionInicioLat,
             request.UbicacionInicioLng,
-            request.KilometrajeInicial);
+            request.KilometrajeInicial,
+            request.CentroCostoId);
 
         await ViajeValidator.ValidarInicioAsync(_unitOfWork, viaje, esSincronizacion: false, cancellationToken);
 

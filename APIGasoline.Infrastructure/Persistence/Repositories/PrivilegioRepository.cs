@@ -1,4 +1,5 @@
 ﻿using APIGasoline.Domain.Entities;
+using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -54,6 +55,20 @@ public class PrivilegioRepository : IPrivilegioRepository
             .OrderBy(clave => clave)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<string>> GetClavesEfectivasAsync(Guid usuarioId, Guid? empresaId, CancellationToken cancellationToken = default)
+        => await _context.Privilegios
+            .AsNoTracking()
+            .Where(p => p.Activo
+                        && _context.Usuarios.Any(u => u.UsuarioId == usuarioId && u.Estado == EstadoUsuario.Activo)
+                        && _context.RolPrivilegios.Any(rp => rp.PrivilegioId == p.PrivilegioId
+                            && _context.Roles.Any(r => r.RolId == rp.RolId
+                                && r.Activo
+                                && (r.EmpresaId == null || r.EmpresaId == empresaId)
+                                && _context.UsuarioRoles.Any(ur => ur.UsuarioId == usuarioId && ur.RolId == r.RolId))))
+            .Select(p => p.Clave)
+            .Distinct()
+            .ToListAsync(cancellationToken);
 
     public async Task AddAsync(Privilegio privilegio, CancellationToken cancellationToken = default)
         => await _context.Privilegios.AddAsync(privilegio, cancellationToken);

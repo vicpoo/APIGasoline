@@ -20,6 +20,10 @@ public class SincronizarViajeRequest
     [GuidNoVacio]
     public Guid EmpleadoOperadorId { get; set; }
 
+    /// <summary>Centro de costos del viaje (opcional, de la misma empresa).</summary>
+    [GuidNoVacio]
+    public Guid? CentroCostoId { get; set; }
+
     [Required]
     public DateTime? FechaInicio { get; set; }
 
@@ -36,4 +40,7 @@ public class SincronizarViajeRequest
 
     [StringLength(255)]
     public string? MotivoInterrupcion { get; set; }
+
+    /// <summary>Pausas que se hicieron sin conexión (opcional).</summary>
+    public List<PausaSincronizadaRequest>? Pausas { get; set; }
 }

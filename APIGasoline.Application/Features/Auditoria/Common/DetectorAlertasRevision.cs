@@ -1,5 +1,6 @@
 ﻿using APIGasoline.Application.Features.Auditoria.DTOs;
 using APIGasoline.Domain.Enums;
+using APIGasoline.Domain.ReadModels;
 
 namespace APIGasoline.Application.Features.Auditoria.Common;
 

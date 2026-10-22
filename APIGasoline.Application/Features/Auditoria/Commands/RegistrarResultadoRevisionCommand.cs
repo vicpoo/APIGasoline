@@ -40,7 +40,7 @@ public class RegistrarResultadoRevisionCommandHandler : IRequestHandler<Registra
         var revision = await _unitOfWork.RevisionesAuditoria.GetByIdAsync(request.RevisionAuditoriaId, cancellationToken)
             ?? throw new NotFoundException($"No existe una revisión de auditoría con el id {request.RevisionAuditoriaId}.");
 
-        PermisosAuditoria.ValidarEmpresa(_usuarioActual, revision.EmpresaId);
+        await PermisosAuditoria.ValidarEmpresaAsync(_usuarioActual, revision.EmpresaId, cancellationToken);
 
         if (_usuarioActual.EmpleadoId is null)
             throw new ForbiddenException("Solo un empleado puede registrar el resultado de una revisión.");

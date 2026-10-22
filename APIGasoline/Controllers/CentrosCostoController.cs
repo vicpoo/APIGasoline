@@ -4,6 +4,8 @@ using APIGasoline.Application.Features.CentrosCosto.Queries;
 using APIGasoline.Contracts.CentrosCosto;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using APIGasoline.Application.Common.Security;
+using APIGasoline.Authorization;
 
 namespace APIGasoline.Controllers;
 
@@ -21,6 +23,7 @@ public class CentrosCostoController : ControllerBase
     /// <summary>
     /// Lista los centros de costo. Filtro opcional: ?empresaId=1
     /// </summary>
+    [RequierePrivilegio(Permisos.CentroCostoVer, Permisos.ViajeRegistrar, Permisos.CargaRegistrar)]
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<CentroCostoDto>>> GetAll([FromQuery] Guid? empresaId, CancellationToken cancellationToken)
     {
@@ -28,6 +31,7 @@ public class CentrosCostoController : ControllerBase
         return Ok(centrosCosto);
     }
 
+    [RequierePrivilegio(Permisos.CentroCostoVer, Permisos.ViajeRegistrar, Permisos.CargaRegistrar)]
     [HttpGet("{centroCostoId:guid}")]
     public async Task<ActionResult<CentroCostoDto>> GetById(Guid centroCostoId, CancellationToken cancellationToken)
     {
@@ -35,6 +39,7 @@ public class CentrosCostoController : ControllerBase
         return Ok(centroCosto);
     }
 
+    [RequierePrivilegio(Permisos.CentroCostoGestionar)]
     [HttpPost]
     public async Task<ActionResult<CentroCostoDto>> Create(CreateCentroCostoRequest request, CancellationToken cancellationToken)
     {
@@ -44,6 +49,7 @@ public class CentrosCostoController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { centroCostoId = centroCosto.CentroCostoId }, centroCosto);
     }
 
+    [RequierePrivilegio(Permisos.CentroCostoGestionar)]
     [HttpPut("{centroCostoId:guid}")]
     public async Task<ActionResult<CentroCostoDto>> Update(Guid centroCostoId, UpdateCentroCostoRequest request, CancellationToken cancellationToken)
     {
@@ -53,6 +59,7 @@ public class CentrosCostoController : ControllerBase
         return Ok(centroCosto);
     }
 
+    [RequierePrivilegio(Permisos.CentroCostoGestionar)]
     [HttpDelete("{centroCostoId:guid}")]
     public async Task<IActionResult> Delete(Guid centroCostoId, CancellationToken cancellationToken)
     {

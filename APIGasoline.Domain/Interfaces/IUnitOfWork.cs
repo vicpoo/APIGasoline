@@ -15,6 +15,7 @@ public interface IUnitOfWork : IDisposable
     ICarroRepository Carros { get; }
     ISolicitudReservaRepository SolicitudesReserva { get; }
     IViajeRepository Viajes { get; }
+    IViajePausaRepository ViajePausas { get; }
     IPuntoRutaRepository PuntosRuta { get; }
     IRutaProcesadaRepository RutasProcesadas { get; }
     ICargaCombustibleRepository CargasCombustible { get; }
@@ -24,6 +25,7 @@ public interface IUnitOfWork : IDisposable
     IDispositivoEmpleadoRepository Dispositivos { get; }
     IAuditoriaEventoRepository AuditoriaEventos { get; }
     IRevisionAuditoriaRepository RevisionesAuditoria { get; }
+    IRevisionCombustibleRepository RevisionCombustible { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task BeginTransactionAsync(CancellationToken cancellationToken = default);

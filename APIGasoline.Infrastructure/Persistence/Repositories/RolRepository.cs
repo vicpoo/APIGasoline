@@ -43,6 +43,9 @@ public class RolRepository : IRolRepository
     public Task<bool> ExistsAsync(Guid rolId, CancellationToken cancellationToken = default)
         => _context.Roles.AnyAsync(r => r.RolId == rolId, cancellationToken);
 
+    public Task<Rol?> GetByNombreAsync(string nombre, Guid? empresaId, CancellationToken cancellationToken = default)
+        => _context.Roles.FirstOrDefaultAsync(r => r.Nombre == nombre && r.EmpresaId == empresaId, cancellationToken);
+
     public Task<bool> NombreExistsAsync(string nombre, Guid? empresaId, Guid? excludeRolId = null, CancellationToken cancellationToken = default)
         => _context.Roles.AnyAsync(
             r => r.Nombre == nombre

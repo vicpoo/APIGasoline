@@ -5,6 +5,8 @@ using APIGasoline.Contracts.Notificaciones;
 using APIGasoline.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using APIGasoline.Application.Common.Security;
+using APIGasoline.Authorization;
 
 namespace APIGasoline.Controllers;
 
@@ -57,6 +59,7 @@ public class NotificacionesController : ControllerBase
     /// <summary>
     /// Alta manual. Las de reservas y cambios de estatus se generan solas.
     /// </summary>
+    [RequierePrivilegio(Permisos.NotificacionEnviar)]
     [HttpPost]
     public async Task<ActionResult<NotificacionDto>> Create(CreateNotificacionRequest request, CancellationToken cancellationToken)
     {

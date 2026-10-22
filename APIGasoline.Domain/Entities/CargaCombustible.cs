@@ -11,6 +11,9 @@ public class CargaCombustible
     public Guid CargaCombustibleId { get; private set; } = Guid.CreateVersion7();
     public Guid EmpresaId { get; private set; }
     public Guid ViajeId { get; private set; }
+
+    /// <summary>Centro de costos al que se carga el gasto (opcional). Debe ser de la misma empresa.</summary>
+    public Guid? CentroCostoId { get; private set; }
     public decimal Litros { get; private set; }
     public decimal? Monto { get; private set; }
 
@@ -47,7 +50,8 @@ public class CargaCombustible
         DateTime fechaCarga,
         decimal? lat,
         decimal? lng,
-        Guid? cargaCombustibleId = null)
+        Guid? cargaCombustibleId = null,
+        Guid? centroCostoId = null)
     {
         if (empresaId == Guid.Empty)
             throw new DomainException("El id de la empresa es obligatorio.");
@@ -68,6 +72,7 @@ public class CargaCombustible
         if (cargaCombustibleId is { } id)
             carga.CargaCombustibleId = id;
 
+        carga.CambiarCentroCosto(centroCostoId);
         carga.CambiarDatos(litros, monto, fotoComprobante, fechaCarga, lat, lng);
 
         return carga;
@@ -108,6 +113,15 @@ public class CargaCombustible
         FechaCarga = new DateTime(fechaCarga.Ticks - (fechaCarga.Ticks % TimeSpan.TicksPerSecond), fechaCarga.Kind);
         UbicacionLat = lat;
         UbicacionLng = lng;
+    }
+
+    /// <summary>Asigna o quita (null) el centro de costos de la carga.</summary>
+    public void CambiarCentroCosto(Guid? centroCostoId)
+    {
+        if (centroCostoId == Guid.Empty)
+            throw new DomainException("El id del centro de costo no es válido.");
+
+        CentroCostoId = centroCostoId;
     }
 
     /// <summary>Registra que la foto del comprobante ya está en el almacenamiento.</summary>

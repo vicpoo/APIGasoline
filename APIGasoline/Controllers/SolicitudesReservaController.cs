@@ -5,6 +5,8 @@ using APIGasoline.Contracts.SolicitudesReserva;
 using APIGasoline.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using APIGasoline.Application.Common.Security;
+using APIGasoline.Authorization;
 
 namespace APIGasoline.Controllers;
 
@@ -20,9 +22,10 @@ public class SolicitudesReservaController : ControllerBase
     }
 
     /// <summary>
-    /// Lista de la más antigua a la más reciente.
+    /// Lista de la más antigua a la más reciente, con nombre y foto del solicitante y el carro.
     /// Filtros opcionales: ?empresaId=, ?carroId=, ?empleadoSolicitanteId=, ?estado=pendiente
     /// </summary>
+    [RequierePrivilegio(Permisos.SolicitudVerPropias, Permisos.SolicitudVerTodas, Permisos.ViajeRegistrar)]
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<SolicitudReservaDto>>> GetAll(
         [FromQuery] Guid? empresaId,
@@ -37,17 +40,22 @@ public class SolicitudesReservaController : ControllerBase
         return Ok(solicitudes);
     }
 
+    /// <summary>
+    /// Detalle: motivo, quién la pide (foto y licencia), qué carro y quién la resolvió.
+    /// </summary>
+    [RequierePrivilegio(Permisos.SolicitudVerPropias, Permisos.SolicitudVerTodas, Permisos.ViajeRegistrar)]
     [HttpGet("{solicitudReservaId:guid}")]
-    public async Task<ActionResult<SolicitudReservaDto>> GetById(Guid solicitudReservaId, CancellationToken cancellationToken)
+    public async Task<ActionResult<SolicitudReservaDetalleDto>> GetById(Guid solicitudReservaId, CancellationToken cancellationToken)
     {
         var solicitud = await _sender.Send(new GetSolicitudReservaByIdQuery(solicitudReservaId), cancellationToken);
         return Ok(solicitud);
     }
 
+    [RequierePrivilegio(Permisos.SolicitudCrear)]
     [HttpPost]
     public async Task<ActionResult<SolicitudReservaDto>> Create(CreateSolicitudReservaRequest request, CancellationToken cancellationToken)
     {
-        var command = new CreateSolicitudReservaCommand(request.EmpresaId, request.CarroId, request.EmpleadoSolicitanteId);
+        var command = new CreateSolicitudReservaCommand(request.EmpresaId, request.CarroId, request.EmpleadoSolicitanteId, request.Motivo);
         var solicitud = await _sender.Send(command, cancellationToken);
 
         return CreatedAtAction(nameof(GetById), new { solicitudReservaId = solicitud.SolicitudReservaId }, solicitud);
@@ -56,6 +64,7 @@ public class SolicitudesReservaController : ControllerBase
     /// <summary>
     /// Aprueba la solicitud, ocupa el carro y rechaza las demás pendientes de ese carro.
     /// </summary>
+    [RequierePrivilegio(Permisos.SolicitudAprobar)]
     [HttpPost("{solicitudReservaId:guid}/aprobar")]
     public async Task<ActionResult<SolicitudReservaDto>> Aprobar(Guid solicitudReservaId, AprobarSolicitudReservaRequest request, CancellationToken cancellationToken)
     {
@@ -63,6 +72,7 @@ public class SolicitudesReservaController : ControllerBase
         return Ok(await _sender.Send(command, cancellationToken));
     }
 
+    [RequierePrivilegio(Permisos.SolicitudRechazar)]
     [HttpPost("{solicitudReservaId:guid}/rechazar")]
     public async Task<ActionResult<SolicitudReservaDto>> Rechazar(Guid solicitudReservaId, RechazarSolicitudReservaRequest request, CancellationToken cancellationToken)
     {
@@ -73,6 +83,7 @@ public class SolicitudesReservaController : ControllerBase
     /// <summary>
     /// Cancela una solicitud pendiente o aprobada (si estaba aprobada, libera el carro).
     /// </summary>
+    [RequierePrivilegio(Permisos.SolicitudCrear, Permisos.SolicitudAprobar)]
     [HttpPost("{solicitudReservaId:guid}/cancelar")]
     public async Task<ActionResult<SolicitudReservaDto>> Cancelar(Guid solicitudReservaId, CancelarSolicitudReservaRequest request, CancellationToken cancellationToken)
     {
@@ -84,6 +95,7 @@ public class SolicitudesReservaController : ControllerBase
     /// HU-USO-04: el operador libera el carro al terminar sus viajes. La reserva queda "finalizada"
     /// y el carro vuelve a "disponible". No se puede liberar con un viaje en curso.
     /// </summary>
+    [RequierePrivilegio(Permisos.ViajeRegistrar, Permisos.SolicitudAprobar)]
     [HttpPost("{solicitudReservaId:guid}/liberar")]
     public async Task<ActionResult<SolicitudReservaDto>> Liberar(Guid solicitudReservaId, LiberarSolicitudReservaRequest request, CancellationToken cancellationToken)
     {
@@ -91,6 +103,7 @@ public class SolicitudesReservaController : ControllerBase
         return Ok(await _sender.Send(command, cancellationToken));
     }
 
+    [RequierePrivilegio(Permisos.SolicitudAprobar)]
     [HttpDelete("{solicitudReservaId:guid}")]
     public async Task<IActionResult> Delete(Guid solicitudReservaId, CancellationToken cancellationToken)
     {

@@ -7,6 +7,8 @@ using APIGasoline.Contracts.Empleados;
 using APIGasoline.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using APIGasoline.Application.Common.Security;
+using APIGasoline.Authorization;
 
 namespace APIGasoline.Controllers;
 
@@ -24,6 +26,7 @@ public class EmpleadosController : ControllerBase
     /// <summary>
     /// Lista los empleados no eliminados. Filtro opcional: ?empresaId=1
     /// </summary>
+    [RequierePrivilegio(Permisos.EmpleadoVer, Permisos.EmpleadoGestionar, Permisos.ViajeVerTodos, Permisos.SolicitudAprobar)]
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<EmpleadoDto>>> GetAll([FromQuery] Guid? empresaId, CancellationToken cancellationToken)
     {
@@ -48,6 +51,7 @@ public class EmpleadosController : ControllerBase
         return Ok(empleado);
     }
 
+    [RequierePrivilegio(Permisos.EmpleadoGestionar)]
     [HttpPost]
     public async Task<ActionResult<EmpleadoDto>> Create(CreateEmpleadoRequest request, CancellationToken cancellationToken)
     {
@@ -118,6 +122,7 @@ public class EmpleadosController : ControllerBase
     /// <summary>
     /// Soft delete: el empleado queda marcado como eliminado.
     /// </summary>
+    [RequierePrivilegio(Permisos.EmpleadoGestionar)]
     [HttpDelete("{empleadoId:guid}")]
     public async Task<IActionResult> Delete(Guid empleadoId, CancellationToken cancellationToken)
     {

@@ -4,6 +4,8 @@ using APIGasoline.Application.Features.Outbox.Queries;
 using APIGasoline.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using APIGasoline.Application.Common.Security;
+using APIGasoline.Authorization;
 
 namespace APIGasoline.Controllers;
 
@@ -25,6 +27,7 @@ public class OutboxController : ControllerBase
     /// Del más reciente al más antiguo.
     /// Filtros opcionales: ?estado=pendiente|procesando|enviado|fallido, ?empresaId=, ?limite=50 (máximo 500)
     /// </summary>
+    [RequierePrivilegio(Permisos.OutboxGestionar)]
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<OutboxMensajeDto>>> GetAll(
         [FromQuery] Guid? empresaId,
@@ -37,6 +40,7 @@ public class OutboxController : ControllerBase
     }
 
     /// <summary>Vuelve a poner en cola un mensaje fallido.</summary>
+    [RequierePrivilegio(Permisos.OutboxGestionar)]
     [HttpPost("{outboxMensajeId:guid}/reintentar")]
     public async Task<ActionResult<OutboxMensajeDto>> Reintentar(Guid outboxMensajeId, CancellationToken cancellationToken)
     {

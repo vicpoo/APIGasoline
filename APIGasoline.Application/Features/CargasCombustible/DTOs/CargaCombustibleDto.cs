@@ -19,4 +19,6 @@ public record CargaCombustibleDto(
     /// <summary>true si litros, monto o comprobante se corrigieron después de capturarse.</summary>
     bool Corregido,
     /// <summary>Hora del servidor en que llegó la carga.</summary>
-    DateTime? FechaRecepcion);
+    DateTime? FechaRecepcion,
+    /// <summary>Centro de costos del gasto (null = sin asignar).</summary>
+    Guid? CentroCostoId = null);

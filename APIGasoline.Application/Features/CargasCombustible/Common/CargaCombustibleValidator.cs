@@ -1,4 +1,5 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
+using APIGasoline.Application.Features.CentrosCosto.Common;
 using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Features.Viajes.Common;
 using APIGasoline.Domain.Entities;
@@ -28,6 +29,8 @@ internal static class CargaCombustibleValidator
         if (ReglaCapacidadTanque.Excede(carga.Litros, carro.CapacidadTanque))
             throw new BadRequestException(
                 $"Los litros ({carga.Litros}) exceden la capacidad del tanque del carro ({carro.CapacidadTanque}).");
+
+        await CentroCostoValidator.ValidarAsync(unitOfWork, viaje.EmpresaId, carga.CentroCostoId, cancellationToken);
 
         var excludeId = carga.CargaCombustibleId;
 

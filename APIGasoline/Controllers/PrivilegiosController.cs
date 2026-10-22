@@ -4,6 +4,8 @@ using APIGasoline.Application.Features.Privilegios.Queries;
 using APIGasoline.Contracts.Privilegios;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using APIGasoline.Application.Common.Security;
+using APIGasoline.Authorization;
 
 namespace APIGasoline.Controllers;
 
@@ -21,6 +23,7 @@ public class PrivilegiosController : ControllerBase
     /// <summary>
     /// Catálogo de privilegios ordenado por módulo y clave. Filtro opcional: ?modulo=carro
     /// </summary>
+    [RequierePrivilegio(Permisos.PrivilegioVer, Permisos.PrivilegioGestionar, Permisos.RolGestionar)]
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<PrivilegioDto>>> GetAll([FromQuery] string? modulo, CancellationToken cancellationToken)
     {
@@ -28,6 +31,7 @@ public class PrivilegiosController : ControllerBase
         return Ok(privilegios);
     }
 
+    [RequierePrivilegio(Permisos.PrivilegioVer, Permisos.PrivilegioGestionar, Permisos.RolGestionar)]
     [HttpGet("{privilegioId:guid}")]
     public async Task<ActionResult<PrivilegioDto>> GetById(Guid privilegioId, CancellationToken cancellationToken)
     {
@@ -35,6 +39,7 @@ public class PrivilegiosController : ControllerBase
         return Ok(privilegio);
     }
 
+    [RequierePrivilegio(Permisos.PrivilegioGestionar)]
     [HttpPost]
     public async Task<ActionResult<PrivilegioDto>> Create(CreatePrivilegioRequest request, CancellationToken cancellationToken)
     {
@@ -45,6 +50,7 @@ public class PrivilegiosController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { privilegioId = privilegio.PrivilegioId }, privilegio);
     }
 
+    [RequierePrivilegio(Permisos.PrivilegioGestionar)]
     [HttpPut("{privilegioId:guid}")]
     public async Task<ActionResult<PrivilegioDto>> Update(Guid privilegioId, UpdatePrivilegioRequest request, CancellationToken cancellationToken)
     {
@@ -56,6 +62,7 @@ public class PrivilegiosController : ControllerBase
         return Ok(privilegio);
     }
 
+    [RequierePrivilegio(Permisos.PrivilegioGestionar)]
     [HttpDelete("{privilegioId:guid}")]
     public async Task<IActionResult> Delete(Guid privilegioId, CancellationToken cancellationToken)
     {

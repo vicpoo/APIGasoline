@@ -64,6 +64,9 @@ public class CarroConfiguration : IEntityTypeConfiguration<Carro>
             .HasConversion(new EstadoCarroConverter())
             .HasDefaultValueSql("'disponible'")
             .ValueGeneratedNever()
+            // Concurrencia optimista: dos cambios de estado simultáneos sobre el mismo carro
+            // (ej. dos aprobaciones) no pueden ganar los dos; el segundo recibe 409.
+            .IsConcurrencyToken()
             .IsRequired();
 
         // Baja del carro (HU-AST-03)

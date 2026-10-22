@@ -1,4 +1,5 @@
-﻿using APIGasoline.Application.Common.Storage;
+﻿using APIGasoline.Application.Features.Viajes.Common;
+using APIGasoline.Application.Common.Storage;
 using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Features.Viajes.DTOs;
@@ -27,9 +28,17 @@ public class InterrumpirViajeCommandHandler : IRequestHandler<InterrumpirViajeCo
     private readonly IFileStorageService _storage;
     private readonly IDateTimeProvider _dateTime;
     private readonly IPublisher _publisher;
+    private readonly IUsuarioActual _usuarioActual;
 
-    public InterrumpirViajeCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IFileStorageService storage, IDateTimeProvider dateTime, IPublisher publisher)
+    public InterrumpirViajeCommandHandler(
+        IUnitOfWork unitOfWork,
+        IMapper mapper,
+        IFileStorageService storage,
+        IDateTimeProvider dateTime,
+        IPublisher publisher,
+        IUsuarioActual usuarioActual)
     {
+        _usuarioActual = usuarioActual;
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _storage = storage;
@@ -42,12 +51,18 @@ public class InterrumpirViajeCommandHandler : IRequestHandler<InterrumpirViajeCo
         var viaje = await _unitOfWork.Viajes.GetByIdAsync(request.ViajeId, cancellationToken)
             ?? throw new NotFoundException($"No existe un viaje con el id {request.ViajeId}.");
 
+        await AccesoViaje.ValidarOperadorAsync(_usuarioActual, viaje, cancellationToken);
+
+        var pausaAbierta = await _unitOfWork.ViajePausas.GetAbiertaByViajeAsync(viaje.ViajeId, cancellationToken);
+
+        // Si estaba en pausa, la pausa se cierra a la hora de fin
         viaje.Interrumpir(
             request.Motivo,
             request.FechaFin ?? _dateTime.Now,
             request.UbicacionFinLat,
             request.UbicacionFinLng,
-            request.KilometrajeFinal);
+            request.KilometrajeFinal,
+            pausaAbierta);
 
         if (request.KilometrajeFinal is not null)
         {
@@ -62,6 +77,7 @@ public class InterrumpirViajeCommandHandler : IRequestHandler<InterrumpirViajeCo
         // El viaje ya quedó cerrado; procesar la ruta no puede deshacerlo
         await _publisher.Publish(new RutaViajeModificadaNotification(viaje.ViajeId), cancellationToken);
 
-        return await _mapper.Map<ViajeDto>(viaje).ConUrlsAsync(_storage, cancellationToken);
+        var dto = await _mapper.Map<ViajeDto>(viaje).ConUrlsAsync(_storage, cancellationToken);
+        return await dto.ConPausasAsync(_unitOfWork, _mapper, _dateTime.Now, cancellationToken);
     }
 }

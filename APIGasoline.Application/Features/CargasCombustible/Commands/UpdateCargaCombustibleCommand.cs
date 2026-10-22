@@ -27,7 +27,9 @@ public record UpdateCargaCombustibleCommand(
     DateTime FechaCarga,
     decimal? UbicacionLat,
     decimal? UbicacionLng,
-    string? Motivo) : IRequest<CargaCombustibleDto>;
+    string? Motivo,
+    /// <summary>null = conservar el centro de costos actual.</summary>
+    Guid? CentroCostoId = null) : IRequest<CargaCombustibleDto>;
 
 public class UpdateCargaCombustibleCommandHandler : IRequestHandler<UpdateCargaCombustibleCommand, CargaCombustibleDto>
 {
@@ -71,7 +73,7 @@ public class UpdateCargaCombustibleCommandHandler : IRequestHandler<UpdateCargaC
             ?? throw new NotFoundException($"No existe un viaje con el id {carga.ViajeId}.");
 
         // Quién puede corregir y con qué motivo
-        var motivo = ReglasCorreccion.Validar(_usuarioActual, viaje, request.Motivo);
+        var motivo = await ReglasCorreccion.ValidarAsync(_usuarioActual, viaje, request.Motivo, cancellationToken);
 
         var comprobanteAnterior = carga.FotoComprobante;
         var llave = extension is null
@@ -86,6 +88,9 @@ public class UpdateCargaCombustibleCommandHandler : IRequestHandler<UpdateCargaC
             request.FechaCarga,
             request.UbicacionLat,
             request.UbicacionLng);
+
+        if (request.CentroCostoId is not null)
+            carga.CambiarCentroCosto(request.CentroCostoId);
 
         await CargaCombustibleValidator.ValidarAsync(_unitOfWork, _dateTime, viaje, carga, cancellationToken);
 

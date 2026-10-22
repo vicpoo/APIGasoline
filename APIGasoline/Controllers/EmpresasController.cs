@@ -4,6 +4,8 @@ using APIGasoline.Application.Features.Empresas.Queries;
 using APIGasoline.Contracts.Empresas;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using APIGasoline.Application.Common.Security;
+using APIGasoline.Authorization;
 
 namespace APIGasoline.Controllers;
 
@@ -21,6 +23,7 @@ public class EmpresasController : ControllerBase
     /// <summary>
     /// Lista las empresas no eliminadas. Filtros opcionales: ?corporativoId=1 y/o ?divisionId=2
     /// </summary>
+    [RequierePrivilegio(Permisos.EmpresaVer, Permisos.EmpresaGestionar)]
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<EmpresaDto>>> GetAll(
         [FromQuery] Guid? corporativoId,
@@ -31,6 +34,7 @@ public class EmpresasController : ControllerBase
         return Ok(empresas);
     }
 
+    [RequierePrivilegio(Permisos.EmpresaVer, Permisos.EmpresaGestionar)]
     [HttpGet("{empresaId:guid}")]
     public async Task<ActionResult<EmpresaDto>> GetById(Guid empresaId, CancellationToken cancellationToken)
     {
@@ -38,6 +42,7 @@ public class EmpresasController : ControllerBase
         return Ok(empresa);
     }
 
+    [RequierePrivilegio(Permisos.EmpresaGestionar)]
     [HttpPost]
     public async Task<ActionResult<EmpresaDto>> Create(CreateEmpresaRequest request, CancellationToken cancellationToken)
     {
@@ -47,6 +52,7 @@ public class EmpresasController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { empresaId = empresa.EmpresaId }, empresa);
     }
 
+    [RequierePrivilegio(Permisos.EmpresaEditar, Permisos.EmpresaGestionar)]
     [HttpPut("{empresaId:guid}")]
     public async Task<ActionResult<EmpresaDto>> Update(Guid empresaId, UpdateEmpresaRequest request, CancellationToken cancellationToken)
     {
@@ -59,6 +65,7 @@ public class EmpresasController : ControllerBase
     /// <summary>
     /// Soft delete: la empresa queda marcada como eliminada.
     /// </summary>
+    [RequierePrivilegio(Permisos.EmpresaGestionar)]
     [HttpDelete("{empresaId:guid}")]
     public async Task<IActionResult> Delete(Guid empresaId, CancellationToken cancellationToken)
     {

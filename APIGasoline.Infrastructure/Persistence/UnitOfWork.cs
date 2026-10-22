@@ -28,6 +28,7 @@ public class UnitOfWork : IUnitOfWork
         Carros = new CarroRepository(context);
         SolicitudesReserva = new SolicitudReservaRepository(context);
         Viajes = new ViajeRepository(context);
+        ViajePausas = new ViajePausaRepository(context);
         PuntosRuta = new PuntoRutaRepository(context);
         RutasProcesadas = new RutaProcesadaRepository(context);
         CargasCombustible = new CargaCombustibleRepository(context);
@@ -37,6 +38,7 @@ public class UnitOfWork : IUnitOfWork
         Dispositivos = new DispositivoEmpleadoRepository(context);
         AuditoriaEventos = new AuditoriaEventoRepository(context);
         RevisionesAuditoria = new RevisionAuditoriaRepository(context);
+        RevisionCombustible = new RevisionCombustibleRepository(context);
     }
 
     public IUsuarioRepository Usuarios { get; }
@@ -52,6 +54,7 @@ public class UnitOfWork : IUnitOfWork
     public ICarroRepository Carros { get; }
     public ISolicitudReservaRepository SolicitudesReserva { get; }
     public IViajeRepository Viajes { get; }
+    public IViajePausaRepository ViajePausas { get; }
     public IPuntoRutaRepository PuntosRuta { get; }
     public IRutaProcesadaRepository RutasProcesadas { get; }
     public ICargaCombustibleRepository CargasCombustible { get; }
@@ -61,6 +64,7 @@ public class UnitOfWork : IUnitOfWork
     public IDispositivoEmpleadoRepository Dispositivos { get; }
     public IAuditoriaEventoRepository AuditoriaEventos { get; }
     public IRevisionAuditoriaRepository RevisionesAuditoria { get; }
+    public IRevisionCombustibleRepository RevisionCombustible { get; }
 
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         => _context.SaveChangesAsync(cancellationToken);

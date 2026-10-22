@@ -16,6 +16,9 @@ public class Viaje
     public Guid? SolicitudReservaId { get; private set; }
     public Guid EmpleadoOperadorId { get; private set; }
 
+    /// <summary>Centro de costos al que se carga el viaje (opcional). Debe ser de la misma empresa.</summary>
+    public Guid? CentroCostoId { get; private set; }
+
     public DateTime FechaInicio { get; private set; }
     public decimal? UbicacionInicioLat { get; private set; }
     public decimal? UbicacionInicioLng { get; private set; }
@@ -60,8 +63,12 @@ public class Viaje
         DateTime fechaInicio,
         decimal? lat,
         decimal? lng,
-        decimal kilometrajeInicial)
+        decimal kilometrajeInicial,
+        Guid? centroCostoId = null)
     {
+        if (centroCostoId == Guid.Empty)
+            throw new DomainException("El id del centro de costo no es válido.");
+
         if (empresaId == Guid.Empty)
             throw new DomainException("El id de la empresa es obligatorio.");
 
@@ -86,6 +93,7 @@ public class Viaje
             CarroId = carroId,
             SolicitudReservaId = solicitudReservaId,
             EmpleadoOperadorId = empleadoOperadorId,
+            CentroCostoId = centroCostoId,
             FechaInicio = fechaInicio,
             UbicacionInicioLat = lat,
             UbicacionInicioLng = lng,
@@ -96,10 +104,13 @@ public class Viaje
 
     public bool EstaEnCurso => Estado == EstadoViaje.EnCurso;
 
-    public void Finalizar(DateTime fechaFin, decimal? lat, decimal? lng, decimal kilometrajeFinal)
+    /// <param name="pausaAbierta">Si el viaje estaba en pausa, la pausa se cierra a la hora de fin.</param>
+    public void Finalizar(DateTime fechaFin, decimal? lat, decimal? lng, decimal kilometrajeFinal, ViajePausa? pausaAbierta = null)
     {
         ValidarEnCurso("finalizar");
+        ValidarPausaAlTerminar(pausaAbierta, fechaFin);
         RegistrarCierre(fechaFin, lat, lng, kilometrajeFinal);
+        CerrarPausaAlTerminar(pausaAbierta, fechaFin);
 
         Estado = EstadoViaje.Finalizado;
     }
@@ -107,7 +118,7 @@ public class Viaje
     /// El viaje se corta antes de terminar (falla, accidente, etc.). El motivo es obligatorio;
     /// los datos de cierre son opcionales porque puede que no se puedan capturar.
 
-    public void Interrumpir(string motivo, DateTime fechaFin, decimal? lat, decimal? lng, decimal? kilometrajeFinal)
+    public void Interrumpir(string motivo, DateTime fechaFin, decimal? lat, decimal? lng, decimal? kilometrajeFinal, ViajePausa? pausaAbierta = null)
     {
         ValidarEnCurso("interrumpir");
 
@@ -119,10 +130,88 @@ public class Viaje
         if (motivoNormalizado.Length > MotivoMaxLength)
             throw new DomainException($"El motivo no puede exceder {MotivoMaxLength} caracteres.");
 
+        ValidarPausaAlTerminar(pausaAbierta, fechaFin);
         RegistrarCierre(fechaFin, lat, lng, kilometrajeFinal);
+        CerrarPausaAlTerminar(pausaAbierta, fechaFin);
 
         Estado = EstadoViaje.Interrumpido;
         MotivoInterrupcion = motivoNormalizado;
+    }
+
+    // ---------------- Pausas ----------------
+
+    /// <summary>
+    /// Pone el viaje en pausa. Reglas: solo un viaje en curso, sin otra pausa abierta, y la pausa no
+    /// puede empezar antes del inicio del viaje ni antes de que terminara la pausa anterior.
+    /// </summary>
+    /// <param name="ultimaPausa">La pausa más reciente del viaje (abierta o cerrada), o null si no tiene.</param>
+    public ViajePausa Pausar(ViajePausa? ultimaPausa, DateTime fecha, string? motivo, decimal? lat, decimal? lng)
+    {
+        ValidarEnCurso("pausar");
+        ValidarPausaPropia(ultimaPausa);
+
+        if (ultimaPausa is { EstaAbierta: true })
+            throw new DomainException("El viaje ya está en pausa.");
+
+        if (fecha < FechaInicio)
+            throw new DomainException("La pausa no puede empezar antes del inicio del viaje.");
+
+        if (ultimaPausa?.FechaFin is { } finAnterior && fecha < finAnterior)
+            throw new DomainException("La pausa no puede empezar antes de que terminara la pausa anterior.");
+
+        ValidarUbicacion(lat, lng, "de la pausa");
+
+        return ViajePausa.Crear(EmpresaId, ViajeId, fecha, null, motivo, lat, lng);
+    }
+
+    /// <summary>Reanuda el viaje: cierra la pausa abierta.</summary>
+    public void Reanudar(ViajePausa? pausaAbierta, DateTime fecha)
+    {
+        ValidarEnCurso("reanudar");
+
+        if (pausaAbierta is not { EstaAbierta: true })
+            throw new DomainException("El viaje no está en pausa.");
+
+        ValidarPausaPropia(pausaAbierta);
+        pausaAbierta.Cerrar(fecha);
+    }
+
+    /// <summary>
+    /// Pausas de un viaje hecho sin conexión (llegan junto con el viaje). Se validan todas juntas:
+    /// dentro del periodo del viaje, sin encimarse, y solo la última puede quedar abierta si el viaje
+    /// sigue en curso. Si el viaje ya cerró, una pausa sin fin se cierra a la hora de fin del viaje.
+    /// </summary>
+    public IReadOnlyList<ViajePausa> RegistrarPausasSincronizadas(IEnumerable<DatosPausa> pausas)
+    {
+        var ordenadas = pausas.OrderBy(p => p.FechaInicio).ToList();
+        var resultado = new List<ViajePausa>(ordenadas.Count);
+        DateTime? finAnterior = null;
+
+        for (var i = 0; i < ordenadas.Count; i++)
+        {
+            var datos = ordenadas[i];
+            var esUltima = i == ordenadas.Count - 1;
+            var fin = datos.FechaFin ?? (EstaEnCurso ? null : FechaFin);
+
+            if (datos.FechaInicio < FechaInicio)
+                throw new DomainException("Una pausa no puede empezar antes del inicio del viaje.");
+
+            if (FechaFin is not null && (datos.FechaInicio > FechaFin || fin > FechaFin))
+                throw new DomainException("Una pausa no puede quedar fuera del periodo del viaje.");
+
+            if (finAnterior is not null && datos.FechaInicio < finAnterior)
+                throw new DomainException("Las pausas no se pueden encimar.");
+
+            if (fin is null && !esUltima)
+                throw new DomainException("Solo la última pausa puede quedar abierta.");
+
+            ValidarUbicacion(datos.UbicacionLat, datos.UbicacionLng, "de la pausa");
+
+            resultado.Add(ViajePausa.Crear(EmpresaId, ViajeId, datos.FechaInicio, fin, datos.Motivo, datos.UbicacionLat, datos.UbicacionLng));
+            finAnterior = fin;
+        }
+
+        return resultado;
     }
 
     public void CambiarFotoTableroInicial(string? llave)
@@ -185,6 +274,30 @@ public class Viaje
         UbicacionFinLat = lat;
         UbicacionFinLng = lng;
         KilometrajeFinal = kilometrajeFinal;
+    }
+
+    /// <summary>Se valida ANTES de tocar el viaje, para no dejarlo a medias si la pausa no cuadra.</summary>
+    private void ValidarPausaAlTerminar(ViajePausa? pausaAbierta, DateTime fechaFin)
+    {
+        if (pausaAbierta is not { EstaAbierta: true })
+            return;
+
+        ValidarPausaPropia(pausaAbierta);
+
+        if (fechaFin < pausaAbierta.FechaInicio)
+            throw new DomainException("La fecha de fin no puede ser anterior al inicio de la pausa en curso.");
+    }
+
+    private static void CerrarPausaAlTerminar(ViajePausa? pausaAbierta, DateTime fechaFin)
+    {
+        if (pausaAbierta is { EstaAbierta: true })
+            pausaAbierta.Cerrar(fechaFin);
+    }
+
+    private void ValidarPausaPropia(ViajePausa? pausa)
+    {
+        if (pausa is not null && pausa.ViajeId != ViajeId)
+            throw new DomainException("La pausa no pertenece a este viaje.");
     }
 
     private void ValidarEnCurso(string accion)

@@ -20,6 +20,7 @@ public class ViajeConfiguration : IEntityTypeConfiguration<Viaje>
         builder.Property(v => v.CarroId).HasColumnName("carro_id").IsRequired();
         builder.Property(v => v.SolicitudReservaId).HasColumnName("solicitud_reserva_id");
         builder.Property(v => v.EmpleadoOperadorId).HasColumnName("empleado_operador_id").IsRequired();
+        builder.Property(v => v.CentroCostoId).HasColumnName("centro_costo_id");
 
         // Inicio (la fecha la manda la app: puede registrarse offline)
         builder.Property(v => v.FechaInicio)
@@ -116,6 +117,15 @@ public class ViajeConfiguration : IEntityTypeConfiguration<Viaje>
             .HasConstraintName("fk_viaje_empleado_operador")
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Opcional: el centro de costos debe ser de la misma empresa del viaje
+        builder.HasOne<CentroCosto>()
+            .WithMany()
+            .HasForeignKey(v => new { v.EmpresaId, v.CentroCostoId })
+            .HasPrincipalKey(cc => new { cc.EmpresaId, cc.CentroCostoId })
+            .HasConstraintName("fk_viaje_centro_costo")
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasIndex(v => v.EmpresaId)
             .HasDatabaseName("ix_viaje_empresa_id");
 
@@ -130,5 +140,6 @@ public class ViajeConfiguration : IEntityTypeConfiguration<Viaje>
         builder.HasIndex(v => new { v.EmpresaId, v.CarroId, v.FechaInicio }).HasDatabaseName("ix_viaje_empresa_id_carro_id_fecha_inicio");
         builder.HasIndex(v => new { v.EmpresaId, v.SolicitudReservaId }).HasDatabaseName("ix_viaje_empresa_id_solicitud_reserva_id");
         builder.HasIndex(v => new { v.EmpresaId, v.EmpleadoOperadorId }).HasDatabaseName("ix_viaje_empresa_id_empleado_operador_id");
+        builder.HasIndex(v => new { v.EmpresaId, v.CentroCostoId }).HasDatabaseName("ix_viaje_empresa_id_centro_costo_id");
     }
 }

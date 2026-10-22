@@ -38,7 +38,6 @@ public static class DependencyInjection
                 .AddInterceptors(serviceProvider.GetRequiredService<AuditoriaInterceptor>()));
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
-        services.AddScoped<IConsultasRevisionCombustible, ConsultasRevisionCombustible>();
         services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
 
         // Seguridad
@@ -46,6 +45,10 @@ public static class DependencyInjection
         services.AddSingleton(jwtSettings);
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
+
+        // Autorización basada en permisos: privilegios efectivos del usuario (BD + caché corta)
+        services.AddMemoryCache();
+        services.AddScoped<IConsultaPrivilegios, ConsultaPrivilegios>();
 
         // Almacenamiento de archivos (MinIO). En BD solo se guarda la llave del archivo.
         minioSettings.Validar();

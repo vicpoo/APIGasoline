@@ -17,6 +17,7 @@ public class CargaCombustibleConfiguration : IEntityTypeConfiguration<CargaCombu
 
         builder.Property(c => c.EmpresaId).HasColumnName("empresa_id").IsRequired();
         builder.Property(c => c.ViajeId).HasColumnName("viaje_id").IsRequired();
+        builder.Property(c => c.CentroCostoId).HasColumnName("centro_costo_id");
 
         builder.Property(c => c.Litros)
             .HasColumnName("litros")
@@ -75,6 +76,15 @@ public class CargaCombustibleConfiguration : IEntityTypeConfiguration<CargaCombu
             .HasConstraintName("fk_carga_combustible_viaje")
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Opcional: el centro de costos debe ser de la misma empresa de la carga
+        builder.HasOne<CentroCosto>()
+            .WithMany()
+            .HasForeignKey(c => new { c.EmpresaId, c.CentroCostoId })
+            .HasPrincipalKey(cc => new { cc.EmpresaId, cc.CentroCostoId })
+            .HasConstraintName("fk_carga_combustible_centro_costo")
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasIndex(c => c.EmpresaId)
             .HasDatabaseName("ix_carga_combustible_empresa_id");
 
@@ -84,6 +94,9 @@ public class CargaCombustibleConfiguration : IEntityTypeConfiguration<CargaCombu
 
         builder.HasIndex(c => new { c.EmpresaId, c.ViajeId })
             .HasDatabaseName("ix_carga_combustible_empresa_id_viaje_id");
+
+        builder.HasIndex(c => new { c.EmpresaId, c.CentroCostoId })
+            .HasDatabaseName("ix_carga_combustible_empresa_id_centro_costo_id");
 
     }
 }

@@ -17,6 +17,12 @@ public interface IPrivilegioRepository
     /// <summary>Claves (sin repetir y ordenadas) de los privilegios activos de esos roles.</summary>
     Task<IReadOnlyList<string>> GetClavesActivasByRolesAsync(IReadOnlyList<Guid> rolIds, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Privilegios efectivos de un usuario (autorización por permisos): claves de los privilegios
+    /// ACTIVOS de sus roles ACTIVOS que sean globales o de su empresa. Usuario inactivo: ninguno.
+    /// </summary>
+    Task<IReadOnlyList<string>> GetClavesEfectivasAsync(Guid usuarioId, Guid? empresaId, CancellationToken cancellationToken = default);
+
     Task AddAsync(Privilegio privilegio, CancellationToken cancellationToken = default);
     void Remove(Privilegio privilegio);
 }

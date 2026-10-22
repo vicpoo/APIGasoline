@@ -1,5 +1,7 @@
-﻿using APIGasoline.Application.Common.Constants;
+﻿using APIGasoline.Application.Common.Interfaces;
+using APIGasoline.Application.Common.Security;
 using APIGasoline.Application.Common.Exceptions;
+using APIGasoline.Application.Features.SolicitudesReserva.Common;
 using APIGasoline.Application.Features.SolicitudesReserva.DTOs;
 using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Enums;
@@ -10,25 +12,35 @@ using APIGasoline.Application.Common.Outbox;
 
 namespace APIGasoline.Application.Features.SolicitudesReserva.Commands;
 
-public record CreateSolicitudReservaCommand(Guid EmpresaId, Guid CarroId, Guid EmpleadoSolicitanteId) : IRequest<SolicitudReservaDto>;
+/// <param name="Motivo">v8. Para qué necesita el carro (obligatorio, máx. 255).</param>
+public record CreateSolicitudReservaCommand(Guid EmpresaId, Guid CarroId, Guid EmpleadoSolicitanteId, string Motivo) : IRequest<SolicitudReservaDto>, IRecursoPropio
+{
+    /// <summary>Cada quien solicita para sí mismo; a nombre de otro, solo con solicitud.aprobar.</summary>
+    public bool EsPropio(IUsuarioActual usuario)
+        => EmpleadoSolicitanteId == usuario.EmpleadoId;
+
+    public string PrivilegioParaOtros => Permisos.SolicitudAprobar;
+}
 
 public class CreateSolicitudReservaCommandHandler : IRequestHandler<CreateSolicitudReservaCommand, SolicitudReservaDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly NotificadorPush _notificador;
+    private readonly IFileStorageService _storage;
 
-    public CreateSolicitudReservaCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, NotificadorPush notificador)
+    public CreateSolicitudReservaCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, NotificadorPush notificador, IFileStorageService storage)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _notificador = notificador;
+        _storage = storage;
     }
 
     public async Task<SolicitudReservaDto> Handle(CreateSolicitudReservaCommand request, CancellationToken cancellationToken)
     {
         // El dominio valida los datos
-        var solicitud = SolicitudReserva.Crear(request.EmpresaId, request.CarroId, request.EmpleadoSolicitanteId);
+        var solicitud = SolicitudReserva.Crear(request.EmpresaId, request.CarroId, request.EmpleadoSolicitanteId, request.Motivo);
 
         if (!await _unitOfWork.Empresas.ExistsAsync(solicitud.EmpresaId, cancellationToken))
             throw new NotFoundException($"No existe una empresa con el id {solicitud.EmpresaId}.");
@@ -70,7 +82,7 @@ public class CreateSolicitudReservaCommandHandler : IRequestHandler<CreateSolici
             await _unitOfWork.SolicitudesReserva.AddAsync(solicitud, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            var confirmadores = await _unitOfWork.Empleados.GetIdsConRolAsync(solicitud.EmpresaId, NombresRol.Confirmador, cancellationToken);
+            var confirmadores = await _unitOfWork.Empleados.GetIdsConPrivilegioAsync(solicitud.EmpresaId, Permisos.SolicitudAprobar, cancellationToken);
 
             var notificaciones = confirmadores
                 .Where(id => id != solicitud.EmpleadoSolicitanteId)
@@ -91,6 +103,6 @@ public class CreateSolicitudReservaCommandHandler : IRequestHandler<CreateSolici
         }
 
         // SolicitudReservaId y FechaSolicitud ya vienen asignados por la base de datos
-        return _mapper.Map<SolicitudReservaDto>(solicitud);
+        return await _mapper.Map<SolicitudReservaDto>(solicitud).ConDatosAsync(_unitOfWork, _storage, cancellationToken);
     }
 }

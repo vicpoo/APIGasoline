@@ -2,6 +2,7 @@
 using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Features.Auditoria.Common;
 using APIGasoline.Application.Features.Auditoria.DTOs;
+using APIGasoline.Domain.Interfaces;
 using MediatR;
 
 namespace APIGasoline.Application.Features.Auditoria.Queries;
@@ -18,18 +19,18 @@ public class GetRevisionCombustibleQueryHandler : IRequestHandler<GetRevisionCom
     /// <summary>Para que la consulta no recorra años de datos en una sola llamada.</summary>
     public static readonly TimeSpan PeriodoMaximo = TimeSpan.FromDays(366);
 
-    private readonly IConsultasRevisionCombustible _consultas;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IUsuarioActual _usuarioActual;
 
-    public GetRevisionCombustibleQueryHandler(IConsultasRevisionCombustible consultas, IUsuarioActual usuarioActual)
+    public GetRevisionCombustibleQueryHandler(IUnitOfWork unitOfWork, IUsuarioActual usuarioActual)
     {
-        _consultas = consultas;
+        _unitOfWork = unitOfWork;
         _usuarioActual = usuarioActual;
     }
 
     public async Task<RevisionCombustibleDto> Handle(GetRevisionCombustibleQuery request, CancellationToken cancellationToken)
     {
-        var empresaId = PermisosAuditoria.ResolverEmpresa(_usuarioActual, request.EmpresaId);
+        var empresaId = await PermisosAuditoria.ResolverEmpresaAsync(_usuarioActual, request.EmpresaId, cancellationToken);
 
         if (request.Hasta < request.Desde)
             throw new BadRequestException("La fecha 'hasta' no puede ser anterior a 'desde'.");
@@ -37,14 +38,14 @@ public class GetRevisionCombustibleQueryHandler : IRequestHandler<GetRevisionCom
         if (request.Hasta - request.Desde > PeriodoMaximo)
             throw new BadRequestException("El periodo de revisión no puede ser mayor a un año.");
 
-        var viajes = await _consultas.GetViajesAsync(empresaId, request.CarroId, request.Desde, request.Hasta, cancellationToken);
+        var viajes = await _unitOfWork.RevisionCombustible.GetViajesAsync(empresaId, request.CarroId, request.Desde, request.Hasta, cancellationToken);
 
         var viajeIds = viajes.Select(v => v.ViajeId).ToList();
         var carroIds = viajes.Select(v => v.CarroId).Distinct().ToList();
 
-        var cargas = await _consultas.GetCargasAsync(viajeIds, cancellationToken);
-        var carros = (await _consultas.GetCarrosAsync(carroIds, cancellationToken)).ToDictionary(c => c.CarroId);
-        var kilometrajeAnterior = await _consultas.GetUltimoKilometrajePorCarroAsync(carroIds, request.Desde, cancellationToken);
+        var cargas = await _unitOfWork.RevisionCombustible.GetCargasAsync(viajeIds, cancellationToken);
+        var carros = (await _unitOfWork.RevisionCombustible.GetCarrosAsync(carroIds, cancellationToken)).ToDictionary(c => c.CarroId);
+        var kilometrajeAnterior = await _unitOfWork.RevisionCombustible.GetUltimoKilometrajePorCarroAsync(carroIds, request.Desde, cancellationToken);
 
         var alertas = DetectorAlertasRevision.Detectar(viajes, cargas, carros, kilometrajeAnterior);
 

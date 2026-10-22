@@ -1,22 +1,14 @@
 ﻿namespace APIGasoline.Application.Common.Constants;
 
 /// <summary>
-/// Nombres de roles (tabla rol) que la lógica de negocio necesita conocer.
+/// Nombres de los roles BASE que crea la siembra inicial (SembrarSeguridadCommand).
+///
+/// IMPORTANTE: la lógica de negocio y la autorización NUNCA deciden por el nombre de un rol;
+/// solo por sus privilegios (<see cref="Security.Permisos"/>). Cada empresa puede renombrar
+/// o crear sus propios roles ("Jefe de flota" en vez de "Confirmador") con los privilegios que quiera.
 /// </summary>
 public static class NombresRol
 {
-    /// <summary>
-    /// Los empleados de la empresa cuyo usuario tiene este rol (activo) reciben
-    /// las notificaciones de nuevas solicitudes de reserva.
-    /// </summary>
-    public const string Confirmador = "Confirmador";
-
-    /// <summary>Puede corregir viajes y cargas ya cerrados (junto con el Confirmador).</summary>
-    public const string GestorActivos = "Gestor de activos";
-
-    /// <summary>Personal interno de la desarrolladora; sin empresa en el token.</summary>
-    public const string Administrador = "Administrador";
-
-    /// <summary>Consulta reportes y el módulo de auditoría y trazabilidad.</summary>
-    public const string ConsultorReportes = "Consultor/Reportes";
+    /// <summary>Rol global con TODOS los privilegios del catálogo (personal de la desarrolladora).</summary>
+    public const string AdministradorPlataforma = "Administrador";
 }

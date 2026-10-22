@@ -23,7 +23,8 @@ public record CreateCargaCombustibleCommand(
     ArchivoEntrada FotoComprobante,
     DateTime FechaCarga,
     decimal? UbicacionLat,
-    decimal? UbicacionLng) : IRequest<CargaCombustibleDto>;
+    decimal? UbicacionLng,
+    Guid? CentroCostoId = null) : IRequest<CargaCombustibleDto>;
 
 public class CreateCargaCombustibleCommandHandler : IRequestHandler<CreateCargaCombustibleCommand, CargaCombustibleDto>
 {
@@ -63,7 +64,8 @@ public class CreateCargaCombustibleCommandHandler : IRequestHandler<CreateCargaC
             request.FechaCarga,
             request.UbicacionLat,
             request.UbicacionLng,
-            cargaId);
+            cargaId,
+            request.CentroCostoId);
 
         // Primero todas las validaciones: así no se sube un archivo que después se rechaza
         await CargaCombustibleValidator.ValidarAsync(_unitOfWork, _dateTime, viaje, carga, cancellationToken);

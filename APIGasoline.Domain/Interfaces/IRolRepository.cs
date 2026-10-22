@@ -20,6 +20,9 @@ public interface IRolRepository
 
     Task<bool> ExistsAsync(Guid rolId, CancellationToken cancellationToken = default);
 
+    /// <summary>Rol por nombre exacto dentro de un ámbito (empresaId null = global). Lo usa la siembra.</summary>
+    Task<Rol?> GetByNombreAsync(string nombre, Guid? empresaId, CancellationToken cancellationToken = default);
+
     /// <summary>El nombre es único por empresa (o entre los globales cuando empresaId es null).</summary>
     Task<bool> NombreExistsAsync(string nombre, Guid? empresaId, Guid? excludeRolId = null, CancellationToken cancellationToken = default);
 

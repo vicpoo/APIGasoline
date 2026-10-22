@@ -3,6 +3,8 @@ using APIGasoline.Application.Features.RutasProcesadas.DTOs;
 using APIGasoline.Application.Features.RutasProcesadas.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using APIGasoline.Application.Common.Security;
+using APIGasoline.Authorization;
 
 namespace APIGasoline.Controllers;
 
@@ -20,6 +22,7 @@ public class RutasProcesadasController : ControllerBase
         _sender = sender;
     }
 
+    [RequierePrivilegio(Permisos.ViajeVerDetalle)]
     [HttpGet("api/viajes/{viajeId:guid}/ruta-procesada")]
     public async Task<ActionResult<RutaProcesadaDto>> GetByViaje(Guid viajeId, CancellationToken cancellationToken)
     {
@@ -28,6 +31,7 @@ public class RutasProcesadasController : ControllerBase
     }
 
     /// <summary>La polyline decodificada en coordenadas (para dibujar o revisar la ruta).</summary>
+    [RequierePrivilegio(Permisos.ViajeVerDetalle)]
     [HttpGet("api/viajes/{viajeId:guid}/ruta-procesada/mapa")]
     public async Task<ActionResult<MapaRutaDto>> GetMapa(Guid viajeId, CancellationToken cancellationToken)
     {
@@ -39,6 +43,7 @@ public class RutasProcesadasController : ControllerBase
     /// Vuelve a calcular la ruta con los puntos y cargas actuales (por ejemplo, si falló el
     /// proceso automático o si mejoró el algoritmo). Solo para viajes finalizados o interrumpidos.
     /// </summary>
+    [RequierePrivilegio(Permisos.ViajeVerTodos)]
     [HttpPost("api/viajes/{viajeId:guid}/ruta-procesada/recalcular")]
     public async Task<ActionResult<RutaProcesadaDto>> Recalcular(Guid viajeId, CancellationToken cancellationToken)
     {
@@ -50,6 +55,7 @@ public class RutasProcesadasController : ControllerBase
     /// Viajes cuyo kilometraje del odómetro no cuadra con el GPS (más del 10 % y más de 2 km).
     /// Filtro opcional: ?empresaId=
     /// </summary>
+    [RequierePrivilegio(Permisos.ViajeVerTodos, Permisos.AuditoriaVer)]
     [HttpGet("api/rutas-procesadas/alertas")]
     public async Task<ActionResult<IReadOnlyList<RutaProcesadaDto>>> GetAlertas([FromQuery] Guid? empresaId, CancellationToken cancellationToken)
     {

@@ -1,4 +1,5 @@
-﻿using APIGasoline.Application.Common.Interfaces;
+﻿using APIGasoline.Application.Common.Security;
+using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Common.Storage;
 using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Features.Empleados.Common;
@@ -16,7 +17,16 @@ public record UpdateEmpleadoCommand(
     Guid EmpleadoId,
     Guid EmpresaId,
     Guid UsuarioId,
-    string NombreCompleto) : IRequest<EmpleadoDto>;
+    string NombreCompleto) : IRequest<EmpleadoDto>, IRecursoPropio
+{
+    /// <summary>El empleado puede editar su nombre, pero no moverse de empresa ni de usuario; con empleado.gestionar, cualquiera.</summary>
+    public bool EsPropio(IUsuarioActual usuario)
+        => EmpleadoId == usuario.EmpleadoId
+        && EmpresaId == usuario.EmpresaId
+        && UsuarioId == usuario.UsuarioId;
+
+    public string PrivilegioParaOtros => Permisos.EmpleadoGestionar;
+}
 
 public class UpdateEmpleadoCommandHandler : IRequestHandler<UpdateEmpleadoCommand, EmpleadoDto>
 {

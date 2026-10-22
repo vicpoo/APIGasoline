@@ -23,6 +23,10 @@ public class UpdateCargaCombustibleRequest
     public decimal? UbicacionLat { get; set; }
     public decimal? UbicacionLng { get; set; }
 
+    /// <summary>Centro de costos del gasto (opcional, de la misma empresa).</summary>
+    [GuidNoVacio]
+    public Guid? CentroCostoId { get; set; }
+
     /// <summary>Por qué se corrige (queda en el historial de auditoría).</summary>
     [Required]
     [StringLength(500)]

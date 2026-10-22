@@ -4,6 +4,8 @@ using APIGasoline.Application.Features.Corporativos.Queries;
 using APIGasoline.Contracts.Corporativos;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using APIGasoline.Application.Common.Security;
+using APIGasoline.Authorization;
 
 namespace APIGasoline.Controllers;
 
@@ -18,6 +20,7 @@ public class CorporativosController : ControllerBase
         _sender = sender;
     }
 
+    [RequierePrivilegio(Permisos.CorporativoVer, Permisos.CorporativoGestionar)]
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<CorporativoDto>>> GetAll(CancellationToken cancellationToken)
     {
@@ -25,6 +28,7 @@ public class CorporativosController : ControllerBase
         return Ok(corporativos);
     }
 
+    [RequierePrivilegio(Permisos.CorporativoVer, Permisos.CorporativoGestionar)]
     [HttpGet("{corporativoId:guid}")]
     public async Task<ActionResult<CorporativoDto>> GetById(Guid corporativoId, CancellationToken cancellationToken)
     {
@@ -32,6 +36,7 @@ public class CorporativosController : ControllerBase
         return Ok(corporativo);
     }
 
+    [RequierePrivilegio(Permisos.CorporativoGestionar)]
     [HttpPost]
     public async Task<ActionResult<CorporativoDto>> Create(CreateCorporativoRequest request, CancellationToken cancellationToken)
     {
@@ -41,6 +46,7 @@ public class CorporativosController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { corporativoId = corporativo.CorporativoId }, corporativo);
     }
 
+    [RequierePrivilegio(Permisos.CorporativoGestionar)]
     [HttpPut("{corporativoId:guid}")]
     public async Task<ActionResult<CorporativoDto>> Update(Guid corporativoId, UpdateCorporativoRequest request, CancellationToken cancellationToken)
     {
@@ -50,6 +56,7 @@ public class CorporativosController : ControllerBase
         return Ok(corporativo);
     }
 
+    [RequierePrivilegio(Permisos.CorporativoGestionar)]
     [HttpDelete("{corporativoId:guid}")]
     public async Task<IActionResult> Delete(Guid corporativoId, CancellationToken cancellationToken)
     {

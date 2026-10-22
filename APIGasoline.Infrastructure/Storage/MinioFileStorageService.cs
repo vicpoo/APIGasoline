@@ -1,5 +1,6 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Common.Interfaces;
+using System.Collections.Concurrent;
 using APIGasoline.Application.Common.Models;
 using Microsoft.Extensions.Logging;
 using Minio;
@@ -14,16 +15,19 @@ namespace APIGasoline.Infrastructure.Storage;
 public class MinioFileStorageService : IFileStorageService
 {
     private readonly IMinioClient _client;        // operaciones (subir, borrar) -> Endpoint interno
-    private readonly IMinioClient _clientPublico; // solo firma URLs -> PublicEndpoint (no hace llamadas de red)
+    // Solo firman URLs (no hacen llamadas de red). Uno por endpoint público: con PublicEndpoint = "auto"
+    // puede haber varios (localhost, 10.0.2.2, IP de la PC...).
+    private readonly ConcurrentDictionary<string, IMinioClient> _clientesPublicos = new(StringComparer.OrdinalIgnoreCase);
+    private readonly IHostPeticionActual? _hostPeticion;
     private readonly MinioSettings _settings;
     private readonly ILogger<MinioFileStorageService> _logger;
 
-    public MinioFileStorageService(MinioSettings settings, ILogger<MinioFileStorageService> logger)
+    public MinioFileStorageService(MinioSettings settings, ILogger<MinioFileStorageService> logger, IHostPeticionActual? hostPeticion = null)
     {
         _settings = settings;
         _logger = logger;
+        _hostPeticion = hostPeticion;
         _client = CrearCliente(settings.Endpoint);
-        _clientPublico = CrearCliente(settings.EndpointPublicoEfectivo);
     }
 
     public async Task SubirAsync(ArchivoEntrada archivo, string llave, CancellationToken cancellationToken = default)
@@ -98,7 +102,10 @@ public class MinioFileStorageService : IFileStorageService
 
         try
         {
-            return await _clientPublico.PresignedGetObjectAsync(args);
+            // La firma incluye el host: se firma con el mismo host al que el cliente va a pedir la foto
+            var endpoint = _settings.EndpointPublicoPara(_hostPeticion?.Host);
+            var cliente = _clientesPublicos.GetOrAdd(endpoint, CrearCliente);
+            return await cliente.PresignedGetObjectAsync(args);
         }
         catch (Exception ex)
         {

@@ -4,6 +4,8 @@ using APIGasoline.Application.Features.PuntosRuta.Queries;
 using APIGasoline.Contracts.PuntosRuta;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using APIGasoline.Application.Common.Security;
+using APIGasoline.Authorization;
 
 namespace APIGasoline.Controllers;
 
@@ -23,6 +25,7 @@ public class PuntosRutaController : ControllerBase
     /// <summary>
     /// Ruta del viaje en orden de captura (para dibujarla en el mapa).
     /// </summary>
+    [RequierePrivilegio(Permisos.ViajeVerDetalle, Permisos.ViajeRegistrar)]
     [HttpGet("api/viajes/{viajeId:guid}/puntos-ruta")]
     public async Task<ActionResult<IReadOnlyList<PuntoRutaDto>>> GetByViaje(Guid viajeId, CancellationToken cancellationToken)
     {
@@ -33,6 +36,7 @@ public class PuntosRutaController : ControllerBase
     /// <summary>
     /// Registra un lote de puntos GPS (máximo 1000). Se puede reenviar sin duplicar.
     /// </summary>
+    [RequierePrivilegio(Permisos.ViajeRegistrar)]
     [HttpPost("api/viajes/{viajeId:guid}/puntos-ruta")]
     public async Task<ActionResult<LotePuntosRutaResultadoDto>> RegistrarLote(
         Guid viajeId,
@@ -47,6 +51,7 @@ public class PuntosRutaController : ControllerBase
         return Ok(resultado);
     }
 
+    [RequierePrivilegio(Permisos.ViajeVerDetalle, Permisos.ViajeRegistrar)]
     [HttpGet("api/puntos-ruta/{puntoRutaId:guid}")]
     public async Task<ActionResult<PuntoRutaDto>> GetById(Guid puntoRutaId, CancellationToken cancellationToken)
     {
@@ -54,6 +59,7 @@ public class PuntosRutaController : ControllerBase
         return Ok(punto);
     }
 
+    [RequierePrivilegio(Permisos.ViajeEliminar)]
     [HttpDelete("api/puntos-ruta/{puntoRutaId:guid}")]
     public async Task<IActionResult> Delete(Guid puntoRutaId, CancellationToken cancellationToken)
     {

@@ -28,6 +28,11 @@ public class SolicitudReservaConfiguration : IEntityTypeConfiguration<SolicitudR
             .HasColumnName("empleado_solicitante_id")
             .IsRequired();
 
+        // v8: motivo que escribe el solicitante (NULL en solicitudes anteriores a v8)
+        builder.Property(s => s.MotivoSolicitud)
+            .HasColumnName("motivo_solicitud")
+            .HasMaxLength(SolicitudReserva.MotivoMaxLength);
+
         // La BD la llena al insertar; EF la lee de vuelta y nunca la envía.
         builder.Property(s => s.FechaSolicitud)
             .HasColumnName("fecha_solicitud")

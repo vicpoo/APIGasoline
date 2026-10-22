@@ -38,7 +38,7 @@ public class CrearRevisionAuditoriaCommandHandler : IRequestHandler<CrearRevisio
     public async Task<RevisionAuditoriaDto> Handle(CrearRevisionAuditoriaCommand request, CancellationToken cancellationToken)
     {
         // Valida el perfil (el revisor debe ser un empleado con acceso al módulo)
-        PermisosAuditoria.ResolverEmpresa(_usuarioActual, null);
+        await PermisosAuditoria.ResolverEmpresaAsync(_usuarioActual, null, cancellationToken);
 
         var revisorId = _usuarioActual.EmpleadoId
             ?? throw new ForbiddenException("Solo un empleado puede registrar revisiones de auditoría.");

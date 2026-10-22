@@ -57,6 +57,9 @@ public class ViajeRepository : IViajeRepository
     public Task<bool> ExistsByCarroAsync(Guid carroId, CancellationToken cancellationToken = default)
         => _context.Viajes.AnyAsync(v => v.CarroId == carroId, cancellationToken);
 
+    public Task<bool> ExistsByCentroCostoAsync(Guid centroCostoId, CancellationToken cancellationToken = default)
+        => _context.Viajes.AnyAsync(v => v.CentroCostoId == centroCostoId, cancellationToken);
+
     public Task<bool> ExistsBySolicitudAsync(Guid solicitudReservaId, CancellationToken cancellationToken = default)
         => _context.Viajes.AnyAsync(v => v.SolicitudReservaId == solicitudReservaId, cancellationToken);
 

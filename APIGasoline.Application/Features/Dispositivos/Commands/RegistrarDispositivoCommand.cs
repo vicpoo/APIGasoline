@@ -1,4 +1,5 @@
-﻿using APIGasoline.Application.Common.Exceptions;
+﻿using APIGasoline.Application.Common.Security;
+using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Features.Dispositivos.DTOs;
 using APIGasoline.Domain.Entities;
@@ -16,7 +17,14 @@ namespace APIGasoline.Application.Features.Dispositivos.Commands;
 public record RegistrarDispositivoCommand(
     Guid EmpleadoId,
     string TokenFcm,
-    PlataformaDispositivo Plataforma) : IRequest<DispositivoDto>;
+    PlataformaDispositivo Plataforma) : IRequest<DispositivoDto>, IRecursoPropio
+{
+    /// <summary>Cada quien registra su celular; para otro empleado se necesita empleado.gestionar.</summary>
+    public bool EsPropio(IUsuarioActual usuario)
+        => EmpleadoId == usuario.EmpleadoId;
+
+    public string PrivilegioParaOtros => Permisos.EmpleadoGestionar;
+}
 
 public class RegistrarDispositivoCommandHandler : IRequestHandler<RegistrarDispositivoCommand, DispositivoDto>
 {

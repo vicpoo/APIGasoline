@@ -17,6 +17,19 @@ public class CarroRepository : ICarroRepository
     public Task<Carro?> GetByIdAsync(Guid carroId, CancellationToken cancellationToken = default)
         => _context.Carros.FirstOrDefaultAsync(c => c.CarroId == carroId, cancellationToken);
 
+    public async Task<IReadOnlyList<Carro>> GetByIdsAsync(IEnumerable<Guid> carroIds, CancellationToken cancellationToken = default)
+    {
+        var ids = carroIds.Distinct().ToList();
+
+        if (ids.Count == 0)
+            return [];
+
+        return await _context.Carros
+            .AsNoTracking()
+            .Where(c => ids.Contains(c.CarroId))
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<Carro>> GetAllAsync(Guid? empresaId = null, EstadoCarro? estado = null, CancellationToken cancellationToken = default)
     {
         var query = _context.Carros.AsNoTracking();

@@ -6,6 +6,8 @@ using APIGasoline.Contracts.CambiosEstatusCarro;
 using APIGasoline.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using APIGasoline.Application.Common.Security;
+using APIGasoline.Authorization;
 
 namespace APIGasoline.Controllers;
 
@@ -28,6 +30,7 @@ public class CambiosEstatusCarroController : ControllerBase
     /// <summary>
     /// Historial del más reciente al más antiguo. Filtros opcionales: ?empresaId=, ?carroId=, ?desde=, ?hasta=
     /// </summary>
+    [RequierePrivilegio(Permisos.CarroVer, Permisos.CarroCambiarEstatus)]
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<CambioEstatusCarroDto>>> GetAll(
         [FromQuery] Guid? empresaId,
@@ -40,6 +43,7 @@ public class CambiosEstatusCarroController : ControllerBase
         return Ok(cambios);
     }
 
+    [RequierePrivilegio(Permisos.CarroVer, Permisos.CarroCambiarEstatus)]
     [HttpGet("{cambioEstatusCarroId:guid}")]
     public async Task<ActionResult<CambioEstatusCarroDto>> GetById(Guid cambioEstatusCarroId, CancellationToken cancellationToken)
     {
@@ -50,6 +54,7 @@ public class CambiosEstatusCarroController : ControllerBase
     /// <summary>
     /// Cambia el estatus del carro (disponible / enMantenimiento) y lo registra en la bitácora.
     /// </summary>
+    [RequierePrivilegio(Permisos.CarroCambiarEstatus, Permisos.ViajeRegistrar)]
     [HttpPost]
     public async Task<ActionResult<CambioEstatusCarroDto>> Cambiar(CambiarEstatusCarroRequest request, CancellationToken cancellationToken)
     {
@@ -70,6 +75,7 @@ public class CambiosEstatusCarroController : ControllerBase
     /// <summary>
     /// HU-EST-02: agrega la foto de la falla o del daño (multipart/form-data, campo "archivo": jpg, png o webp, máx. 5 MB).
     /// </summary>
+    [RequierePrivilegio(Permisos.CarroCambiarEstatus, Permisos.ViajeRegistrar)]
     [HttpPut("{cambioEstatusCarroId:guid}/foto-evidencia")]
     [Consumes("multipart/form-data")]
     [RequestSizeLimit(FormFileExtensions.LimiteCuerpoBytes)]

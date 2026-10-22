@@ -9,7 +9,14 @@ namespace APIGasoline.Application.Features.Usuarios.Commands;
 /// <summary>
 /// Cambia la contraseña verificando primero la actual.
 /// </summary>
-public record CambiarPasswordCommand(Guid UsuarioId, string PasswordActual, string PasswordNueva) : IRequest;
+public record CambiarPasswordCommand(Guid UsuarioId, string PasswordActual, string PasswordNueva) : IRequest, IRecursoPropio
+{
+    /// <summary>Su propia contraseña, o la de cualquiera con usuario.gestionar (igual se pide la actual).</summary>
+    public bool EsPropio(IUsuarioActual usuario)
+        => UsuarioId == usuario.UsuarioId;
+
+    public string PrivilegioParaOtros => Permisos.UsuarioGestionar;
+}
 
 public class CambiarPasswordCommandHandler : IRequestHandler<CambiarPasswordCommand>
 {

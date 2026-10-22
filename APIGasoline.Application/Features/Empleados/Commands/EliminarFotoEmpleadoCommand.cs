@@ -1,4 +1,5 @@
-﻿using APIGasoline.Application.Common.Exceptions;
+﻿using APIGasoline.Application.Common.Security;
+using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Features.Empleados.Common;
 using APIGasoline.Domain.Interfaces;
@@ -9,7 +10,14 @@ namespace APIGasoline.Application.Features.Empleados.Commands;
 /// <summary>
 /// Quita la foto de perfil o la licencia: limpia la llave en BD y después elimina el archivo.
 /// </summary>
-public record EliminarFotoEmpleadoCommand(Guid EmpleadoId, TipoFotoEmpleado Tipo) : IRequest;
+public record EliminarFotoEmpleadoCommand(Guid EmpleadoId, TipoFotoEmpleado Tipo) : IRequest, IRecursoPropio
+{
+    /// <summary>Sus propias fotos, o las de cualquiera con empleado.gestionar.</summary>
+    public bool EsPropio(IUsuarioActual usuario)
+        => EmpleadoId == usuario.EmpleadoId;
+
+    public string PrivilegioParaOtros => Permisos.EmpleadoGestionar;
+}
 
 public class EliminarFotoEmpleadoCommandHandler : IRequestHandler<EliminarFotoEmpleadoCommand>
 {

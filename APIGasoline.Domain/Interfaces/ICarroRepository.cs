@@ -6,6 +6,9 @@ namespace APIGasoline.Domain.Interfaces;
 public interface ICarroRepository
 {
     Task<Carro?> GetByIdAsync(Guid carroId, CancellationToken cancellationToken = default);
+    /// <summary>Varios carros por id (incluye los dados de baja).</summary>
+    Task<IReadOnlyList<Carro>> GetByIdsAsync(IEnumerable<Guid> carroIds, CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<Carro>> GetAllAsync(Guid? empresaId = null, EstadoCarro? estado = null, CancellationToken cancellationToken = default);
     Task<bool> ExistsAsync(Guid carroId, CancellationToken cancellationToken = default);
     Task<bool> PlacasExistsAsync(string placas, Guid? excludeCarroId = null, CancellationToken cancellationToken = default);

@@ -54,7 +54,7 @@ public class CorregirKilometrajeViajeCommandHandler : IRequestHandler<CorregirKi
         var viaje = await _unitOfWork.Viajes.GetByIdAsync(request.ViajeId, cancellationToken)
             ?? throw new NotFoundException($"No existe un viaje con el id {request.ViajeId}.");
 
-        var motivo = ReglasCorreccion.Validar(_usuarioActual, viaje, request.Motivo);
+        var motivo = await ReglasCorreccion.ValidarAsync(_usuarioActual, viaje, request.Motivo, cancellationToken);
 
         var carro = await _unitOfWork.Carros.GetByIdAsync(viaje.CarroId, cancellationToken)
             ?? throw new NotFoundException($"No existe un carro con el id {viaje.CarroId}.");

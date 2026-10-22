@@ -1,4 +1,5 @@
-﻿using APIGasoline.Application.Common.Interfaces;
+﻿using APIGasoline.Application.Common.Security;
+using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Common.Storage;
 using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Features.Empleados.DTOs;
@@ -8,7 +9,14 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.Empleados.Queries;
 
-public record GetEmpleadoByIdQuery(Guid EmpleadoId) : IRequest<EmpleadoDto>;
+public record GetEmpleadoByIdQuery(Guid EmpleadoId) : IRequest<EmpleadoDto>, IRecursoPropio
+{
+    /// <summary>Su propio perfil, o cualquiera con empleado.ver.</summary>
+    public bool EsPropio(IUsuarioActual usuario)
+        => EmpleadoId == usuario.EmpleadoId;
+
+    public string PrivilegioParaOtros => Permisos.EmpleadoVer;
+}
 
 public class GetEmpleadoByIdQueryHandler : IRequestHandler<GetEmpleadoByIdQuery, EmpleadoDto>
 {

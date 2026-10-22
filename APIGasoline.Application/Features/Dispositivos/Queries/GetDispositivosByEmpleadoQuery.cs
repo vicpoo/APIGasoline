@@ -1,4 +1,6 @@
-﻿using APIGasoline.Application.Common.Exceptions;
+﻿using APIGasoline.Application.Common.Interfaces;
+using APIGasoline.Application.Common.Security;
+using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Features.Dispositivos.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
@@ -6,7 +8,14 @@ using MediatR;
 
 namespace APIGasoline.Application.Features.Dispositivos.Queries;
 
-public record GetDispositivosByEmpleadoQuery(Guid EmpleadoId) : IRequest<IReadOnlyList<DispositivoDto>>;
+public record GetDispositivosByEmpleadoQuery(Guid EmpleadoId) : IRequest<IReadOnlyList<DispositivoDto>>, IRecursoPropio
+{
+    /// <summary>Sus celulares, o los de cualquiera con empleado.ver.</summary>
+    public bool EsPropio(IUsuarioActual usuario)
+        => EmpleadoId == usuario.EmpleadoId;
+
+    public string PrivilegioParaOtros => Permisos.EmpleadoVer;
+}
 
 public class GetDispositivosByEmpleadoQueryHandler : IRequestHandler<GetDispositivosByEmpleadoQuery, IReadOnlyList<DispositivoDto>>
 {

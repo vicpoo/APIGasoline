@@ -4,6 +4,8 @@ using APIGasoline.Application.Features.UsuarioRoles.Queries;
 using APIGasoline.Contracts.UsuarioRoles;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using APIGasoline.Application.Common.Security;
+using APIGasoline.Authorization;
 
 namespace APIGasoline.Controllers;
 
@@ -21,6 +23,7 @@ public class UsuarioRolesController : ControllerBase
     /// <summary>
     /// Lista las asignaciones. Filtros opcionales: ?usuarioId=1 y/o ?rolId=2
     /// </summary>
+    [RequierePrivilegio(Permisos.RolVer, Permisos.RolAsignar)]
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<UsuarioRolDto>>> GetAll(
         [FromQuery] Guid? usuarioId,
@@ -31,6 +34,7 @@ public class UsuarioRolesController : ControllerBase
         return Ok(usuarioRoles);
     }
 
+    [RequierePrivilegio(Permisos.RolVer, Permisos.RolAsignar)]
     [HttpGet("{usuarioRolId:guid}")]
     public async Task<ActionResult<UsuarioRolDto>> GetById(Guid usuarioRolId, CancellationToken cancellationToken)
     {
@@ -38,6 +42,7 @@ public class UsuarioRolesController : ControllerBase
         return Ok(usuarioRol);
     }
 
+    [RequierePrivilegio(Permisos.RolAsignar)]
     [HttpPost]
     public async Task<ActionResult<UsuarioRolDto>> Create(CreateUsuarioRolRequest request, CancellationToken cancellationToken)
     {
@@ -47,6 +52,7 @@ public class UsuarioRolesController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { usuarioRolId = usuarioRol.UsuarioRolId }, usuarioRol);
     }
 
+    [RequierePrivilegio(Permisos.RolAsignar)]
     [HttpPut("{usuarioRolId:guid}")]
     public async Task<ActionResult<UsuarioRolDto>> Update(Guid usuarioRolId, UpdateUsuarioRolRequest request, CancellationToken cancellationToken)
     {
@@ -56,6 +62,7 @@ public class UsuarioRolesController : ControllerBase
         return Ok(usuarioRol);
     }
 
+    [RequierePrivilegio(Permisos.RolAsignar)]
     [HttpDelete("{usuarioRolId:guid}")]
     public async Task<IActionResult> Delete(Guid usuarioRolId, CancellationToken cancellationToken)
     {

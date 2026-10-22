@@ -1,6 +1,7 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Domain.Exceptions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace APIGasoline.Middleware;
 
@@ -44,6 +45,11 @@ public class ExceptionHandlingMiddleware
         catch (ConflictException ex)
         {
             await WriteProblemAsync(context, StatusCodes.Status409Conflict, "Conflicto", ex.Message);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            await WriteProblemAsync(context, StatusCodes.Status409Conflict, "Conflicto",
+                "Otro usuario modificó este registro al mismo tiempo. Actualiza la información e inténtalo de nuevo.");
         }
         catch (AlmacenamientoException ex)
         {

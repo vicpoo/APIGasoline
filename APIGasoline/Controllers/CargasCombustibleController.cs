@@ -5,6 +5,8 @@ using APIGasoline.Contracts.CargasCombustible;
 using APIGasoline.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using APIGasoline.Application.Common.Security;
+using APIGasoline.Authorization;
 
 namespace APIGasoline.Controllers;
 
@@ -23,6 +25,7 @@ public class CargasCombustibleController : ControllerBase
     /// Lista de la más reciente a la más antigua.
     /// Filtros opcionales: ?empresaId=, ?viajeId=, ?desde=2026-10-01&amp;hasta=2026-10-31
     /// </summary>
+    [RequierePrivilegio(Permisos.ViajeVerDetalle, Permisos.AuditoriaVer)]
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<CargaCombustibleDto>>> GetAll(
         [FromQuery] Guid? empresaId,
@@ -35,6 +38,7 @@ public class CargasCombustibleController : ControllerBase
         return Ok(cargas);
     }
 
+    [RequierePrivilegio(Permisos.ViajeVerDetalle, Permisos.CargaEditar, Permisos.CargaEliminar, Permisos.AuditoriaVer)]
     [HttpGet("{cargaCombustibleId:guid}")]
     public async Task<ActionResult<CargaCombustibleDto>> GetById(Guid cargaCombustibleId, CancellationToken cancellationToken)
     {
@@ -46,6 +50,7 @@ public class CargasCombustibleController : ControllerBase
     /// Registra una carga. Se envía como multipart/form-data con el archivo "fotoComprobante"
     /// (jpg, png o webp, máx. 5 MB). En la BD solo se guarda la llave del archivo.
     /// </summary>
+    [RequierePrivilegio(Permisos.CargaRegistrar)]
     [HttpPost]
     [Consumes("multipart/form-data")]
     [RequestSizeLimit(FormFileExtensions.LimiteCuerpoBytes)]
@@ -61,7 +66,8 @@ public class CargasCombustibleController : ControllerBase
             request.FotoComprobante.ToArchivoEntrada(contenido),
             request.FechaCarga!.Value,
             request.UbicacionLat,
-            request.UbicacionLng);
+            request.UbicacionLng,
+            request.CentroCostoId);
 
         var carga = await _sender.Send(command, cancellationToken);
 
@@ -73,6 +79,7 @@ public class CargasCombustibleController : ControllerBase
     /// (si no se manda, se conserva el comprobante actual) y "motivo" es obligatorio.
     /// Requiere token. El valor anterior queda en el historial de auditoría.
     /// </summary>
+    [RequierePrivilegio(Permisos.CargaEditar)]
     [HttpPut("{cargaCombustibleId:guid}")]
     [Consumes("multipart/form-data")]
     [RequestSizeLimit(FormFileExtensions.LimiteCuerpoBytes)]
@@ -89,15 +96,18 @@ public class CargasCombustibleController : ControllerBase
             request.FechaCarga!.Value,
             request.UbicacionLat,
             request.UbicacionLng,
-            request.Motivo);
+            request.Motivo,
+            request.CentroCostoId);
 
         return Ok(await _sender.Send(command, cancellationToken));
     }
 
+    [RequierePrivilegio(Permisos.CargaEliminar)]
     [HttpDelete("{cargaCombustibleId:guid}")]
-    public async Task<IActionResult> Delete(Guid cargaCombustibleId, CancellationToken cancellationToken)
+    public async Task<IActionResult> Delete(Guid cargaCombustibleId, [FromQuery] string? motivo, CancellationToken cancellationToken)
     {
-        await _sender.Send(new DeleteCargaCombustibleCommand(cargaCombustibleId), cancellationToken);
+        // DELETE /api/cargas-combustible/{id}?motivo=... (obligatorio: queda en la auditoría)
+        await _sender.Send(new DeleteCargaCombustibleCommand(cargaCombustibleId, motivo), cancellationToken);
         return NoContent();
     }
 }

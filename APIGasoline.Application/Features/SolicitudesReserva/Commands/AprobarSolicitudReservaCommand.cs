@@ -41,6 +41,13 @@ public class AprobarSolicitudReservaCommandHandler : IRequestHandler<AprobarSoli
         var carro = await _unitOfWork.Carros.GetByIdAsync(solicitud.CarroId, cancellationToken)
             ?? throw new NotFoundException($"No existe un carro con el id {solicitud.CarroId}.");
 
+        // Un carro solo puede tener un usuario activo a la vez (HU-RES-01 / RES-02)
+        if (!carro.EstaDisponible)
+            throw new ConflictException($"El carro {carro.Placas} no está disponible (estado actual: {carro.Estado}).");
+
+        if (await _unitOfWork.SolicitudesReserva.GetAprobadaByCarroAsync(carro.CarroId, cancellationToken) is not null)
+            throw new ConflictException($"El carro {carro.Placas} ya está asignado a otra solicitud aprobada.");
+
         var ahora = _dateTime.Now;
 
         // Reglas de dominio: solo pendientes, no aprobar la propia, carro disponible

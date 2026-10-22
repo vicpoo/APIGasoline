@@ -22,7 +22,7 @@ public class GetAuditoriaEventoByIdQueryHandler : IRequestHandler<GetAuditoriaEv
 
     public async Task<AuditoriaEventoDto> Handle(GetAuditoriaEventoByIdQuery request, CancellationToken cancellationToken)
     {
-        var empresaPermitida = PermisosAuditoria.ResolverEmpresa(_usuarioActual, null);
+        var empresaPermitida = await PermisosAuditoria.ResolverEmpresaAsync(_usuarioActual, null, cancellationToken);
 
         var evento = await _unitOfWork.AuditoriaEventos.GetByIdAsync(request.AuditoriaEventoId, cancellationToken);
 

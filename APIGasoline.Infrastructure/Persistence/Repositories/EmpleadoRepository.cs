@@ -18,6 +18,21 @@ public class EmpleadoRepository : IEmpleadoRepository
     public Task<Empleado?> GetByIdAsync(Guid empleadoId, CancellationToken cancellationToken = default)
         => _context.Empleados.FirstOrDefaultAsync(e => e.EmpleadoId == empleadoId, cancellationToken);
 
+    public async Task<IReadOnlyList<Empleado>> GetByIdsAsync(IEnumerable<Guid> empleadoIds, CancellationToken cancellationToken = default)
+    {
+        var ids = empleadoIds.Distinct().ToList();
+
+        if (ids.Count == 0)
+            return [];
+
+        // IgnoreQueryFilters: el historial debe mostrar también a empleados ya eliminados
+        return await _context.Empleados
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(e => ids.Contains(e.EmpleadoId))
+            .ToListAsync(cancellationToken);
+    }
+
     public Task<Empleado?> GetByUsuarioIdAsync(Guid usuarioId, CancellationToken cancellationToken = default)
         => _context.Empleados.FirstOrDefaultAsync(e => e.UsuarioId == usuarioId, cancellationToken);
 
@@ -44,13 +59,16 @@ public class EmpleadoRepository : IEmpleadoRepository
                      && (excludeEmpleadoId == null || e.EmpleadoId != excludeEmpleadoId),
                 cancellationToken);
 
-    public async Task<IReadOnlyList<Guid>> GetIdsConRolAsync(Guid empresaId, string nombreRol, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Guid>> GetIdsConPrivilegioAsync(Guid empresaId, string clavePrivilegio, CancellationToken cancellationToken = default)
         => await _context.Empleados
             .AsNoTracking()
             .Where(e => e.EmpresaId == empresaId
                         && _context.UsuarioRoles.Any(ur => ur.UsuarioId == e.UsuarioId
-                            && _context.Roles.Any(r => r.RolId == ur.RolId && r.Activo && r.Nombre == nombreRol
-                                && (r.EmpresaId == null || r.EmpresaId == empresaId))))
+                            && _context.Roles.Any(r => r.RolId == ur.RolId && r.Activo
+                                && (r.EmpresaId == null || r.EmpresaId == empresaId)
+                                && _context.RolPrivilegios.Any(rp => rp.RolId == r.RolId
+                                    && _context.Privilegios.Any(p => p.PrivilegioId == rp.PrivilegioId
+                                        && p.Activo && p.Clave == clavePrivilegio)))))
             .Select(e => e.EmpleadoId)
             .ToListAsync(cancellationToken);
 

@@ -177,6 +177,10 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasColumnType("binary(16)")
                         .HasColumnName("carga_combustible_id");
 
+                    b.Property<Guid?>("CentroCostoId")
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("centro_costo_id");
+
                     b.Property<bool>("Corregido")
                         .HasColumnType("tinyint(1)")
                         .HasDefaultValue(false)
@@ -239,6 +243,9 @@ namespace APIGasoline.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("uq_carga_combustible_empresa_id_carga_combustible_id");
 
+                    b.HasIndex("EmpresaId", "CentroCostoId")
+                        .HasDatabaseName("ix_carga_combustible_empresa_id_centro_costo_id");
+
                     b.HasIndex("EmpresaId", "ViajeId")
                         .HasDatabaseName("ix_carga_combustible_empresa_id_viaje_id");
 
@@ -275,6 +282,7 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasColumnName("empresa_id");
 
                     b.Property<string>("Estado")
+                        .IsConcurrencyToken()
                         .IsRequired()
                         .HasColumnType("enum('disponible','ocupado','en_mantenimiento')")
                         .HasColumnName("estado")
@@ -374,12 +382,11 @@ namespace APIGasoline.Infrastructure.Migrations
 
                     b.HasKey("CentroCostoId");
 
+                    b.HasAlternateKey("EmpresaId", "CentroCostoId")
+                        .HasName("uq_centro_costo_empresa_id_centro_costo_id");
+
                     b.HasIndex("EmpresaId")
                         .HasDatabaseName("ix_centro_costo_empresa_id");
-
-                    b.HasIndex("EmpresaId", "CentroCostoId")
-                        .IsUnique()
-                        .HasDatabaseName("uq_centro_costo_empresa_id_centro_costo_id");
 
                     b.HasIndex("EmpresaId", "Clave")
                         .IsUnique()
@@ -1194,6 +1201,11 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasColumnType("varchar(255)")
                         .HasColumnName("motivo_resolucion");
 
+                    b.Property<string>("MotivoSolicitud")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasColumnName("motivo_solicitud");
+
                     b.Property<string>("ObservacionesLiberacion")
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)")
@@ -1300,6 +1312,10 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasColumnType("binary(16)")
                         .HasColumnName("carro_id");
 
+                    b.Property<Guid?>("CentroCostoId")
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("centro_costo_id");
+
                     b.Property<bool>("Corregido")
                         .HasColumnType("tinyint(1)")
                         .HasDefaultValue(false)
@@ -1398,6 +1414,9 @@ namespace APIGasoline.Infrastructure.Migrations
                     b.HasIndex("EmpresaId", "CarroId")
                         .HasDatabaseName("ix_viaje_empresa_id_carro_id");
 
+                    b.HasIndex("EmpresaId", "CentroCostoId")
+                        .HasDatabaseName("ix_viaje_empresa_id_centro_costo_id");
+
                     b.HasIndex("EmpresaId", "EmpleadoOperadorId")
                         .HasDatabaseName("ix_viaje_empresa_id_empleado_operador_id");
 
@@ -1408,6 +1427,57 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasDatabaseName("ix_viaje_empresa_id_carro_id_fecha_inicio");
 
                     b.ToTable("viaje", (string)null);
+                });
+
+            modelBuilder.Entity("APIGasoline.Domain.Entities.ViajePausa", b =>
+                {
+                    b.Property<Guid>("ViajePausaId")
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("viaje_pausa_id");
+
+                    b.Property<Guid>("EmpresaId")
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("empresa_id");
+
+                    b.Property<DateTime?>("FechaFin")
+                        .HasColumnType("timestamp")
+                        .HasColumnName("fecha_fin");
+
+                    b.Property<DateTime>("FechaInicio")
+                        .HasColumnType("timestamp")
+                        .HasColumnName("fecha_inicio");
+
+                    b.Property<string>("Motivo")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasColumnName("motivo");
+
+                    b.Property<decimal?>("UbicacionLat")
+                        .HasPrecision(9, 6)
+                        .HasColumnType("decimal(9,6)")
+                        .HasColumnName("ubicacion_lat");
+
+                    b.Property<decimal?>("UbicacionLng")
+                        .HasPrecision(9, 6)
+                        .HasColumnType("decimal(9,6)")
+                        .HasColumnName("ubicacion_lng");
+
+                    b.Property<Guid>("ViajeId")
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("viaje_id");
+
+                    b.HasKey("ViajePausaId");
+
+                    b.HasIndex("EmpresaId")
+                        .HasDatabaseName("ix_viaje_pausa_empresa_id");
+
+                    b.HasIndex("EmpresaId", "ViajeId")
+                        .HasDatabaseName("ix_viaje_pausa_empresa_id_viaje_id");
+
+                    b.HasIndex("ViajeId", "FechaInicio")
+                        .HasDatabaseName("ix_viaje_pausa_viaje_id_fecha_inicio");
+
+                    b.ToTable("viaje_pausa", (string)null);
                 });
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.AuditoriaEvento", b =>
@@ -1474,6 +1544,13 @@ namespace APIGasoline.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_carga_combustible_viaje");
+
+                    b.HasOne("APIGasoline.Domain.Entities.CentroCosto", null)
+                        .WithMany()
+                        .HasForeignKey("EmpresaId", "CentroCostoId")
+                        .HasPrincipalKey("EmpresaId", "CentroCostoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_carga_combustible_centro_costo");
                 });
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.Carro", b =>
@@ -1746,6 +1823,13 @@ namespace APIGasoline.Infrastructure.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_viaje_carro");
 
+                    b.HasOne("APIGasoline.Domain.Entities.CentroCosto", null)
+                        .WithMany()
+                        .HasForeignKey("EmpresaId", "CentroCostoId")
+                        .HasPrincipalKey("EmpresaId", "CentroCostoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_viaje_centro_costo");
+
                     b.HasOne("APIGasoline.Domain.Entities.Empleado", null)
                         .WithMany()
                         .HasForeignKey("EmpresaId", "EmpleadoOperadorId")
@@ -1760,6 +1844,24 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasPrincipalKey("EmpresaId", "SolicitudReservaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_viaje_solicitud_reserva");
+                });
+
+            modelBuilder.Entity("APIGasoline.Domain.Entities.ViajePausa", b =>
+                {
+                    b.HasOne("APIGasoline.Domain.Entities.Empresa", null)
+                        .WithMany()
+                        .HasForeignKey("EmpresaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_viaje_pausa_empresa");
+
+                    b.HasOne("APIGasoline.Domain.Entities.Viaje", null)
+                        .WithMany()
+                        .HasForeignKey("EmpresaId", "ViajeId")
+                        .HasPrincipalKey("EmpresaId", "ViajeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_viaje_pausa_viaje");
                 });
 #pragma warning restore 612, 618
         }

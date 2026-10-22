@@ -14,8 +14,24 @@ public class MinioSettings
     /// Host:puerto con el que se firman las URLs que recibe el cliente (navegador / app móvil).
     /// Dentro de Docker la API usa "minio:9000", pero ese nombre no existe fuera de Docker,
     /// por eso las URLs se firman con este endpoint público. Si está vacío se usa <see cref="Endpoint"/>.
+    /// Con "auto" se usa el host con el que el cliente llamó a la API y el puerto de <see cref="Endpoint"/>
+    /// (localhost desde Postman, 10.0.2.2 desde el emulador, la IP de la PC desde un celular). Solo para desarrollo.
     /// </summary>
     public string PublicEndpoint { get; set; } = string.Empty;
+
+    public const string PublicEndpointAuto = "auto";
+
+    public bool PublicEndpointEsAuto => string.Equals(PublicEndpoint?.Trim(), PublicEndpointAuto, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Puerto de MinIO tomado de <see cref="Endpoint"/> (ej. "localhost:9000" -> "9000").</summary>
+    public string? PuertoEndpoint
+    {
+        get
+        {
+            var separador = Endpoint.LastIndexOf(':');
+            return separador > 0 && separador < Endpoint.Length - 1 ? Endpoint[(separador + 1)..] : null;
+        }
+    }
 
     public string AccessKey { get; set; } = string.Empty;
     public string SecretKey { get; set; } = string.Empty;
@@ -28,7 +44,17 @@ public class MinioSettings
     /// <summary>Vigencia de las URLs prefirmadas.</summary>
     public int UrlExpiracionMinutos { get; set; } = 60;
 
-    public string EndpointPublicoEfectivo => string.IsNullOrWhiteSpace(PublicEndpoint) ? Endpoint : PublicEndpoint;
+    /// <summary>Endpoint fijo para firmar URLs (en modo "auto" es el de respaldo fuera de una petición HTTP).</summary>
+    public string EndpointPublicoEfectivo => string.IsNullOrWhiteSpace(PublicEndpoint) || PublicEndpointEsAuto ? Endpoint : PublicEndpoint;
+
+    /// <summary>Endpoint público con el host de la petición (modo "auto").</summary>
+    public string EndpointPublicoPara(string? hostPeticion)
+    {
+        if (!PublicEndpointEsAuto || string.IsNullOrWhiteSpace(hostPeticion))
+            return EndpointPublicoEfectivo;
+
+        return PuertoEndpoint is null ? hostPeticion : $"{hostPeticion}:{PuertoEndpoint}";
+    }
 
     public void Validar()
     {

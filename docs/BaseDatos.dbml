@@ -1,55 +1,10 @@
 // ============================================================
 // BASE DE DATOS — APP DE COMBUSTIBLE
-// Versión 5: viajes tipo Strava + combustible, con módulo secundario de auditoría y trazabilidad
+// Versión 8: viajes tipo Strava + combustible, con módulo secundario de auditoría y trazabilidad
 // 🔐 v5 = RBAC listo para el front: privilegios por clave, ámbito y roles globales únicos
-// ============================================================
-//
-// ENFOQUE
-// El núcleo de la app son los VIAJES (ruta GPS tipo Strava) y las CARGAS DE COMBUSTIBLE.
-// La auditoría es un módulo SECUNDARIO de trazabilidad: no duplica viajes ni cargas,
-// solo registra los eventos sobre ellos y las revisiones que hace un responsable.
-//   A. Historial de cambios      → auditoria_evento
-//   B. Revisión de combustible   → alertas calculadas al consultar (sin tabla)
-//   C. Revisiones y observaciones → revision_auditoria
-//
-// CAMBIOS RESPECTO A v4  (🔐 v5)
-//   - privilegio.clave: código técnico inmutable modulo.accion (ej. carro.crear). Lo usan la API y el front.
-//   - privilegio.modulo: agrupa la pantalla de roles. privilegio.nombre deja de ser único (solo texto visible).
-//   - privilegio.ambito: plataforma (solo roles globales) | empresa (cualquier rol).
-//   - rol.empresa_clave: columna generada para que (empresa_clave, nombre) sea único también en roles globales.
-//   - GET /api/auth/privilegios devuelve las claves efectivas y su versión (hash) para la app offline-first.
-//
-// CAMBIOS RESPECTO A v3  (🆕 = nuevo, ✏️ = modificado)
-// Tablas nuevas (2):
-//   - auditoria_evento   → quién creó, modificó, aprobó, rechazó o canceló qué, cuándo y por qué (HU-ADM-03, HU-AST-02).
-//   - revision_auditoria → resultado de la revisión de un viaje o de las cargas de un carro en un periodo.
-// Columnas nuevas:
-//   - empresa.activo (HU-ADM-01).
-//   - empleado.fecha_carga_licencia (HU-LOG-01).
-//   - carro: baja (HU-AST-03).
-//   - solicitud_reserva: estado 'finalizada', fecha y observaciones de liberación (HU-USO-04).
-//   - viaje: foto del tablero al iniciar y al terminar; corregido.
-//   - carga_combustible: corregido y fecha_subida_comprobante (detecta comprobantes pendientes).
-//   - cambio_estatus_carro: tipo_motivo y foto_evidencia (HU-EST-02; registra fallas y percances).
-//   - fecha_recepcion (hora del servidor) en lugar de sincronizado.
-//   - notificacion: tipo 'reporte_mantenimiento' (HU-EST-02).
-//
-// CONVENCIÓN DE IDENTIFICADORES
-// - Todas las llaves primarias y foráneas son UUID v7 guardados como binary(16), generados por la app.
-// - Leer:     SELECT BIN_TO_UUID(usuario_id) AS usuario_id, email FROM usuario;
-// - Insertar: INSERT INTO privilegio (privilegio_id, clave, modulo, nombre) VALUES (UUID_TO_BIN(UUID()), 'carro.crear', 'carro', 'Agregar carro');
-// - Buscar:   WHERE usuario_id = UUID_TO_BIN('0192f3a4-...');
-//
-// CONVENCIÓN DE ARCHIVOS EN MINIO
-// - La BD guarda solo la llave (ruta dentro del bucket), nunca la URL.
-// - Formato: empresa/{empresa_id}/{entidad}/{id}/{carpeta}/{tipo}-{uuid}.{ext}
-//
-// REGLAS DE CORRECCIÓN
-// - Antes de sincronizar: el operador corrige libremente en el celular.
-// - Viaje en curso: el operador puede corregir su kilometraje o sus cargas (con motivo).
-// - Viaje cerrado: solo el Confirmador o el Gestor de activos pueden corregir (con motivo).
-// - Toda corrección marca corregido = true y queda en auditoria_evento con el valor anterior y el nuevo.
-// - Nunca se corrigen: punto_ruta ni auditoria_evento.
+// 🧾 v6 = centro de costos en viaje y carga_combustible (FK compuesta, misma empresa)
+// ⏸️ v7 = pausas de viaje (viaje_pausa): pausar / reanudar un viaje en curso
+// 📝 v8 = motivo de la solicitud de reserva (motivo_solicitud): lo escribe quien pide el carro
 // ============================================================
 
 
@@ -219,7 +174,7 @@ Table centro_costo {
 
   indexes {
     empresa_id
-    (empresa_id, centro_costo_id) [unique]
+    (empresa_id, centro_costo_id) [unique, note: '✏️ v6. Llave alterna: la referencian viaje y carga_combustible con FK compuesta.']
     (empresa_id, clave) [unique]
   }
 
@@ -319,6 +274,7 @@ Table solicitud_reserva {
   empresa_id binary(16) [not null]
   carro_id binary(16) [not null]
   empleado_solicitante_id binary(16) [not null]
+  motivo_solicitud varchar(255) [note: '📝 v8. Para qué necesita el carro el solicitante (se ve en el detalle de la solicitud). La API lo exige en solicitudes nuevas; NULL solo en las anteriores a v8.']
   fecha_solicitud timestamp [default: `now()`]
   estado enum(
     'pendiente',
@@ -329,7 +285,7 @@ Table solicitud_reserva {
   ) [not null, default: 'pendiente', note: '✏️ Se agrega finalizada (el operador liberó el carro).']
   empleado_confirmador_id binary(16)
   fecha_resolucion timestamp
-  motivo_resolucion varchar(255)
+  motivo_resolucion varchar(255) [note: 'Motivo de quien aprueba (opcional) o rechaza (obligatorio). No confundir con motivo_solicitud.']
   fecha_liberacion timestamp [note: '🆕 Cuándo se liberó el carro (HU-USO-04 / HU-EST-02).']
   observaciones_liberacion varchar(500) [note: '🆕 Observaciones opcionales al devolver el carro (HU-USO-04).']
 
@@ -353,6 +309,7 @@ Table viaje {
   carro_id binary(16) [not null]
   solicitud_reserva_id binary(16)
   empleado_operador_id binary(16) [not null]
+  centro_costo_id binary(16) [note: '🧾 v6. Centro de costos al que se carga el viaje (se elige en "Iniciar viaje"). Opcional: NULL si la empresa no usa centros de costo. Debe ser de la misma empresa y estar activo (FK compuesta + validación en la API).']
 
   fecha_inicio timestamp [not null]
   ubicacion_inicio_lat decimal(9,6)
@@ -381,6 +338,7 @@ Table viaje {
     empresa_id
     (empresa_id, viaje_id) [unique]
     (empresa_id, carro_id, fecha_inicio)
+    (empresa_id, centro_costo_id) [note: '🧾 v6. Gasto por centro de costos (reportes).']
   }
 
   Note: 'Registra un viaje realizado con un carro. Una reserva aprobada puede tener varios viajes.'
@@ -411,6 +369,30 @@ Table punto_ruta {
   }
 
   Note: 'Punto GPS CRUDO capturado durante un viaje. Es la fuente de verdad: nunca se modifica ni se corrige. El resumen calculado se guarda en ruta_procesada.'
+}
+
+
+// ============================================================
+// ⏸️ v7 — PAUSA DE VIAJE
+// ============================================================
+
+Table viaje_pausa {
+  viaje_pausa_id binary(16) [primary key, note: '⏸️ v7. UUID v7.']
+  empresa_id binary(16) [not null]
+  viaje_id binary(16) [not null]
+  fecha_inicio timestamp [not null, note: 'Hora en que empezó la pausa (la manda la app: puede ser sin conexión).']
+  fecha_fin timestamp [note: 'NULL = el viaje está en pausa. Solo puede haber una pausa abierta por viaje.']
+  motivo varchar(255) [note: 'Opcional: comida, carga de gasolina, espera...']
+  ubicacion_lat decimal(9,6)
+  ubicacion_lng decimal(9,6)
+
+  indexes {
+    empresa_id
+    (empresa_id, viaje_id)
+    (viaje_id, fecha_inicio)
+  }
+
+  Note: '⏸️ v7. Pausas de un viaje en curso. Reglas (dominio, Viaje.Pausar/Reanudar): solo un viaje en curso se pausa; sin dos pausas abiertas; no se enciman; al finalizar o interrumpir, la pausa abierta se cierra a la hora de fin. Los puntos GPS que caen dentro de una pausa se descartan. La duración real del viaje descuenta el tiempo en pausa. ON DELETE CASCADE con el viaje (como punto_ruta).'
 }
 
 
@@ -470,6 +452,7 @@ Table carga_combustible {
   carga_combustible_id binary(16) [primary key]
   empresa_id binary(16) [not null]
   viaje_id binary(16) [not null]
+  centro_costo_id binary(16) [note: '🧾 v6. Centro de costos del gasto. Por defecto el del viaje, pero cada carga puede ir a otro (Figma: lista en "Registro de gasolina"). Opcional y de la misma empresa.']
   litros decimal(8,2) [not null]
   monto decimal(10,2)
   foto_comprobante varchar(255) [not null, note: 'Llave en MinIO: empresa/{empresa_id}/viaje/{viaje_id}/carga/{carga_combustible_id}/comprobante-{uuid}.jpg']
@@ -486,6 +469,7 @@ Table carga_combustible {
     empresa_id
     (empresa_id, carga_combustible_id) [unique]
     (empresa_id, viaje_id)
+    (empresa_id, centro_costo_id) [note: '🧾 v6. Gasto de combustible por centro de costos.']
   }
 
   Note: 'Registra una carga de combustible, incluyendo litros, monto, comprobante y ubicación geográfica.'
@@ -722,6 +706,7 @@ Ref: dispositivo_empleado.empresa_id > empresa.empresa_id
 Ref: outbox_mensaje.empresa_id > empresa.empresa_id
 Ref: auditoria_evento.empresa_id > empresa.empresa_id // 🆕
 Ref: revision_auditoria.empresa_id > empresa.empresa_id // 🆕
+Ref: viaje_pausa.empresa_id > empresa.empresa_id // ⏸️ v7
 
 
 // ============================================================
@@ -752,11 +737,16 @@ Ref: viaje.(empresa_id, carro_id) > carro.(empresa_id, carro_id)
 Ref: viaje.(empresa_id, solicitud_reserva_id) > solicitud_reserva.(empresa_id, solicitud_reserva_id)
 Ref: viaje.(empresa_id, empleado_operador_id) > empleado.(empresa_id, empleado_id)
 
-// Al borrar el viaje se borran sus puntos y su ruta procesada.
+// Al borrar el viaje se borran sus puntos, sus pausas y su ruta procesada.
 Ref: punto_ruta.(empresa_id, viaje_id) > viaje.(empresa_id, viaje_id) [delete: cascade]
+Ref: viaje_pausa.(empresa_id, viaje_id) > viaje.(empresa_id, viaje_id) [delete: cascade] // ⏸️ v7
 Ref: ruta_procesada.(empresa_id, viaje_id) - viaje.(empresa_id, viaje_id) [delete: cascade]
 
 Ref: carga_combustible.(empresa_id, viaje_id) > viaje.(empresa_id, viaje_id)
+
+// 🧾 v6 — Centro de costos (opcional, misma empresa)
+Ref: viaje.(empresa_id, centro_costo_id) > centro_costo.(empresa_id, centro_costo_id)
+Ref: carga_combustible.(empresa_id, centro_costo_id) > centro_costo.(empresa_id, centro_costo_id)
 
 
 // ============================================================
@@ -805,5 +795,41 @@ Detecta también privilegios QUITADOS (filas borradas de rol_privilegio o usuari
 2. Un usuario sin empleado (Administrador de plataforma) solo recibe roles globales.
 3. rol_privilegio: si rol.empresa_id no es NULL, privilegio.ambito debe ser 'empresa'.
 4. privilegio.clave nunca se modifica; si una acción deja de existir se pone activo = false.
+'''
+}
+
+
+// ============================================================
+// 🧾 v6 · ⏸️ v7 · 📝 v8 — REGLAS DE RESERVA Y VIAJE QUE GARANTIZA LA API (no la BD)
+// ============================================================
+
+Note reglas_reserva_viaje {
+'''
+## Un carro, un usuario activo (HU-RES-01 / RES-02)
+1. Aprobar una solicitud exige que el carro esté "disponible", que no esté dado de baja y que no tenga
+   otra solicitud aprobada. Si no, 409.
+2. carro.estado es token de concurrencia optimista: si dos confirmadores aprueban el mismo carro al
+   mismo tiempo, el segundo UPDATE no encuentra el estado original y recibe 409 (nadie queda con el carro duplicado).
+3. Al aprobar, las demás solicitudes pendientes DEL MISMO CARRO se rechazan automáticamente y se notifica.
+   Las solicitudes de otros carros no se tocan.
+
+## Solicitudes
+4. Un empleado no puede tener dos solicitudes pendientes del mismo carro (409).
+5. No se puede solicitar un carro ocupado, en mantenimiento o dado de baja (409), ni sin licencia (400).
+6. 📝 v8. Toda solicitud nueva lleva motivo_solicitud (1 a 255 caracteres; 400 si falta).
+   motivo_resolucion es otro campo: lo escribe quien aprueba (opcional) o rechaza (obligatorio).
+7. 📝 v8. La lista de solicitudes devuelve el nombre y la foto del solicitante y el resumen del carro
+   (para la tarjeta "Solicitud de ..."); el detalle agrega el motivo, la licencia del solicitante,
+   el carro completo y quién la resolvió. No son columnas nuevas: se arman con empleado y carro.
+
+## Viajes
+8. Un carro solo puede tener un viaje en_curso (409).
+9. El viaje usa la reserva aprobada del mismo carro, empresa y operador.
+10. centro_costo_id de viaje y carga: misma empresa y activo (404 / 400).
+11. ⏸️ v7. Solo un viaje en curso se pausa; no hay dos pausas abiertas ni pausas encimadas. Al terminar
+    o interrumpir, la pausa abierta se cierra a la hora de fin. Los puntos GPS dentro de una pausa se
+    descartan y la duración del viaje descuenta el tiempo en pausa.
+12. Agregar, editar o eliminar cargas de gasolina no cambia el estado del viaje.
+13. El kilometraje final lo captura el usuario al terminar el viaje (junto con la foto del tablero).
 '''
 }

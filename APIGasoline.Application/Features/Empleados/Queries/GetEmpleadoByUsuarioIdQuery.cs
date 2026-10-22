@@ -1,4 +1,5 @@
-﻿using APIGasoline.Application.Common.Interfaces;
+﻿using APIGasoline.Application.Common.Security;
+using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Common.Storage;
 using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Features.Empleados.DTOs;
@@ -12,7 +13,14 @@ namespace APIGasoline.Application.Features.Empleados.Queries;
 /// Obtiene el empleado ligado a un usuario del servicio de seguridad
 /// (útil al iniciar sesión en la app).
 /// </summary>
-public record GetEmpleadoByUsuarioIdQuery(Guid UsuarioId) : IRequest<EmpleadoDto>;
+public record GetEmpleadoByUsuarioIdQuery(Guid UsuarioId) : IRequest<EmpleadoDto>, IRecursoPropio
+{
+    /// <summary>Su propio perfil, o cualquiera con empleado.ver.</summary>
+    public bool EsPropio(IUsuarioActual usuario)
+        => UsuarioId == usuario.UsuarioId;
+
+    public string PrivilegioParaOtros => Permisos.EmpleadoVer;
+}
 
 public class GetEmpleadoByUsuarioIdQueryHandler : IRequestHandler<GetEmpleadoByUsuarioIdQuery, EmpleadoDto>
 {
