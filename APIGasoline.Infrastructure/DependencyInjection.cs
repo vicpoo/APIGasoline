@@ -38,6 +38,7 @@ public static class DependencyInjection
                 .AddInterceptors(serviceProvider.GetRequiredService<AuditoriaInterceptor>()));
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<IMigradorBaseDatos, MigradorBaseDatos>();
         services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
 
         // Seguridad

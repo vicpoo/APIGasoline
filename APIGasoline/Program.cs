@@ -5,6 +5,7 @@ using APIGasoline.Application;
 using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Common.Outbox;
 using APIGasoline.Application.Features.Auth.Commands;
+using APIGasoline.Application.Features.BaseDatos.Commands;
 using APIGasoline.Authorization;
 using APIGasoline.Configuration;
 using APIGasoline.Infrastructure;
@@ -53,6 +54,9 @@ var pushSettings = builder.Configuration.GetSection(PushSettings.SectionName).Ge
 var seguridadSettings = builder.Configuration.GetSection(SeguridadSettings.SectionName).Get<SeguridadSettings>()
     ?? new SeguridadSettings();
 
+var baseDatosSettings = builder.Configuration.GetSection(BaseDatosSettings.SectionName).Get<BaseDatosSettings>()
+    ?? new BaseDatosSettings();
+
 builder.Services.AddInfrastructure(connectionString, jwtSettings, minioSettings, outboxSettings, pushSettings);
 
 // Autenticación con JWT (el token lo emite POST /api/auth/login)
@@ -91,6 +95,15 @@ builder.Services.AddScoped<IAuthorizationHandler, PrivilegioAuthorizationHandler
 builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, RespuestaAutorizacionHandler>();
 
 var app = builder.Build();
+
+// Esquema de la BD: aplica las migraciones pendientes (la lógica vive en Application/Infrastructure;
+// aquí solo se manda por MediatR). Si falla, la API NO arranca: sin tablas no tiene caso seguir.
+if (baseDatosSettings.MigrarAlIniciar)
+{
+    using var scope = app.Services.CreateScope();
+    var sender = scope.ServiceProvider.GetRequiredService<MediatR.ISender>();
+    await sender.Send(new AplicarMigracionesCommand());
+}
 
 // Catálogo de privilegios + rol Administrador (+ usuario admin inicial si se configuró).
 // La lógica vive en Application (SembrarSeguridadCommand); aquí solo se manda por MediatR.

@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 #  APIGasoline - PRODUCCIÓN (EC2)
 #  Servicios: API + MySQL 8.0 + MinIO
 #
@@ -39,6 +39,7 @@ services:
       Minio__UseSsl: "false"
       Push__Proveedor: ${PUSH_PROVEEDOR:-NoOp}
       Push__Firebase__CredencialesPath: /app/secrets/apigasoline-firebase.json
+      BaseDatos__MigrarAlIniciar: "true"
       Seguridad__SembrarAlIniciar: "true"
       Seguridad__AdminEmail: ${ADMIN_EMAIL}
       Seguridad__AdminPassword: ${ADMIN_PASSWORD}
