@@ -1,0 +1,17 @@
+**/bin/
+**/obj/
+.vs/
+.git/
+.gitignore
+**/*.user
+**/appsettings.Development.json
+.env
+.env.*
+secrets/
+docs/
+postman/
+pruebas-carga/
+tests/
+**/pruebas/
+*.md
+docker-compose*.yml
