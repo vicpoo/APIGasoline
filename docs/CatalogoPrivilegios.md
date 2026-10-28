@@ -97,3 +97,18 @@ Algunas funciones necesitan leer datos de otro módulo. En esos casos el endpoin
 | `GET /api/solicitudes-reserva` | `solicitud.ver_propias` / `solicitud.ver_todas` | `viaje.registrar` | La pestaña Registrar busca las reservas aprobadas del operador. |
 | `GET /api/viajes/{id}` · `GET /api/viajes/{id}/puntos-ruta` | `viaje.ver_detalle` | `viaje.registrar` | La app consulta el viaje en curso. |
 | `GET /api/centros-costo` | `centro_costo.ver` | `viaje.registrar`, `carga.registrar` | Se elige el centro de costos al iniciar el viaje y en cada carga. |
+
+## 6. Reportes de la flota (módulo de auditoría)
+
+Los reportes son parte del módulo de auditoría y trazabilidad: **usan el mismo privilegio `auditoria.ver`** y las mismas reglas de empresa (solo la del token, salvo `plataforma.multiempresa`). La API genera los archivos; la app solo los descarga y los comparte.
+
+| Función de la app | Clave del privilegio | Endpoint de la API |
+|---|---|---|
+| Ver el reporte (vista previa) | `auditoria.ver` | `GET /api/reportes/flota?carroId=&desde=&hasta=` |
+| Descargar el reporte en PDF | `auditoria.ver` | `GET /api/reportes/flota/pdf?carroId=&desde=&hasta=` |
+| Descargar el reporte en Excel (.xlsx) | `auditoria.ver` | `GET /api/reportes/flota/excel?carroId=&desde=&hasta=` |
+
+- Sin `carroId`: toda la flota. Sin `desde` / `hasta`: todo el historial.
+- Por carro: viajes, km recorridos (odómetro: km final − km inicial de los viajes cerrados), km GPS, cargas, litros, gasto, rendimiento (km/L) y costo por km. Más los totales de la flota.
+- Las cargas se cuentan por la fecha de la carga; los viajes, por su fecha de inicio.
+- Un carro dado de baja solo aparece si tuvo movimiento en el periodo.

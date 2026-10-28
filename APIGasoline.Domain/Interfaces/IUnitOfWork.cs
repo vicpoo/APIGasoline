@@ -27,6 +27,9 @@ public interface IUnitOfWork : IDisposable
     IRevisionAuditoriaRepository RevisionesAuditoria { get; }
     IRevisionCombustibleRepository RevisionCombustible { get; }
 
+    /// <summary>Lecturas para los reportes de la flota (PDF / Excel).</summary>
+    IReporteFlotaRepository ReportesFlota { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task BeginTransactionAsync(CancellationToken cancellationToken = default);
     Task CommitTransactionAsync(CancellationToken cancellationToken = default);

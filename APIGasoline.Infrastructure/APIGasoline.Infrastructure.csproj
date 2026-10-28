@@ -18,6 +18,14 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.12" />
     <!-- Almacenamiento de archivos (SDK oficial de MinIO, compatible con S3) -->
     <PackageReference Include="Minio" Version="6.0.5" />
+    <!-- Reportes de la flota: PDF (PDFsharp-MigraDoc) y Excel (ClosedXML). Ambas con licencia MIT -->
+    <PackageReference Include="PDFsharp-MigraDoc" Version="6.2.4" />
+    <PackageReference Include="ClosedXML" Version="0.105.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Tipografía de la app (Poppins) para los PDF: el contenedor Linux no trae fuentes -->
+    <EmbeddedResource Include="Reportes\Fuentes\*.ttf" />
   </ItemGroup>
 
   <PropertyGroup>

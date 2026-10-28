@@ -39,6 +39,7 @@ public class UnitOfWork : IUnitOfWork
         AuditoriaEventos = new AuditoriaEventoRepository(context);
         RevisionesAuditoria = new RevisionAuditoriaRepository(context);
         RevisionCombustible = new RevisionCombustibleRepository(context);
+        ReportesFlota = new ReporteFlotaRepository(context);
     }
 
     public IUsuarioRepository Usuarios { get; }
@@ -65,6 +66,7 @@ public class UnitOfWork : IUnitOfWork
     public IAuditoriaEventoRepository AuditoriaEventos { get; }
     public IRevisionAuditoriaRepository RevisionesAuditoria { get; }
     public IRevisionCombustibleRepository RevisionCombustible { get; }
+    public IReporteFlotaRepository ReportesFlota { get; }
 
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         => _context.SaveChangesAsync(cancellationToken);

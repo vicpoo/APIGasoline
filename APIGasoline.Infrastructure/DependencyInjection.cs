@@ -13,6 +13,8 @@ using APIGasoline.Infrastructure.Storage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MySqlConnector;
+using APIGasoline.Application.Features.Reportes.Common;
+using APIGasoline.Infrastructure.Reportes;
 
 namespace APIGasoline.Infrastructure;
 
@@ -70,6 +72,10 @@ public static class DependencyInjection
         else
             services.AddSingleton<IPushNotificationService, NoOpPushService>();
         services.AddHostedService<OutboxWorker>();
+
+        // Reportes de la flota (PDF y Excel). Sin estado: una instancia para toda la app
+        services.AddSingleton<IReportePdfGenerator, ReportePdfGenerator>();
+        services.AddSingleton<IReporteExcelGenerator, ReporteExcelGenerator>();
 
         return services;
     }
