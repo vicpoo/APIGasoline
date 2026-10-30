@@ -22,7 +22,8 @@ public record CreateCarroCommand(
     string Placas,
     decimal? CapacidadTanque,
     decimal KilometrajeActual,
-    EstadoCarro Estado) : IRequest<CarroDto>;
+    EstadoCarro Estado,
+    TipoVehiculo TipoVehiculo = TipoVehiculo.Carro) : IRequest<CarroDto>;
 
 public class CreateCarroCommandHandler : IRequestHandler<CreateCarroCommand, CarroDto>
 {
@@ -51,7 +52,8 @@ public class CreateCarroCommandHandler : IRequestHandler<CreateCarroCommand, Car
             request.CapacidadTanque,
             request.KilometrajeActual,
             _dateTime.Now.Year,
-            request.Estado);
+            request.Estado,
+            request.TipoVehiculo);
 
         // Las empresas eliminadas (soft delete) no cuentan como existentes
         if (!await _unitOfWork.Empresas.ExistsAsync(carro.EmpresaId, cancellationToken))

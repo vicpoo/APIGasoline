@@ -332,6 +332,12 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasColumnType("varchar(20)")
                         .HasColumnName("placas");
 
+                    b.Property<string>("TipoVehiculo")
+                        .IsRequired()
+                        .HasColumnType("enum('carro','moto','camioneta','camion')")
+                        .HasColumnName("tipo_vehiculo")
+                        .HasDefaultValueSql("'carro'");
+
                     b.HasKey("CarroId");
 
                     b.HasAlternateKey("EmpresaId", "CarroId")

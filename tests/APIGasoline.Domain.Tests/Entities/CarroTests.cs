@@ -214,6 +214,37 @@ public class CarroTests
         Assert.Throws<DomainException>(() => carro.CambiarEstado((EstadoCarro)99));
     }
 
+    // --- Tipo de vehículo ---
+
+    [Fact]
+    public void Crear_SinTipo_QuedaComoCarro()
+    {
+        var carro = ConstruirCarro();
+
+        Assert.Equal(TipoVehiculo.Carro, carro.TipoVehiculo);
+    }
+
+    [Theory]
+    [InlineData(TipoVehiculo.Moto)]
+    [InlineData(TipoVehiculo.Camioneta)]
+    [InlineData(TipoVehiculo.Camion)]
+    public void CambiarTipoVehiculo_ValorValido_LoAsigna(TipoVehiculo tipo)
+    {
+        var carro = ConstruirCarro();
+
+        carro.CambiarTipoVehiculo(tipo);
+
+        Assert.Equal(tipo, carro.TipoVehiculo);
+    }
+
+    [Fact]
+    public void CambiarTipoVehiculo_ValorFueraDelEnum_LanzaDomainException()
+    {
+        var carro = ConstruirCarro();
+
+        Assert.Throws<DomainException>(() => carro.CambiarTipoVehiculo((TipoVehiculo)99));
+    }
+
     // --- Foto ---
 
     [Fact]

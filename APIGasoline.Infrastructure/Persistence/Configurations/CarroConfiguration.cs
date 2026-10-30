@@ -69,6 +69,15 @@ public class CarroConfiguration : IEntityTypeConfiguration<Carro>
             .IsConcurrencyToken()
             .IsRequired();
 
+        // enum('carro','moto','camioneta','camion'); los carros que ya existían quedan como 'carro'
+        builder.Property(c => c.TipoVehiculo)
+            .HasColumnName("tipo_vehiculo")
+            .HasColumnType(TipoVehiculoConverter.ColumnType)
+            .HasConversion(new TipoVehiculoConverter())
+            .HasDefaultValueSql($"'{TipoVehiculoConverter.Default}'")
+            .ValueGeneratedNever()
+            .IsRequired();
+
         // Baja del carro (HU-AST-03)
         builder.Property(c => c.DadoDeBaja)
             .HasColumnName("dado_de_baja")

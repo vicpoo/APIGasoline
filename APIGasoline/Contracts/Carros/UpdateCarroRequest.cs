@@ -28,4 +28,10 @@ public class UpdateCarroRequest
     public decimal? CapacidadTanque { get; set; }
 
     public decimal KilometrajeActual { get; set; }
+
+    /// <summary>
+    /// "carro", "moto", "camioneta" o "camion". Opcional: si no se manda se conserva el actual
+    /// (así las versiones viejas de la app no lo regresan a "carro").
+    /// </summary>
+    public TipoVehiculo? TipoVehiculo { get; set; }
 }

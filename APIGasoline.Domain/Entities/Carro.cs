@@ -31,6 +31,9 @@ public class Carro
 
     public EstadoCarro Estado { get; private set; } = EstadoCarro.Disponible;
 
+    /// <summary>Carro, moto, camioneta o camión (la app muestra el ícono según el tipo).</summary>
+    public TipoVehiculo TipoVehiculo { get; private set; } = TipoVehiculo.Carro;
+
     /// <summary>Baja del carro (HU-AST-03). El historial de viajes se conserva.</summary>
     public bool DadoDeBaja { get; private set; }
     public DateTime? FechaBaja { get; private set; }
@@ -54,7 +57,8 @@ public class Carro
         decimal? capacidadTanque,
         decimal kilometrajeActual,
         int anioActual,
-        EstadoCarro estado = EstadoCarro.Disponible)
+        EstadoCarro estado = EstadoCarro.Disponible,
+        TipoVehiculo tipoVehiculo = TipoVehiculo.Carro)
     {
         if (kilometrajeActual < 0 || kilometrajeActual > KilometrajeMaximo)
             throw new DomainException($"El kilometraje debe estar entre 0 y {KilometrajeMaximo}.");
@@ -66,6 +70,7 @@ public class Carro
         carro.CambiarFotoVehiculo(fotoVehiculo);
         carro.CambiarCapacidadTanque(capacidadTanque);
         carro.CambiarEstado(estado);
+        carro.CambiarTipoVehiculo(tipoVehiculo);
 
         return carro;
     }
@@ -145,6 +150,14 @@ public class Carro
             throw new DomainException($"El kilometraje debe estar entre 0 y {KilometrajeMaximo}.");
 
         KilometrajeActual = kilometraje;
+    }
+
+    public void CambiarTipoVehiculo(TipoVehiculo tipoVehiculo)
+    {
+        if (!Enum.IsDefined(tipoVehiculo))
+            throw new DomainException("El tipo de vehículo no es válido.");
+
+        TipoVehiculo = tipoVehiculo;
     }
 
     public void CambiarEstado(EstadoCarro estado)

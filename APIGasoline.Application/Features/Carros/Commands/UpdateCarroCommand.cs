@@ -21,7 +21,8 @@ public record UpdateCarroCommand(
     string? Color,
     string Placas,
     decimal? CapacidadTanque,
-    decimal KilometrajeActual) : IRequest<CarroDto>;
+    decimal KilometrajeActual,
+    TipoVehiculo? TipoVehiculo = null) : IRequest<CarroDto>;
 
 public class UpdateCarroCommandHandler : IRequestHandler<UpdateCarroCommand, CarroDto>
 {
@@ -49,6 +50,8 @@ public class UpdateCarroCommandHandler : IRequestHandler<UpdateCarroCommand, Car
         carro.CambiarPlacas(request.Placas);
         carro.CambiarCapacidadTanque(request.CapacidadTanque);
         carro.ActualizarKilometraje(request.KilometrajeActual);
+        if (request.TipoVehiculo is { } tipo)
+            carro.CambiarTipoVehiculo(tipo);
         // El estado NO se cambia aquí: usa /api/cambios-estatus-carro (queda en la bitácora)
 
         if (!await _unitOfWork.Empresas.ExistsAsync(carro.EmpresaId, cancellationToken))

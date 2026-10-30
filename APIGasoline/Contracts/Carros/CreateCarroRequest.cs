@@ -30,4 +30,7 @@ public class CreateCarroRequest
     public decimal KilometrajeActual { get; set; }
 
     public EstadoCarro Estado { get; set; } = EstadoCarro.Disponible;
+
+    /// <summary>"carro", "moto", "camioneta" o "camion". Si no se manda, es "carro".</summary>
+    public TipoVehiculo TipoVehiculo { get; set; } = TipoVehiculo.Carro;
 }
