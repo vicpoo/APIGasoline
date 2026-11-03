@@ -31,8 +31,8 @@ public class FiltroPuntosRutaTests
     // --- Precisión ---
 
     [Theory]
-    [InlineData(80, 2)]    // peor que 50 m: se descarta
-    [InlineData(50, 3)]    // exactamente 50 m: se acepta
+    [InlineData(40, 2)]    // peor que 25 m: se descarta
+    [InlineData(25, 3)]    // exactamente 25 m: se acepta
     [InlineData(5, 3)]
     public void Filtrar_PrecisionDelPuntoIntermedio_DecideSiSeConserva(double precision, int validosEsperados)
     {

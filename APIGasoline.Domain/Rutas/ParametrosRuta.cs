@@ -6,11 +6,14 @@
 /// </summary>
 public sealed record ParametrosRuta
 {
-    /// <summary>Valores usados por la API (versión 1 del algoritmo).</summary>
+    /// <summary>Valores usados por la API (versión 1.1 del algoritmo).</summary>
     public static ParametrosRuta PorDefecto { get; } = new();
 
-    /// <summary>Puntos con un radio de error mayor se descartan.</summary>
-    public double PrecisionMaximaMetros { get; init; } = 50;
+    /// <summary>
+    /// Puntos con un radio de error mayor se descartan. 25 m (antes 50): con el GPS cada 5 s / 10 m
+    /// llegan suficientes puntos para quedarse solo con los buenos. Debe coincidir con la app (RouteFilter).
+    /// </summary>
+    public double PrecisionMaximaMetros { get; init; } = 25;
 
     /// <summary>Un salto entre dos puntos que implique más de esta velocidad es imposible para un carro.</summary>
     public double VelocidadMaximaKmh { get; init; } = 200;

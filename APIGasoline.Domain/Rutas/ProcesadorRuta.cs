@@ -26,7 +26,8 @@ public static class ProcesadorRuta
     /// Cambiarla cada vez que cambie el algoritmo o sus umbrales, para saber qué viajes
     /// conviene reprocesar.
     /// </summary>
-    public const string VersionAlgoritmo = "1.0";
+    /// <remarks>1.1: precisión máxima de 50 m a 25 m.</remarks>
+    public const string VersionAlgoritmo = "1.1";
 
     public static ResultadoRuta Procesar(
         IReadOnlyCollection<PuntoGps> puntosCrudos,

@@ -87,7 +87,7 @@ public class RutaEscenariosTests
     public void Reprocesar_ConParametrosMasEstrictos_CambiaLosDescartados()
     {
         var viaje = IniciarViaje();
-        var puntos = RecibirPuntos(11, precision: 30m);
+        var puntos = RecibirPuntos(11, precision: 22m);
         viaje.Finalizar(Inicio.AddMinutes(5), null, null, 15002.80m);
         var crudos = puntos.Select(p => p.ToPuntoGps()).ToList();
 
