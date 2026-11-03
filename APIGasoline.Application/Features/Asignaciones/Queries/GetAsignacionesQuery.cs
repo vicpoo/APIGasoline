@@ -9,8 +9,8 @@ using MediatR;
 namespace APIGasoline.Application.Features.Asignaciones.Queries;
 
 /// <summary>
-/// Vista Asignaciones (asignacion.gestionar): todos los carros con quién los tiene y todos los
-/// empleados con sus carros, en una sola llamada. Solo la empresa del token, salvo plataforma.multiempresa.
+/// Vista Asignaciones (asignacion.gestionar): solo lo vinculado (carros con quién los tiene y
+/// empleados con sus carros), en una sola llamada. Solo la empresa del token, salvo plataforma.multiempresa.
 /// </summary>
 public record GetAsignacionesQuery(Guid? EmpresaId = null) : IRequest<AsignacionesDto>;
 

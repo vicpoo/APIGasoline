@@ -62,7 +62,7 @@ La API (APIGasoline) y la app móvil (GasolineProject) usan **autorización basa
   - Con el viaje cerrado, además se necesita `viaje.corregir_cerrado`.
 - **`carga.eliminar`:** sigue las mismas reglas que editar: motivo obligatorio (`?motivo=`), queda en la auditoría y, con el viaje cerrado, además se necesita `viaje.corregir_cerrado`.
 - **`asignacion.gestionar`** (vista Asignaciones: `GET /api/asignaciones` · `POST /api/asignaciones/{id}/desvincular`):
-  - Ve todos los carros con quién los tiene y todos los empleados con sus carros.
+  - Ve los carros vinculados a un empleado (y a cada empleado con sus carros); los que nadie tiene no aparecen.
   - Desvincula un carro de cualquier empleado: motivo obligatorio, la bitácora queda a su nombre y el empleado recibe una notificación.
   - No se puede desvincular con un viaje en curso o en pausa.
 - **Dejar carro (`viaje.registrar`, `POST /api/solicitudes-reserva/{id}/liberar`):** cada empleado deja solo SU carro; no se puede con un viaje en curso o en pausa (la app también lo bloquea si hay un viaje sin sincronizar).

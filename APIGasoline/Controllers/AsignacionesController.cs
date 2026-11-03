@@ -26,7 +26,7 @@ public class AsignacionesController : ControllerBase
     }
 
     /// <summary>
-    /// Todos los carros (con quién los tiene) y todos los empleados (con sus carros) de la empresa.
+    /// Solo lo vinculado: los carros que tiene algún empleado y los empleados con al menos un carro.
     /// Cada asignación indica si tiene un viaje en curso (entonces no se puede desvincular).
     /// </summary>
     [RequierePrivilegio(Permisos.AsignacionGestionar)]

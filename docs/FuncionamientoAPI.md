@@ -186,7 +186,7 @@ El catálogo completo de privilegios está en `docs/CatalogoPrivilegios.md`.
 
 | Método | Ruta | Privilegio | Qué hace |
 |---|---|---|---|
-| GET | `/api/asignaciones` | `asignacion.gestionar` | Todos los carros (con quién los tiene) y todos los empleados (con sus carros), con `tieneViajeEnCurso` en cada asignación. |
+| GET | `/api/asignaciones` | `asignacion.gestionar` | Solo lo vinculado: los carros que tiene algún empleado (con quién) y los empleados con al menos un carro, con `tieneViajeEnCurso` en cada asignación. |
 | POST | `/api/asignaciones/{solicitudReservaId}/desvincular` | `asignacion.gestionar` | Le quita el carro al empleado (`motivo` obligatorio): reserva finalizada, carro disponible, bitácora a nombre del administrador y push al empleado. 409 con un viaje en curso o en pausa. |
 
 ### 4.5 Viajes

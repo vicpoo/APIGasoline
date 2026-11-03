@@ -6,8 +6,9 @@ namespace APIGasoline.Application.Features.Asignaciones.Common;
 
 /// <summary>
 /// Arma la vista Asignaciones a partir de datos ya cargados (sin BD ni red, se prueba sola).
-/// - Carros: todos los que no están dados de baja, ordenados por placas.
-/// - Empleados: todos, primero los que tienen carro y luego por nombre.
+/// Solo lo VINCULADO (lo que se puede desvincular):
+/// - Carros: los que tiene asignados un empleado (sin los dados de baja), ordenados por placas.
+/// - Empleados: los que tienen al menos un carro, ordenados por nombre.
 /// - Una asignación es una reserva aprobada; si el carro tuviera más de una (dato inconsistente)
 ///   se toma la más reciente.
 /// </summary>
@@ -37,26 +38,23 @@ public static class ArmadoAsignaciones
             .GroupBy(r => r.CarroId)
             .ToDictionary(g => g.Key, g => g.OrderByDescending(r => r.FechaResolucion ?? r.FechaSolicitud).First());
 
-        var listaCarros = carros
-            .Where(c => !c.DadoDeBaja)
-            .OrderBy(c => c.Placas, StringComparer.OrdinalIgnoreCase)
-            .Select(c =>
-            {
-                AsignacionCarroDto? asignacion = null;
-                if (reservaPorCarro.TryGetValue(c.CarroId, out var reserva)
-                    && empleadosPorId.TryGetValue(reserva.EmpleadoSolicitanteId, out var empleado))
-                {
-                    asignacion = new AsignacionCarroDto(
-                        reserva.SolicitudReservaId,
-                        new EmpleadoResumenDto(empleado.EmpleadoId, empleado.NombreCompleto, url(empleado.FotoPerfil)),
-                        reserva.FechaResolucion,
-                        reservasConViajeEnCurso.Contains(reserva.SolicitudReservaId));
-                }
+        var listaCarros = new List<CarroAsignacionDto>();
+        foreach (var c in carros.Where(x => !x.DadoDeBaja).OrderBy(x => x.Placas, StringComparer.OrdinalIgnoreCase))
+        {
+            // Solo los carros que alguien tiene
+            if (!reservaPorCarro.TryGetValue(c.CarroId, out var reserva)
+                || !empleadosPorId.TryGetValue(reserva.EmpleadoSolicitanteId, out var empleado))
+                continue;
 
-                return new CarroAsignacionDto(
-                    c.CarroId, c.Marca, c.Modelo, c.Anio, c.Color, c.Placas, url(c.FotoVehiculo), c.Estado, asignacion);
-            })
-            .ToList();
+            var asignacion = new AsignacionCarroDto(
+                reserva.SolicitudReservaId,
+                new EmpleadoResumenDto(empleado.EmpleadoId, empleado.NombreCompleto, url(empleado.FotoPerfil)),
+                reserva.FechaResolucion,
+                reservasConViajeEnCurso.Contains(reserva.SolicitudReservaId));
+
+            listaCarros.Add(new CarroAsignacionDto(
+                c.CarroId, c.Marca, c.Modelo, c.Anio, c.Color, c.Placas, url(c.FotoVehiculo), c.Estado, asignacion));
+        }
 
         var reservasPorEmpleado = reservaPorCarro.Values
             .GroupBy(r => r.EmpleadoSolicitanteId)
@@ -84,8 +82,8 @@ public static class ArmadoAsignaciones
 
                 return new EmpleadoAsignacionDto(e.EmpleadoId, e.NombreCompleto, url(e.FotoPerfil), asignados);
             })
-            .OrderByDescending(e => e.Carros.Count > 0)
-            .ThenBy(e => e.NombreCompleto, StringComparer.CurrentCultureIgnoreCase)
+            .Where(e => e.Carros.Count > 0)
+            .OrderBy(e => e.NombreCompleto, StringComparer.CurrentCultureIgnoreCase)
             .ToList();
 
         return new AsignacionesDto(listaCarros, listaEmpleados);

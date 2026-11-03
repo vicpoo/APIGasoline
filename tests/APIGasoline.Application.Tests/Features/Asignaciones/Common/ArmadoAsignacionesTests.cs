@@ -34,7 +34,6 @@ public class ArmadoAsignacionesTests
         var resultado = ArmadoAsignaciones.Armar([carro], [ana], [reserva], new HashSet<Guid>(), Url);
 
         var asignacion = Assert.Single(resultado.Carros).Asignacion;
-        Assert.NotNull(asignacion);
         Assert.Equal(reserva.SolicitudReservaId, asignacion.SolicitudReservaId);
         Assert.Equal("Ana", asignacion.Empleado.NombreCompleto);
         Assert.Equal("https://cdn/perfiles/10.jpg", asignacion.Empleado.FotoPerfilUrl);
@@ -46,12 +45,12 @@ public class ArmadoAsignacionesTests
     }
 
     [Fact]
-    public void Armar_CarroSinReserva_NoTieneAsignacion()
+    public void Armar_CarroYEmpleadoSinVincular_NoAparecen()
     {
         var resultado = ArmadoAsignaciones.Armar([NuevoCarro("ABC-123")], [NuevoEmpleado("Ana", 10)], [], new HashSet<Guid>(), Url);
 
-        Assert.Null(Assert.Single(resultado.Carros).Asignacion);
-        Assert.Empty(Assert.Single(resultado.Empleados).Carros);
+        Assert.Empty(resultado.Carros);
+        Assert.Empty(resultado.Empleados);
     }
 
     [Fact]
@@ -63,19 +62,23 @@ public class ArmadoAsignacionesTests
 
         var resultado = ArmadoAsignaciones.Armar([carro], [ana], [reserva], new HashSet<Guid> { reserva.SolicitudReservaId }, Url);
 
-        Assert.True(Assert.Single(resultado.Carros).Asignacion!.TieneViajeEnCurso);
+        Assert.True(Assert.Single(resultado.Carros).Asignacion.TieneViajeEnCurso);
         Assert.True(Assert.Single(Assert.Single(resultado.Empleados).Carros).TieneViajeEnCurso);
     }
 
     [Fact]
     public void Armar_CarroDadoDeBaja_NoAparece()
     {
+        var ana = NuevoEmpleado("Ana", 10);
         var baja = NuevoCarro("BAJA-1");
+        var reservaBaja = Aprobada(baja, ana);
         baja.DarDeBaja(Hoy, "Vendido");
+        var activo = NuevoCarro("ABC-123", EstadoCarro.Ocupado);
 
-        var resultado = ArmadoAsignaciones.Armar([baja, NuevoCarro("ABC-123")], [], [], new HashSet<Guid>(), Url);
+        var resultado = ArmadoAsignaciones.Armar([baja, activo], [ana], [reservaBaja, Aprobada(activo, ana)], new HashSet<Guid>(), Url);
 
         Assert.Equal("ABC-123", Assert.Single(resultado.Carros).Placas);
+        Assert.Equal("ABC-123", Assert.Single(Assert.Single(resultado.Empleados).Carros).Carro.Placas);
     }
 
     [Fact]
@@ -89,20 +92,23 @@ public class ArmadoAsignacionesTests
 
         var resultado = ArmadoAsignaciones.Armar([carro], [ana, beto], [vieja, nueva], new HashSet<Guid>(), Url);
 
-        Assert.Equal("Beto", Assert.Single(resultado.Carros).Asignacion!.Empleado.NombreCompleto);
-        Assert.Empty(resultado.Empleados.Single(e => e.NombreCompleto == "Ana").Carros);
+        Assert.Equal("Beto", Assert.Single(resultado.Carros).Asignacion.Empleado.NombreCompleto);
+        // Ana ya no tiene ese carro: no aparece
+        Assert.Equal("Beto", Assert.Single(resultado.Empleados).NombreCompleto);
     }
 
     [Fact]
-    public void Armar_Empleados_PrimeroLosQueTienenCarroYLuegoPorNombre()
+    public void Armar_Empleados_SoloLosQueTienenCarroYPorNombre()
     {
-        var carro = NuevoCarro("ABC-123", EstadoCarro.Ocupado);
+        var versa = NuevoCarro("ABC-123", EstadoCarro.Ocupado);
+        var aveo = NuevoCarro("XYZ-987", EstadoCarro.Ocupado);
         var ana = NuevoEmpleado("Ana", 10);
         var zoe = NuevoEmpleado("Zoe", 11);
         var beto = NuevoEmpleado("Beto", 12);
 
-        var resultado = ArmadoAsignaciones.Armar([carro], [ana, zoe, beto], [Aprobada(carro, zoe)], new HashSet<Guid>(), Url);
+        var resultado = ArmadoAsignaciones.Armar(
+            [versa, aveo], [ana, zoe, beto], [Aprobada(versa, zoe), Aprobada(aveo, ana)], new HashSet<Guid>(), Url);
 
-        Assert.Equal(new[] { "Zoe", "Ana", "Beto" }, resultado.Empleados.Select(e => e.NombreCompleto));
+        Assert.Equal(new[] { "Ana", "Zoe" }, resultado.Empleados.Select(e => e.NombreCompleto));
     }
 }
