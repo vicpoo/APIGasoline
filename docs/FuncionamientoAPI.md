@@ -166,7 +166,7 @@ El catálogo completo de privilegios está en `docs/CatalogoPrivilegios.md`.
 |---|---|---|---|
 | GET | `/api/cambios-estatus-carro` | `carro.ver`, `carro.cambiar_estatus` | Bitácora. Filtros: `?empresaId=`, `?carroId=`, `?desde=`, `?hasta=`. |
 | GET | `/api/cambios-estatus-carro/{id}` | `carro.ver`, `carro.cambiar_estatus` | Un cambio. |
-| POST | `/api/cambios-estatus-carro` | `carro.cambiar_estatus`, `viaje.registrar` | Cambia el estatus a disponible o en mantenimiento, y lo registra en la bitácora. |
+| POST | `/api/cambios-estatus-carro` | `carro.cambiar_estatus`, `viaje.registrar` | Cambia el estatus a disponible o en mantenimiento, y lo registra en la bitácora. Un carro ocupado no se pasa a disponible aquí (409): se libera con "liberar" o "desvincular". |
 | PUT | `/api/cambios-estatus-carro/{id}/foto-evidencia` | `carro.cambiar_estatus`, `viaje.registrar` | Foto de la falla o del daño. |
 
 ### 4.4 Solicitudes de reserva
@@ -179,8 +179,15 @@ El catálogo completo de privilegios está en `docs/CatalogoPrivilegios.md`.
 | POST | `/api/solicitudes-reserva/{id}/aprobar` | `solicitud.aprobar` | La aprueba: ocupa el carro y rechaza las demás pendientes de ese carro. |
 | POST | `/api/solicitudes-reserva/{id}/rechazar` | `solicitud.rechazar` | La rechaza. |
 | POST | `/api/solicitudes-reserva/{id}/cancelar` | `solicitud.crear`, `solicitud.aprobar` | La cancela. Si estaba aprobada, libera el carro. |
-| POST | `/api/solicitudes-reserva/{id}/liberar` | `viaje.registrar`, `solicitud.aprobar` | El operador entrega el carro: la reserva queda finalizada y el carro, disponible. |
+| POST | `/api/solicitudes-reserva/{id}/liberar` | `viaje.registrar`, `asignacion.gestionar` | El operador entrega SU carro ("Dejar carro"): la reserva queda finalizada y el carro, disponible. La de otro empleado requiere `asignacion.gestionar`. 409 con un viaje en curso o en pausa. |
 | DELETE | `/api/solicitudes-reserva/{id}` | `solicitud.aprobar` | La borra. |
+
+**Asignaciones (quién tiene cada carro)**
+
+| Método | Ruta | Privilegio | Qué hace |
+|---|---|---|---|
+| GET | `/api/asignaciones` | `asignacion.gestionar` | Todos los carros (con quién los tiene) y todos los empleados (con sus carros), con `tieneViajeEnCurso` en cada asignación. |
+| POST | `/api/asignaciones/{solicitudReservaId}/desvincular` | `asignacion.gestionar` | Le quita el carro al empleado (`motivo` obligatorio): reserva finalizada, carro disponible, bitácora a nombre del administrador y push al empleado. 409 con un viaje en curso o en pausa. |
 
 ### 4.5 Viajes
 

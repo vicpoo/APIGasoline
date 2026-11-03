@@ -70,6 +70,12 @@ public static class Permisos
     /// <summary>Cambiar el estatus de un carro (disponible / mantenimiento / baja...).</summary>
     public const string CarroCambiarEstatus = "carro.cambiar_estatus";
 
+    /// <summary>
+    /// Ver quién tiene cada carro (vista Asignaciones) y desvincular un carro de cualquier empleado
+    /// para que otro lo pueda usar. Cada empleado puede dejar su propio carro sin este privilegio.
+    /// </summary>
+    public const string AsignacionGestionar = "asignacion.gestionar";
+
     public const string SolicitudCrear = "solicitud.crear";
 
     /// <summary>Ver el status de sus propias solicitudes.</summary>
@@ -147,6 +153,7 @@ public static class Permisos
         new(CarroEditar, "Editar vehículos", "Editar vehículos", AmbitoPrivilegio.Empresa),
         new(CarroEliminar, "Eliminar vehículos", "Eliminar vehículos", AmbitoPrivilegio.Empresa),
         new(CarroCambiarEstatus, "Cambiar estatus de vehículos", "Mandar a mantenimiento, liberar o dar de baja un vehículo.", AmbitoPrivilegio.Empresa),
+        new(AsignacionGestionar, "Administrar asignaciones de vehículos", "Ver quién tiene cada vehículo y desvincularlo de un empleado.", AmbitoPrivilegio.Empresa),
         new(SolicitudCrear, "Solicitar un vehículo", "Solicitar un vehículo", AmbitoPrivilegio.Empresa),
         new(SolicitudVerPropias, "Ver mis solicitudes", "Ver el status de mis solicitudes.", AmbitoPrivilegio.Empresa),
         new(SolicitudVerTodas, "Ver las solicitudes de la empresa", "Ver todas las solicitudes de la empresa.", AmbitoPrivilegio.Empresa),

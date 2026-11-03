@@ -1,8 +1,8 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Common.Interfaces;
+using APIGasoline.Application.Common.Security;
+using APIGasoline.Application.Features.SolicitudesReserva.Common;
 using APIGasoline.Application.Features.SolicitudesReserva.DTOs;
-using APIGasoline.Domain.Entities;
-using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
 using MediatR;
@@ -10,9 +10,11 @@ using MediatR;
 namespace APIGasoline.Application.Features.SolicitudesReserva.Commands;
 
 /// <summary>
-/// HU-USO-04: el operador terminó todos sus viajes con el carro y lo libera.
+/// HU-USO-04: el operador terminó todos sus viajes con el carro y lo libera ("Dejar carro" en la app).
 /// La reserva pasa a "finalizada" (con fecha y observaciones) y el carro vuelve a "disponible";
 /// el cambio queda en la bitácora de estatus como "liberacion".
+/// Cada quien libera solo SU reserva; la de otro empleado, solo con asignacion.gestionar
+/// (para eso la app usa "Desvincular", que además pide motivo y avisa al empleado).
 /// </summary>
 /// <param name="FechaLiberacion">Hora del celular (puede registrarse offline). Si no viene, la del servidor.</param>
 public record LiberarSolicitudReservaCommand(
@@ -25,12 +27,14 @@ public class LiberarSolicitudReservaCommandHandler : IRequestHandler<LiberarSoli
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly IDateTimeProvider _dateTime;
+    private readonly IUsuarioActual _usuarioActual;
 
-    public LiberarSolicitudReservaCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IDateTimeProvider dateTime)
+    public LiberarSolicitudReservaCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IDateTimeProvider dateTime, IUsuarioActual usuarioActual)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _dateTime = dateTime;
+        _usuarioActual = usuarioActual;
     }
 
     public async Task<SolicitudReservaDto> Handle(LiberarSolicitudReservaCommand request, CancellationToken cancellationToken)
@@ -38,30 +42,24 @@ public class LiberarSolicitudReservaCommandHandler : IRequestHandler<LiberarSoli
         var solicitud = await _unitOfWork.SolicitudesReserva.GetByIdAsync(request.SolicitudReservaId, cancellationToken)
             ?? throw new NotFoundException($"No existe una solicitud de reserva con el id {request.SolicitudReservaId}.");
 
-        if (await _unitOfWork.Viajes.ExisteEnCursoPorSolicitudAsync(solicitud.SolicitudReservaId, cancellationToken))
-            throw new ConflictException("No se puede liberar el carro porque tiene un viaje en curso. Finaliza el viaje primero.");
+        // Solo su empresa, y solo su propia reserva salvo que tenga asignacion.gestionar
+        await _usuarioActual.ValidarEmpresaAsync(solicitud.EmpresaId, cancellationToken);
+        await _usuarioActual.ValidarPropioOPrivilegioAsync(
+            solicitud.EmpleadoSolicitanteId == _usuarioActual.EmpleadoId,
+            Permisos.AsignacionGestionar,
+            cancellationToken);
 
         var fecha = request.FechaLiberacion ?? _dateTime.Now;
 
-        // El dominio valida que la reserva esté aprobada
-        solicitud.Finalizar(fecha, request.Observaciones);
-
-        var carro = await _unitOfWork.Carros.GetByIdAsync(solicitud.CarroId, cancellationToken)
-            ?? throw new NotFoundException($"No existe un carro con el id {solicitud.CarroId}.");
-
-        // Libera el carro y deja el registro en la bitácora (a nombre del solicitante)
-        if (carro.Estado == EstadoCarro.Ocupado)
-        {
-            var cambio = CambioEstatusCarro.Registrar(
-                carro,
-                solicitud.EmpleadoSolicitanteId,
-                EstadoCarro.Disponible,
-                solicitud.ObservacionesLiberacion ?? $"Liberado al terminar la reserva {solicitud.SolicitudReservaId}.",
-                fechaCambio: fecha,
-                tipoMotivo: TipoMotivoCambio.Liberacion);
-
-            await _unitOfWork.CambiosEstatusCarro.AddAsync(cambio, cancellationToken);
-        }
+        // La bitácora queda a nombre del solicitante (es quien deja el carro)
+        await LiberacionReserva.LiberarAsync(
+            _unitOfWork,
+            solicitud,
+            solicitud.EmpleadoSolicitanteId,
+            fecha,
+            request.Observaciones,
+            motivoBitacora: null,
+            cancellationToken);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

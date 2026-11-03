@@ -92,10 +92,11 @@ public class SolicitudesReservaController : ControllerBase
     }
 
     /// <summary>
-    /// HU-USO-04: el operador libera el carro al terminar sus viajes. La reserva queda "finalizada"
-    /// y el carro vuelve a "disponible". No se puede liberar con un viaje en curso.
+    /// HU-USO-04: el operador libera el carro al terminar sus viajes ("Dejar carro"). La reserva queda
+    /// "finalizada" y el carro vuelve a "disponible". No se puede liberar con un viaje en curso.
+    /// Solo la reserva propia; la de otro empleado requiere asignacion.gestionar.
     /// </summary>
-    [RequierePrivilegio(Permisos.ViajeRegistrar, Permisos.SolicitudAprobar)]
+    [RequierePrivilegio(Permisos.ViajeRegistrar, Permisos.AsignacionGestionar)]
     [HttpPost("{solicitudReservaId:guid}/liberar")]
     public async Task<ActionResult<SolicitudReservaDto>> Liberar(Guid solicitudReservaId, LiberarSolicitudReservaRequest request, CancellationToken cancellationToken)
     {

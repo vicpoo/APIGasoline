@@ -61,6 +61,12 @@ public class CambiarEstatusCarroCommandHandler : IRequestHandler<CambiarEstatusC
         if (empleado.EmpresaId != carro.EmpresaId)
             throw new BadRequestException($"El empleado {empleado.EmpleadoId} no pertenece a la empresa del carro.");
 
+        // Un carro ocupado tiene una reserva aprobada: pasarlo a "disponible" aquí dejaría la reserva
+        // abierta (el empleado lo seguiría viendo como suyo). Se libera con "Dejar carro" o "Desvincular".
+        if (request.EstatusNuevo == EstadoCarro.Disponible && carro.Estado == EstadoCarro.Ocupado)
+            throw new ConflictException(
+                "El carro está asignado a un empleado. Para liberarlo, desvincúlalo desde Asignaciones o que el empleado use \"Dejar carro\".");
+
         Viaje? viajeAfectado = null;
 
         if (request.ViajeAfectadoId is not null)
