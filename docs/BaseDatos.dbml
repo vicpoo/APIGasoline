@@ -1,10 +1,11 @@
 // ============================================================
 // BASE DE DATOS — APP DE COMBUSTIBLE
-// Versión 8: viajes tipo Strava + combustible, con módulo secundario de auditoría y trazabilidad
+// Versión 9: viajes tipo Strava + combustible, con módulo secundario de auditoría y trazabilidad
 // 🔐 v5 = RBAC listo para el front: privilegios por clave, ámbito y roles globales únicos
 // 🧾 v6 = centro de costos en viaje y carga_combustible (FK compuesta, misma empresa)
 // ⏸️ v7 = pausas de viaje (viaje_pausa): pausar / reanudar un viaje en curso
 // 📝 v8 = motivo de la solicitud de reserva (motivo_solicitud): lo escribe quien pide el carro
+// 🚚 v9 = tipo de vehículo del carro (tipo_vehiculo): carro, moto, camioneta o camión
 // ============================================================
 
 
@@ -251,6 +252,12 @@ Table carro {
     'ocupado',
     'en_mantenimiento'
   ) [not null, default: 'disponible']
+  tipo_vehiculo enum(
+    'carro',
+    'moto',
+    'camioneta',
+    'camion'
+  ) [not null, default: 'carro', note: '🚚 v9. Tipo de vehículo; la app cambia el ícono de la tarjeta según el tipo. Los carros anteriores a v9 quedaron como carro.']
   dado_de_baja boolean [not null, default: false, note: '🆕 HU-AST-03. El historial de viajes se conserva.']
   fecha_baja timestamp [note: '🆕']
   motivo_baja varchar(255) [note: '🆕']

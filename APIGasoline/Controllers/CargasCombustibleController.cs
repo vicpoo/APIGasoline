@@ -64,7 +64,7 @@ public class CargasCombustibleController : ControllerBase
             request.Litros!.Value,
             request.Monto,
             request.FotoComprobante.ToArchivoEntrada(contenido),
-            request.FechaCarga!.Value,
+            request.FechaCarga!.Value.AHoraLocal(),
             request.UbicacionLat,
             request.UbicacionLng,
             request.CentroCostoId);
@@ -93,7 +93,7 @@ public class CargasCombustibleController : ControllerBase
             request.Litros!.Value,
             request.Monto,
             request.FotoComprobante is null || contenido is null ? null : request.FotoComprobante.ToArchivoEntrada(contenido),
-            request.FechaCarga!.Value,
+            request.FechaCarga!.Value.AHoraLocal(),
             request.UbicacionLat,
             request.UbicacionLng,
             request.Motivo,
