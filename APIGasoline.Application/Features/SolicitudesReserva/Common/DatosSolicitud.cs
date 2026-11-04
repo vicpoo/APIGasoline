@@ -43,7 +43,8 @@ internal static class DatosSolicitud
                 Solicitante = empleado is null ? null : await ResumenAsync(empleado, urls, cancellationToken),
                 Carro = carro is null ? null : new CarroResumenDto(
                     carro.CarroId, carro.Marca, carro.Modelo, carro.Anio, carro.Color, carro.Placas,
-                    await urls.ObtenerAsync(carro.FotoVehiculo, cancellationToken))
+                    await urls.ObtenerAsync(carro.FotoVehiculo, cancellationToken),
+                    carro.TipoVehiculo)
             });
         }
 

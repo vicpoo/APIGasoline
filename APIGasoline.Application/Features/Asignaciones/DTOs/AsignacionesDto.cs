@@ -21,7 +21,9 @@ public record CarroAsignacionDto(
     string Placas,
     string? FotoVehiculoUrl,
     EstadoCarro Estado,
-    AsignacionCarroDto Asignacion);
+    AsignacionCarroDto Asignacion,
+    /// <summary>Para el ícono de la tarjeta en la app (la vista ya no muestra fotos).</summary>
+    TipoVehiculo TipoVehiculo = TipoVehiculo.Carro);
 
 /// <summary>Quién tiene el carro, desde cuándo y si hay un viaje en curso (no se puede desvincular).</summary>
 public record AsignacionCarroDto(

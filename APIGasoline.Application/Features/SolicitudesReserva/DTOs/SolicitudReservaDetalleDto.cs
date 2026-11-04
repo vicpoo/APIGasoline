@@ -46,7 +46,9 @@ public record CarroResumenDto(
     int? Anio,
     string? Color,
     string Placas,
-    string? FotoVehiculoUrl);
+    string? FotoVehiculoUrl,
+    /// <summary>Para el ícono de la tarjeta en la app.</summary>
+    TipoVehiculo TipoVehiculo = TipoVehiculo.Carro);
 
 /// <summary>Carro en el detalle de la solicitud.</summary>
 public record CarroDetalleDto(

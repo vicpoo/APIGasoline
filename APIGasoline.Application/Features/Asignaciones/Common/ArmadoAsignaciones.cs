@@ -53,7 +53,7 @@ public static class ArmadoAsignaciones
                 reservasConViajeEnCurso.Contains(reserva.SolicitudReservaId));
 
             listaCarros.Add(new CarroAsignacionDto(
-                c.CarroId, c.Marca, c.Modelo, c.Anio, c.Color, c.Placas, url(c.FotoVehiculo), c.Estado, asignacion));
+                c.CarroId, c.Marca, c.Modelo, c.Anio, c.Color, c.Placas, url(c.FotoVehiculo), c.Estado, asignacion, c.TipoVehiculo));
         }
 
         var reservasPorEmpleado = reservaPorCarro.Values
@@ -71,7 +71,7 @@ public static class ArmadoAsignaciones
                             var carro = carrosPorId[r.CarroId];
                             return new AsignacionEmpleadoDto(
                                 r.SolicitudReservaId,
-                                new CarroResumenDto(carro.CarroId, carro.Marca, carro.Modelo, carro.Anio, carro.Color, carro.Placas, url(carro.FotoVehiculo)),
+                                new CarroResumenDto(carro.CarroId, carro.Marca, carro.Modelo, carro.Anio, carro.Color, carro.Placas, url(carro.FotoVehiculo), carro.TipoVehiculo),
                                 carro.Estado,
                                 r.FechaResolucion,
                                 reservasConViajeEnCurso.Contains(r.SolicitudReservaId));

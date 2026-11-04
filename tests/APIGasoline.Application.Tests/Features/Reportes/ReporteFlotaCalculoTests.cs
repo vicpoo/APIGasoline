@@ -19,9 +19,10 @@ public class ReporteFlotaCalculoTests
         IReadOnlyList<CarroReporte> carros,
         IReadOnlyList<ViajesPorCarro>? viajes = null,
         IReadOnlyList<CargasPorCarro>? cargas = null,
-        IReadOnlyList<KmGpsPorCarro>? gps = null)
+        IReadOnlyList<KmGpsPorCarro>? gps = null,
+        IReadOnlyList<CargaDetalle>? detalle = null)
         => new(ReporteFlotaCalculo.Armar(Id(100), "Grupo de prueba", null, null, null, Ahora,
-            carros, viajes ?? [], cargas ?? [], gps ?? []));
+            carros, viajes ?? [], cargas ?? [], gps ?? [], detalle));
 
     /// <summary>Envoltorio para leer el resultado más corto en las pruebas.</summary>
     private sealed record ReporteFlotaArmado(APIGasoline.Application.Features.Reportes.DTOs.ReporteFlotaDto Reporte)
@@ -48,6 +49,49 @@ public class ReporteFlotaCalculoTests
         Assert.Equal(1_000m, fila.Gasto);
         Assert.Equal(10m, fila.RendimientoKmPorLitro); // 400 km / 40 L
         Assert.Equal(2.5m, fila.CostoPorKm);           // $1000 / 400 km
+    }
+
+    // ---------------- Detalle de cargas (PDF / Excel) ----------------
+
+    [Fact]
+    public void DetalleCargas_OrdenadasPorFecha_ConVehiculoYCentroDeCostos()
+    {
+        var r = Armar(
+            [Carro(Vocho, "AAA-111"), Carro(Tsuru, "BBB-222")],
+            cargas: [new CargasPorCarro(Vocho, 1, 40m, 1_000m), new CargasPorCarro(Tsuru, 1, 30m, 700m)],
+            detalle:
+            [
+                new CargaDetalle(Id(11), Ahora.AddHours(-1), Tsuru, 30m, 700m, null, null),
+                new CargaDetalle(Id(10), Ahora.AddDays(-1), Vocho, 40.004m, 1_000m, "ADM", "Administración"),
+            ]);
+
+        var detalle = r.Reporte.DetalleCargas!;
+        Assert.Equal(2, detalle.Count);
+        Assert.Equal(Id(10), detalle[0].CargaCombustibleId);
+        Assert.Equal("AAA-111", detalle[0].Placas);
+        Assert.Equal("Nissan Tsuru 2018", detalle[0].Vehiculo);
+        Assert.Equal(40m, detalle[0].Litros);
+        Assert.Equal("ADM · Administración", detalle[0].CentroCosto);
+        Assert.Null(detalle[1].CentroCosto);
+    }
+
+    [Fact]
+    public void DetalleCargas_DeUnCarroFueraDelReporte_NoAparece()
+    {
+        // Carro dado de baja sin movimiento: no queda en el reporte, así que su carga tampoco
+        var r = Armar([Carro(Vocho, "AAA-111")], detalle: [new CargaDetalle(Id(10), Ahora, Baja, 20m, 500m, null, null)]);
+
+        Assert.Empty(r.Reporte.DetalleCargas!);
+    }
+
+    [Theory]
+    [InlineData("ADM", "Administración", "ADM · Administración")]
+    [InlineData(null, "Ventas", "Ventas")]
+    [InlineData("OPS", " ", "OPS")]
+    [InlineData(null, null, null)]
+    public void NombreCentroCosto_ClaveYNombre(string? clave, string? nombre, string? esperado)
+    {
+        Assert.Equal(esperado, ReporteFlotaCalculo.NombreCentroCosto(clave, nombre));
     }
 
     [Fact]

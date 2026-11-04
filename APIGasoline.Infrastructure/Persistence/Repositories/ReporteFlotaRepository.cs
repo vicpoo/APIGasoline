@@ -88,6 +88,71 @@ public sealed class ReporteFlotaRepository : IReporteFlotaRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<CargaDetalle>> GetDetalleCargasAsync(
+        Guid? empresaId,
+        Guid? carroId,
+        DateTime? desde,
+        DateTime? hasta,
+        CancellationToken cancellationToken = default)
+    {
+        var cargas = _context.CargasCombustible.AsNoTracking();
+
+        if (empresaId is not null)
+            cargas = cargas.Where(c => c.EmpresaId == empresaId);
+
+        if (desde is not null)
+            cargas = cargas.Where(c => c.FechaCarga >= desde);
+
+        if (hasta is not null)
+            cargas = cargas.Where(c => c.FechaCarga <= hasta);
+
+        // El carro sale del viaje; el centro de costos es el de la carga o, si no tiene, el del viaje
+        var consulta =
+            from c in cargas
+            join v in _context.Viajes.AsNoTracking() on c.ViajeId equals v.ViajeId
+            select new
+            {
+                c.CargaCombustibleId,
+                c.FechaCarga,
+                v.CarroId,
+                c.Litros,
+                c.Monto,
+                CentroCostoId = c.CentroCostoId ?? v.CentroCostoId,
+            };
+
+        if (carroId is not null)
+            consulta = consulta.Where(x => x.CarroId == carroId);
+
+        var filas = await consulta
+            .OrderBy(x => x.FechaCarga)
+            .ThenBy(x => x.CargaCombustibleId)
+            .ToListAsync(cancellationToken);
+
+        // Los centros de costo en una segunda consulta (pocos): evita un LEFT JOIN sobre un COALESCE
+        var idsCentros = filas.Where(x => x.CentroCostoId is not null).Select(x => x.CentroCostoId!.Value).Distinct().ToList();
+        var centros = idsCentros.Count == 0
+            ? new Dictionary<Guid, (string Clave, string Nombre)>()
+            : await _context.CentrosCosto.AsNoTracking()
+                .Where(cc => idsCentros.Contains(cc.CentroCostoId))
+                .ToDictionaryAsync(cc => cc.CentroCostoId, cc => (cc.Clave, cc.Nombre), cancellationToken);
+
+        return filas
+            .Select(x =>
+            {
+                (string Clave, string Nombre)? centro =
+                    x.CentroCostoId is { } id && centros.TryGetValue(id, out var cc) ? cc : null;
+                return new CargaDetalle(
+                    x.CargaCombustibleId,
+                    x.FechaCarga,
+                    x.CarroId,
+                    x.Litros,
+                    x.Monto,
+                    centro?.Clave,
+                    centro?.Nombre);
+            })
+            .ToList();
+    }
+
     public async Task<IReadOnlyList<KmGpsPorCarro>> GetKmGpsPorCarroAsync(
         Guid? empresaId,
         Guid? carroId,

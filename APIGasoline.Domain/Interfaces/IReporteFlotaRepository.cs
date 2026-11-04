@@ -18,6 +18,9 @@ public interface IReporteFlotaRepository
     /// <summary>Cargas cuya fecha de carga cae en el periodo.</summary>
     Task<IReadOnlyList<CargasPorCarro>> GetCargasPorCarroAsync(Guid? empresaId, Guid? carroId, DateTime? desde, DateTime? hasta, CancellationToken cancellationToken = default);
 
+    /// <summary>Cada carga del periodo (por fecha de la carga) con su centro de costos, de la más antigua a la más reciente.</summary>
+    Task<IReadOnlyList<CargaDetalle>> GetDetalleCargasAsync(Guid? empresaId, Guid? carroId, DateTime? desde, DateTime? hasta, CancellationToken cancellationToken = default);
+
     /// <summary>Km GPS de los viajes que iniciaron en el periodo y ya tienen ruta procesada.</summary>
     Task<IReadOnlyList<KmGpsPorCarro>> GetKmGpsPorCarroAsync(Guid? empresaId, Guid? carroId, DateTime? desde, DateTime? hasta, CancellationToken cancellationToken = default);
 }

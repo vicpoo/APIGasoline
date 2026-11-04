@@ -44,6 +44,15 @@ internal static class TextosReporte
             _ => carro.Estado.ToString(),
         };
 
+    /// <summary>Texto de la columna "Centro de costos" cuando la carga (ni su viaje) tiene uno.</summary>
+    public const string SinCentroCosto = "Sin centro de costos";
+
+    public static string CentroCosto(CargaReporteDto carga) => carga.CentroCosto ?? SinCentroCosto;
+
+    /// <summary>Precio por litro de una carga (— si no tiene monto).</summary>
+    public static decimal? PrecioLitro(CargaReporteDto carga)
+        => carga.Monto is { } monto && monto > 0 && carga.Litros > 0 ? Math.Round(monto / carga.Litros, 2) : null;
+
     public static string Vehiculo(CarroReporteDto carro)
         => carro.Anio is { } anio ? $"{carro.Marca} {carro.Modelo} {anio}" : $"{carro.Marca} {carro.Modelo}";
 }

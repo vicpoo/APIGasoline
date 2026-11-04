@@ -8,8 +8,8 @@ using static APIGasoline.Infrastructure.Reportes.TextosReporte;
 namespace APIGasoline.Infrastructure.Reportes;
 
 /// <summary>
-/// Reporte en PDF con PDFsharp-MigraDoc (licencia MIT): encabezado, tarjetas de resumen y la tabla
-/// por carro. Colores y tipografía de la app (azul #476D9E, títulos #080D38, Poppins).
+/// Reporte en PDF con PDFsharp-MigraDoc (licencia MIT): encabezado, tarjetas de resumen, la tabla
+/// por carro y el detalle de cada carga de gasolina con su centro de costos. Colores y tipografía de la app (azul #476D9E, títulos #080D38, Poppins).
 /// </summary>
 public sealed class ReportePdfGenerator : IReportePdfGenerator
 {
@@ -45,6 +45,7 @@ public sealed class ReportePdfGenerator : IReportePdfGenerator
         Encabezado(seccion, reporte);
         Resumen(seccion, reporte.Resumen);
         TablaPorCarro(seccion, reporte);
+        TablaCargas(seccion, reporte);
         Pie(seccion, reporte);
 
         var renderer = new PdfDocumentRenderer { Document = documento };
@@ -226,6 +227,93 @@ public sealed class ReportePdfGenerator : IReportePdfGenerator
             Entero(r.Viajes), Numero(r.KmRecorridos), Entero(r.Cargas), Numero(r.Litros), Dinero(r.Gasto),
             Opcional(r.RendimientoKmPorLitro, Numero), Opcional(r.CostoPorKm, Numero),
         };
+        for (var i = 0; i < totales.Length; i++)
+            total.Cells[i].AddParagraph(totales[i]);
+    }
+
+    /// <summary>Cada carga de gasolina del periodo: fecha, vehículo, litros, monto y su centro de costos.</summary>
+    private static void TablaCargas(Section seccion, ReporteFlotaDto reporte)
+    {
+        var cargas = reporte.DetalleCargas ?? [];
+
+        var subtitulo = seccion.AddParagraph("Cargas de gasolina");
+        subtitulo.Format.Font.Size = 11;
+        subtitulo.Format.Font.Bold = true;
+        subtitulo.Format.Font.Color = Marino;
+        subtitulo.Format.SpaceBefore = Unit.FromPoint(14);
+        subtitulo.Format.SpaceAfter = Unit.FromPoint(6);
+
+        if (cargas.Count == 0)
+        {
+            seccion.AddParagraph("No hubo cargas de gasolina en el periodo.").Format.Font.Color = GrisTexto;
+            return;
+        }
+
+        // ~18.6 cm de ancho útil
+        var columnas = new (string Titulo, double Cm, bool Derecha)[]
+        {
+            ("Fecha", 3.0, false),
+            ("Placas", 2.0, false),
+            ("Vehículo", 3.6, false),
+            ("Litros", 1.6, true),
+            ("Monto", 2.0, true),
+            ("$/L", 1.4, true),
+            ("Centro de costos", 5.0, false),
+        };
+
+        var tabla = seccion.AddTable();
+        tabla.Borders.Color = GrisBorde;
+        tabla.Borders.Width = 0.5;
+        tabla.LeftPadding = Unit.FromPoint(3);
+        tabla.RightPadding = Unit.FromPoint(3);
+        tabla.TopPadding = Unit.FromPoint(2);
+        tabla.BottomPadding = Unit.FromPoint(2);
+
+        foreach (var (_, cm, derecha) in columnas)
+        {
+            var columna = tabla.AddColumn(Unit.FromCentimeter(cm));
+            columna.Format.Alignment = derecha ? ParagraphAlignment.Right : ParagraphAlignment.Left;
+        }
+
+        var encabezado = tabla.AddRow();
+        encabezado.HeadingFormat = true;
+        encabezado.Shading.Color = Azul;
+        encabezado.Format.Font.Bold = true;
+        encabezado.Format.Font.Color = Colors.White;
+        for (var i = 0; i < columnas.Length; i++)
+            encabezado.Cells[i].AddParagraph(columnas[i].Titulo);
+
+        var par = false;
+        foreach (var carga in cargas)
+        {
+            var fila = tabla.AddRow();
+            if (par) fila.Shading.Color = GrisFondo;
+            par = !par;
+
+            var valores = new[]
+            {
+                FechaHora(carga.FechaCarga),
+                carga.Placas,
+                carga.Vehiculo,
+                Numero(carga.Litros),
+                Opcional(carga.Monto, Dinero),
+                Opcional(PrecioLitro(carga), Numero),
+                CentroCosto(carga),
+            };
+            for (var i = 0; i < valores.Length; i++)
+                fila.Cells[i].AddParagraph(valores[i]);
+
+            // Sin centro de costos: en gris para que se note
+            if (carga.CentroCosto is null)
+                fila.Cells[columnas.Length - 1].Format.Font.Color = GrisTexto;
+        }
+
+        var total = tabla.AddRow();
+        total.Format.Font.Bold = true;
+        total.Shading.Color = Color.FromRgb(0xDD, 0xE5, 0xEF);
+        var litros = cargas.Sum(c => c.Litros);
+        var monto = cargas.Sum(c => c.Monto ?? 0m);
+        var totales = new[] { "Total", $"{Entero(cargas.Count)} cargas", "", Numero(litros), Dinero(monto), "", "" };
         for (var i = 0; i < totales.Length; i++)
             total.Cells[i].AddParagraph(totales[i]);
     }

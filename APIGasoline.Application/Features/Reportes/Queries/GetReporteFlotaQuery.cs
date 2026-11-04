@@ -44,6 +44,7 @@ public class GetReporteFlotaQueryHandler : IRequestHandler<GetReporteFlotaQuery,
         var viajes = await repositorio.GetViajesPorCarroAsync(empresaId, request.CarroId, request.Desde, request.Hasta, cancellationToken);
         var cargas = await repositorio.GetCargasPorCarroAsync(empresaId, request.CarroId, request.Desde, request.Hasta, cancellationToken);
         var kmGps = await repositorio.GetKmGpsPorCarroAsync(empresaId, request.CarroId, request.Desde, request.Hasta, cancellationToken);
+        var detalleCargas = await repositorio.GetDetalleCargasAsync(empresaId, request.CarroId, request.Desde, request.Hasta, cancellationToken);
 
         var empresa = empresaId is null
             ? "Todas las empresas"
@@ -59,7 +60,8 @@ public class GetReporteFlotaQueryHandler : IRequestHandler<GetReporteFlotaQuery,
             carros,
             viajes,
             cargas,
-            kmGps);
+            kmGps,
+            detalleCargas);
     }
 }
 

@@ -18,7 +18,21 @@ public record ReporteFlotaDto(
     DateTime GeneradoEn,
     ResumenFlotaDto Resumen,
     /// <summary>Ordenados del que más gastó al que menos.</summary>
-    IReadOnlyList<CarroReporteDto> Carros);
+    IReadOnlyList<CarroReporteDto> Carros,
+    /// <summary>Cada carga del periodo con su centro de costos (de la más antigua a la más reciente).</summary>
+    IReadOnlyList<CargaReporteDto>? DetalleCargas = null);
+
+/// <summary>Una carga de gasolina en el detalle del reporte.</summary>
+public record CargaReporteDto(
+    Guid CargaCombustibleId,
+    DateTime FechaCarga,
+    Guid CarroId,
+    string Placas,
+    string Vehiculo,
+    decimal Litros,
+    decimal? Monto,
+    /// <summary>"CLAVE · Nombre" del centro de costos (el de la carga o, si no tiene, el del viaje); null = sin centro.</summary>
+    string? CentroCosto);
 
 public record ResumenFlotaDto(
     int Carros,

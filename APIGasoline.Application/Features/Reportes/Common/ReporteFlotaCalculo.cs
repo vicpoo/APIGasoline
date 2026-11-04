@@ -19,7 +19,8 @@ public static class ReporteFlotaCalculo
         IReadOnlyList<CarroReporte> carros,
         IReadOnlyList<ViajesPorCarro> viajes,
         IReadOnlyList<CargasPorCarro> cargas,
-        IReadOnlyList<KmGpsPorCarro> kmGps)
+        IReadOnlyList<KmGpsPorCarro> kmGps,
+        IReadOnlyList<CargaDetalle>? detalleCargas = null)
     {
         var viajesPorCarro = viajes.ToDictionary(v => v.CarroId);
         var cargasPorCarro = cargas.ToDictionary(c => c.CarroId);
@@ -79,8 +80,39 @@ public static class ReporteFlotaCalculo
             RendimientoKmPorLitro: Dividir(kmTotal, litrosTotal),
             CostoPorKm: Dividir(gastoTotal, kmTotal));
 
-        return new ReporteFlotaDto(empresaId, empresa, carroId, desde, hasta, generadoEn, resumen, filas);
+        // Detalle: solo las cargas de los carros que quedaron en el reporte
+        var carrosPorId = carros.ToDictionary(c => c.CarroId);
+        var enReporte = filas.Select(f => f.CarroId).ToHashSet();
+        var detalle = (detalleCargas ?? [])
+            .Where(c => enReporte.Contains(c.CarroId) && carrosPorId.ContainsKey(c.CarroId))
+            .OrderBy(c => c.FechaCarga)
+            .Select(c =>
+            {
+                var carro = carrosPorId[c.CarroId];
+                return new CargaReporteDto(
+                    c.CargaCombustibleId,
+                    c.FechaCarga,
+                    c.CarroId,
+                    carro.Placas,
+                    NombreVehiculo(carro),
+                    Redondear(c.Litros),
+                    c.Monto is { } monto ? Redondear(monto) : null,
+                    NombreCentroCosto(c.CentroCostoClave, c.CentroCostoNombre));
+            })
+            .ToList();
+
+        return new ReporteFlotaDto(empresaId, empresa, carroId, desde, hasta, generadoEn, resumen, filas, detalle);
     }
+
+    /// <summary>"ADM · Administración"; solo uno si falta el otro; null si la carga no tiene centro.</summary>
+    public static string? NombreCentroCosto(string? clave, string? nombre)
+    {
+        var partes = new[] { clave, nombre }.Where(p => !string.IsNullOrWhiteSpace(p)).Select(p => p!.Trim()).ToList();
+        return partes.Count == 0 ? null : string.Join(" · ", partes);
+    }
+
+    private static string NombreVehiculo(CarroReporte carro)
+        => carro.Anio is { } anio ? $"{carro.Marca} {carro.Modelo} {anio}" : $"{carro.Marca} {carro.Modelo}";
 
     private static bool TieneActividad(CarroReporteDto fila) => fila.Viajes > 0 || fila.Cargas > 0;
 

@@ -21,5 +21,18 @@ public record ViajesPorCarro(Guid CarroId, int Viajes, decimal KmRecorridos, Dat
 /// <summary>Cargas de gasolina del carro en el periodo (por fecha de la carga).</summary>
 public record CargasPorCarro(Guid CarroId, int Cargas, decimal Litros, decimal Monto);
 
+/// <summary>
+/// Una carga de gasolina del periodo, para el detalle del PDF / Excel. El centro de costos es el de la
+/// carga o, si la carga no tiene, el del viaje.
+/// </summary>
+public record CargaDetalle(
+    Guid CargaCombustibleId,
+    DateTime FechaCarga,
+    Guid CarroId,
+    decimal Litros,
+    decimal? Monto,
+    string? CentroCostoClave,
+    string? CentroCostoNombre);
+
 /// <summary>Km medidos por GPS (rutas procesadas) de los viajes del carro en el periodo.</summary>
 public record KmGpsPorCarro(Guid CarroId, decimal KmGps);
