@@ -64,8 +64,14 @@ public class Viaje
         decimal? lat,
         decimal? lng,
         decimal kilometrajeInicial,
-        Guid? centroCostoId = null)
+        Guid? centroCostoId = null,
+        Guid? viajeId = null)
     {
+        // Offline-first: la app genera el UUID del viaje en el teléfono y la API lo conserva.
+        // Así un reintento (respuesta perdida) se reconoce como el mismo viaje.
+        if (viajeId == Guid.Empty)
+            throw new DomainException("El id del viaje no es válido.");
+
         if (centroCostoId == Guid.Empty)
             throw new DomainException("El id del centro de costo no es válido.");
 
@@ -87,7 +93,7 @@ public class Viaje
         ValidarKilometraje(kilometrajeInicial, "inicial");
         ValidarUbicacion(lat, lng, "de inicio");
 
-        return new Viaje
+        var viaje = new Viaje
         {
             EmpresaId = empresaId,
             CarroId = carroId,
@@ -100,6 +106,11 @@ public class Viaje
             KilometrajeInicial = kilometrajeInicial,
             Estado = EstadoViaje.EnCurso
         };
+
+        if (viajeId is { } id)
+            viaje.ViajeId = id;
+
+        return viaje;
     }
 
     public bool EstaEnCurso => Estado == EstadoViaje.EnCurso;

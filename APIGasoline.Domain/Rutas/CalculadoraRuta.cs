@@ -14,6 +14,10 @@ public sealed record MetricasRuta(
 /// Calcula distancia, tiempo en movimiento / detenido y velocidades a partir de puntos ya filtrados
 /// (en orden cronológico). Un tramo cuenta como "en movimiento" si su velocidad alcanza el umbral;
 /// los tramos detenidos no suman distancia, porque el GPS "tiembla" aunque el carro esté parado.
+/// Excepción: el arranque después de una parada. La app no guarda puntos mientras el carro está detenido,
+/// así que el primer tramo al arrancar incluye toda la espera y promedia menos del umbral aunque el carro
+/// ya se mueva. Si el punto trae su velocidad instantánea y supera el umbral, la distancia de ese tramo sí
+/// cuenta (el tiempo se queda como detenido, para no alterar las velocidades).
 /// </summary>
 public static class CalculadoraRuta
 {
@@ -22,7 +26,7 @@ public static class CalculadoraRuta
         ArgumentNullException.ThrowIfNull(puntos);
         ArgumentNullException.ThrowIfNull(parametros);
 
-        double distancia = 0, segundosMovimiento = 0, segundosDetenido = 0;
+        double distanciaMovimiento = 0, distanciaArranques = 0, segundosMovimiento = 0, segundosDetenido = 0;
         double? velocidadMaxima = null;
 
         for (var i = 1; i < puntos.Count; i++)
@@ -36,17 +40,21 @@ public static class CalculadoraRuta
 
             if (velocidadKmh >= parametros.VelocidadMovimientoKmh)
             {
-                distancia += metros;
+                distanciaMovimiento += metros;
                 segundosMovimiento += segundos;
                 velocidadMaxima = Math.Max(velocidadMaxima ?? 0, velocidadKmh);
             }
             else
             {
+                if (puntos[i].Velocidad is { } velocidadInstantanea && velocidadInstantanea * 3.6 >= parametros.VelocidadMovimientoKmh)
+                    distanciaArranques += metros;
+
                 segundosDetenido += segundos;
             }
         }
 
-        double? velocidadPromedio = segundosMovimiento > 0 ? distancia / segundosMovimiento * 3.6 : null;
+        var distancia = distanciaMovimiento + distanciaArranques;
+        double? velocidadPromedio = segundosMovimiento > 0 ? distanciaMovimiento / segundosMovimiento * 3.6 : null;
 
         return new MetricasRuta(
             distancia,

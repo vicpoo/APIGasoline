@@ -44,7 +44,7 @@ public class ExceptionHandlingMiddleware
         }
         catch (ConflictException ex)
         {
-            await WriteProblemAsync(context, StatusCodes.Status409Conflict, "Conflicto", ex.Message);
+            await WriteProblemAsync(context, StatusCodes.Status409Conflict, "Conflicto", ex.Message, ConExtensiones(ex));
         }
         catch (DbUpdateConcurrencyException)
         {
@@ -67,18 +67,48 @@ public class ExceptionHandlingMiddleware
         }
     }
 
-    private static async Task WriteProblemAsync(HttpContext context, int statusCode, string title, string detail)
+    private static async Task WriteProblemAsync(
+        HttpContext context,
+        int statusCode,
+        string title,
+        string detail,
+        IDictionary<string, object?>? extensiones = null)
     {
         context.Response.StatusCode = statusCode;
 
+        var problem = new ProblemDetails
+        {
+            Status = statusCode,
+            Title = title,
+            Detail = detail
+        };
+
+        if (extensiones is not null)
+        {
+            foreach (var (clave, valor) in extensiones)
+                problem.Extensions[clave] = valor;
+        }
+
         await context.Response.WriteAsJsonAsync(
-            new ProblemDetails
-            {
-                Status = statusCode,
-                Title = title,
-                Detail = detail
-            },
+            problem,
             options: null,
             contentType: "application/problem+json");
+    }
+
+    /// <summary>"codigo" y los datos del conflicto, para que la app decida sin leer el mensaje.</summary>
+    private static Dictionary<string, object?>? ConExtensiones(ConflictException ex)
+    {
+        if (ex.Codigo is null)
+            return null;
+
+        var extensiones = new Dictionary<string, object?> { ["codigo"] = ex.Codigo };
+
+        if (ex.Datos is not null)
+        {
+            foreach (var (clave, valor) in ex.Datos)
+                extensiones[clave] = valor;
+        }
+
+        return extensiones;
     }
 }

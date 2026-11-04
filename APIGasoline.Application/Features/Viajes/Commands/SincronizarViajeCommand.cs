@@ -16,6 +16,9 @@ namespace APIGasoline.Application.Features.Viajes.Commands;
 /// <summary>
 /// Sube un viaje que la app registró sin conexión (offline-first).
 /// Puede venir en curso, finalizado o interrumpido. La BD guarda la hora de llegada en fecha_recepcion.
+/// Idempotente: si llega <see cref="ViajeId"/> y ese viaje ya existe, se regresa TAL CUAL está en el servidor
+/// (no se vuelve a crear ni se cierra). La app compara el estado devuelto: si sigue en curso, manda
+/// después sus pausas, cargas y el finalizar como en un viaje en línea.
 /// </summary>
 public record SincronizarViajeCommand(
     Guid EmpresaId,
@@ -34,7 +37,9 @@ public record SincronizarViajeCommand(
     string? MotivoInterrupcion,
     Guid? CentroCostoId = null,
     /// <summary>Pausas que se hicieron sin conexión (opcional).</summary>
-    IReadOnlyList<DatosPausa>? Pausas = null) : IRequest<ViajeDto>, IRecursoPropio
+    IReadOnlyList<DatosPausa>? Pausas = null,
+    /// <summary>UUID generado en el teléfono (opcional).</summary>
+    Guid? ViajeId = null) : IRequest<ViajeDto>, IRecursoPropio
 {
     /// <summary>El operador sube SUS viajes; a nombre de otro, solo con viaje.corregir_cerrado.</summary>
     public bool EsPropio(IUsuarioActual usuario)
@@ -50,23 +55,37 @@ public class SincronizarViajeCommandHandler : IRequestHandler<SincronizarViajeCo
     private readonly IFileStorageService _storage;
     private readonly IPublisher _publisher;
     private readonly IDateTimeProvider _dateTime;
+    private readonly IUsuarioActual _usuarioActual;
 
     public SincronizarViajeCommandHandler(
         IUnitOfWork unitOfWork,
         IMapper mapper,
         IFileStorageService storage,
         IPublisher publisher,
-        IDateTimeProvider dateTime)
+        IDateTimeProvider dateTime,
+        IUsuarioActual usuarioActual)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _storage = storage;
         _publisher = publisher;
         _dateTime = dateTime;
+        _usuarioActual = usuarioActual;
     }
 
     public async Task<ViajeDto> Handle(SincronizarViajeCommand request, CancellationToken cancellationToken)
     {
+        // Reintento (o el viaje ya se había creado en línea): se regresa como está en el servidor
+        if (request.ViajeId is { } viajeId
+            && await _unitOfWork.Viajes.GetByIdAsync(viajeId, cancellationToken) is { } existente)
+        {
+            ReintentoRegistro.ValidarViaje(existente, request.EmpresaId, request.CarroId, request.EmpleadoOperadorId);
+            await AccesoViaje.ValidarOperadorAsync(_usuarioActual, existente, cancellationToken);
+
+            var dtoExistente = await _mapper.Map<ViajeDto>(existente).ConUrlsAsync(_storage, cancellationToken);
+            return await dtoExistente.ConPausasAsync(_unitOfWork, _mapper, _dateTime.Now, cancellationToken);
+        }
+
         var viaje = Viaje.Iniciar(
             request.EmpresaId,
             request.CarroId,
@@ -76,7 +95,8 @@ public class SincronizarViajeCommandHandler : IRequestHandler<SincronizarViajeCo
             request.UbicacionInicioLat,
             request.UbicacionInicioLng,
             request.KilometrajeInicial,
-            request.CentroCostoId);
+            request.CentroCostoId,
+            request.ViajeId);
 
         switch (request.Estado)
         {

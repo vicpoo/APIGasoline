@@ -35,6 +35,8 @@ internal static class CargaCombustibleValidator
         var excludeId = carga.CargaCombustibleId;
 
         if (await unitOfWork.CargasCombustible.ExisteEnFechaAsync(viaje.ViajeId, carga.FechaCarga, excludeId, cancellationToken))
-            throw new ConflictException("Ya existe una carga registrada para este viaje en la misma fecha y hora.");
+            throw new ConflictException(
+                "Ya existe una carga registrada para este viaje en la misma fecha y hora.",
+                CodigosConflicto.CargaMismaFecha);
     }
 }

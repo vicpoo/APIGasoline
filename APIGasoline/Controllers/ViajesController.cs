@@ -70,7 +70,8 @@ public class ViajesController : ControllerBase
             request.UbicacionInicioLat,
             request.UbicacionInicioLng,
             request.KilometrajeInicial,
-            request.CentroCostoId);
+            request.CentroCostoId,
+            request.ViajeId);
 
         var viaje = await _sender.Send(command, cancellationToken);
 
@@ -153,7 +154,8 @@ public class ViajesController : ControllerBase
             request.CentroCostoId,
             request.Pausas?
                 .Select(p => new DatosPausa(p.FechaInicio!.Value, p.FechaFin, p.Motivo, p.UbicacionLat, p.UbicacionLng))
-                .ToList());
+                .ToList(),
+            request.ViajeId);
 
         var viaje = await _sender.Send(command, cancellationToken);
 

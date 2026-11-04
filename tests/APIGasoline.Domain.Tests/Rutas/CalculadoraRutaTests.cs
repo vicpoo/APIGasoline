@@ -30,6 +30,32 @@ public class CalculadoraRutaTests
     }
 
     [Fact]
+    public void Calcular_ArranqueDespuesDeUnaParada_ConVelocidadDelGps_SumaLaDistancia()
+    {
+        // 60 s parado en un semáforo (la app no guarda puntos) y el primer punto al arrancar está ~28 m
+        // adelante: el tramo promedia 1.7 km/h, pero el GPS dice que ya va a 8 m/s
+        var antes = RutaDePrueba.Punto(0);
+        var alArrancar = new PuntoGps(antes.Latitud + RutaDePrueba.Paso / 10, antes.Longitud, antes.Timestamp.AddSeconds(60), Velocidad: 8);
+
+        var metricas = CalculadoraRuta.Calcular([antes, alArrancar], Parametros);
+
+        Assert.InRange(metricas.DistanciaMetros, 27, 29);
+        Assert.Equal(60, metricas.TiempoDetenidoSeg);
+        Assert.Null(metricas.VelocidadPromedioKmh);
+    }
+
+    [Fact]
+    public void Calcular_TramoLentoSinVelocidadDelGps_NoSumaDistancia()
+    {
+        var antes = RutaDePrueba.Punto(0);
+        var despues = new PuntoGps(antes.Latitud + RutaDePrueba.Paso / 10, antes.Longitud, antes.Timestamp.AddSeconds(60));
+
+        var metricas = CalculadoraRuta.Calcular([antes, despues], Parametros);
+
+        Assert.Equal(0, metricas.DistanciaMetros);
+    }
+
+    [Fact]
     public void Calcular_CarroDetenido_SumaTiempoDetenidoSinDistancia()
     {
         var parado = RutaDePrueba.Punto(0);

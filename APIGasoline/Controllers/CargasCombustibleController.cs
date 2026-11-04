@@ -67,7 +67,8 @@ public class CargasCombustibleController : ControllerBase
             request.FechaCarga!.Value.AHoraLocal(),
             request.UbicacionLat,
             request.UbicacionLng,
-            request.CentroCostoId);
+            request.CentroCostoId,
+            request.CargaCombustibleId);
 
         var carga = await _sender.Send(command, cancellationToken);
 

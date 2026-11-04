@@ -91,7 +91,7 @@ DTO (AutoMapper) → respuesta JSON
 | 401 | Sin sesión o token inválido. |
 | 403 | Sin el privilegio, o el registro es de otro empleado u otra empresa. El mensaje dice qué privilegio falta. |
 | 404 | El registro no existe. |
-| 409 | Conflicto: duplicado, registro en uso, o dos personas modificaron lo mismo al mismo tiempo. |
+| 409 | Conflicto: duplicado, registro en uso, o dos personas modificaron lo mismo al mismo tiempo. Algunos traen `codigo` en el cuerpo para la app: `VIAJE_EN_CURSO` (con `viajeId`, `empleadoOperadorId`, `fechaInicio` del otro viaje), `ID_DUPLICADO` (con `id`) y `CARGA_MISMA_FECHA`. |
 | 413 | El archivo excede el tamaño permitido (5 MB). |
 | 503 | El almacenamiento de archivos (MinIO) no está disponible. |
 
@@ -195,12 +195,12 @@ El catálogo completo de privilegios está en `docs/CatalogoPrivilegios.md`.
 |---|---|---|---|
 | GET | `/api/viajes` | `viaje.ver_propios`, `viaje.ver_todos` | Historial. Sin `ver_todos`, solo los propios. Filtros: `?carroId=`, `?empleadoOperadorId=`, `?estado=`. Cada viaje trae `operador` (nombre y foto) para la tarjeta. |
 | GET | `/api/viajes/{id}` | `viaje.ver_detalle`, `viaje.registrar` | Detalle con `estaPausado`, `segundosEnPausa` y `pausas`. |
-| POST | `/api/viajes` | `viaje.registrar` | Inicia un viaje en línea (requiere reserva aprobada; el centro de costos es opcional). |
+| POST | `/api/viajes` | `viaje.registrar` | Inicia un viaje en línea (requiere reserva aprobada; el centro de costos es opcional). Acepta `viajeId` (UUID generado en el teléfono): reenviar con el mismo id regresa el viaje ya creado. |
 | POST | `/api/viajes/{id}/pausar` | `viaje.registrar` | Pone el viaje en pausa. Cuerpo opcional: `fecha`, `motivo`, `ubicacionLat`, `ubicacionLng`. |
 | POST | `/api/viajes/{id}/reanudar` | `viaje.registrar` | Reanuda. Cuerpo opcional: `fecha`. |
 | POST | `/api/viajes/{id}/finalizar` | `viaje.registrar` | Finaliza con la fecha y el kilometraje final. Cierra la pausa si estaba en pausa. |
 | POST | `/api/viajes/{id}/interrumpir` | `viaje.registrar`, `viaje.corregir_cerrado` | Lo corta antes de terminar, con motivo obligatorio. |
-| POST | `/api/viajes/sincronizar` | `viaje.registrar` | Sube un viaje completo hecho sin conexión, con sus `pausas`. |
+| POST | `/api/viajes/sincronizar` | `viaje.registrar` | Sube un viaje completo hecho sin conexión, con sus `pausas`. Acepta `viajeId`; si ya existe se regresa tal como está en el servidor (la app revisa `estado`). |
 | PUT | `/api/viajes/{id}/foto-tablero/{momento}` | `viaje.registrar` | Foto del odómetro; `momento` = `inicial` o `final`. |
 | POST | `/api/viajes/{id}/corregir-kilometraje` | `viaje.registrar`, `viaje.corregir_cerrado` | Corrige el kilometraje, con motivo, y queda auditado. |
 | DELETE | `/api/viajes/{id}` | `viaje.eliminar` | Borra un viaje cerrado sin cargas ni revisiones. |
@@ -211,6 +211,7 @@ El catálogo completo de privilegios está en `docs/CatalogoPrivilegios.md`.
 |---|---|---|---|
 | POST | `/api/viajes/{id}/puntos-ruta` | `viaje.registrar` | Lote de hasta 1000 puntos. Se puede reenviar sin duplicar; descarta los que caen en una pausa. |
 | GET | `/api/viajes/{id}/puntos-ruta` | `viaje.ver_detalle`, `viaje.registrar` | Ruta cruda en orden de captura. |
+| GET | `/api/viajes/{id}/puntos-ruta/gpx` | `viaje.ver_detalle`, `viaje.registrar` | La misma ruta como archivo GPX (hora en UTC), para compararla con Strava, GPX Studio o Google Earth. |
 | GET | `/api/puntos-ruta/{id}` | `viaje.ver_detalle`, `viaje.registrar` | Un punto. |
 | DELETE | `/api/puntos-ruta/{id}` | `viaje.eliminar` | Borra un punto. |
 | GET | `/api/viajes/{id}/ruta-procesada` | `viaje.ver_detalle` | Resumen calculado: kilómetros por GPS, comparación contra el odómetro y rendimiento en km/L. |
@@ -224,7 +225,7 @@ El catálogo completo de privilegios está en `docs/CatalogoPrivilegios.md`.
 |---|---|---|---|
 | GET | `/api/cargas-combustible?viajeId=` | `viaje.ver_detalle`, `auditoria.ver` | Cargas de un viaje. Sin `viajeId`, necesita `viaje.ver_todos` o `auditoria.ver`. |
 | GET | `/api/cargas-combustible/{id}` | `viaje.ver_detalle`, `carga.editar`, `carga.eliminar`, `auditoria.ver` | Una carga. |
-| POST | `/api/cargas-combustible` | `carga.registrar` | Registra una carga (multipart con `fotoComprobante`). |
+| POST | `/api/cargas-combustible` | `carga.registrar` | Registra una carga (multipart con `fotoComprobante`). Solo en viajes propios (o con `viaje.corregir_cerrado`). Acepta `cargaCombustibleId`: reenviar con el mismo id regresa la carga ya creada sin duplicarla. |
 | PUT | `/api/cargas-combustible/{id}` | `carga.editar` | La corrige, con `motivo` obligatorio, y queda auditada. |
 | DELETE | `/api/cargas-combustible/{id}?motivo=` | `carga.eliminar` | La elimina, con motivo obligatorio, y queda auditada. |
 
@@ -342,6 +343,7 @@ Operador                         API                                  Supervisor
    3. Las cargas.
    4. Finalizar, si el viaje ya terminó.
 3. **Reintentos:** los lotes de puntos se pueden reenviar sin duplicarse. Las pausas se validan juntas: no se enciman y deben caer dentro del viaje.
+   El viaje y las cargas usan el UUID que genera el teléfono (`viajeId`, `cargaCombustibleId`): si se pierde la respuesta y la app reenvía, la API regresa el registro existente en lugar de un 409.
 4. **Fecha de recepción:** la BD guarda en `fecha_recepcion` cuándo llegó cada registro. Así se sabe cuánto tiempo estuvo sin sincronizar.
 
 ### 5.5 Correcciones (kilometraje y cargas)

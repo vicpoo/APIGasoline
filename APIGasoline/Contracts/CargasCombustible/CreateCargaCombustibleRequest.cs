@@ -7,6 +7,13 @@ namespace APIGasoline.Contracts.CargasCombustible;
 /// </summary>
 public class CreateCargaCombustibleRequest
 {
+    /// <summary>
+    /// UUID de la carga generado en el teléfono (offline-first, opcional). Si se manda, reintentar con el
+    /// mismo id regresa la carga ya creada sin duplicarla ni volver a subir el ticket.
+    /// </summary>
+    [GuidNoVacio]
+    public Guid? CargaCombustibleId { get; set; }
+
     [GuidNoVacio]
     public Guid ViajeId { get; set; }
 

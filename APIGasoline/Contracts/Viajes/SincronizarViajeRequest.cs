@@ -8,6 +8,13 @@ namespace APIGasoline.Contracts.Viajes;
 /// </summary>
 public class SincronizarViajeRequest
 {
+    /// <summary>
+    /// UUID del viaje generado en el teléfono (offline-first, opcional). Si se manda, reintentar con el
+    /// mismo id regresa el viaje ya creado en lugar de un 409.
+    /// </summary>
+    [GuidNoVacio]
+    public Guid? ViajeId { get; set; }
+
     [GuidNoVacio]
     public Guid EmpresaId { get; set; }
 

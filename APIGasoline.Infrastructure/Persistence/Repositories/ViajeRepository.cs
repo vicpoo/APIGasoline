@@ -51,6 +51,13 @@ public class ViajeRepository : IViajeRepository
     public Task<bool> ExisteEnCursoPorCarroAsync(Guid carroId, CancellationToken cancellationToken = default)
         => _context.Viajes.AnyAsync(v => v.CarroId == carroId && v.Estado == EstadoViaje.EnCurso, cancellationToken);
 
+    public Task<Viaje?> GetEnCursoPorCarroAsync(Guid carroId, CancellationToken cancellationToken = default)
+        => _context.Viajes
+            .AsNoTracking()
+            .Where(v => v.CarroId == carroId && v.Estado == EstadoViaje.EnCurso)
+            .OrderByDescending(v => v.FechaInicio)
+            .FirstOrDefaultAsync(cancellationToken);
+
     public Task<bool> ExisteEnCursoPorSolicitudAsync(Guid solicitudReservaId, CancellationToken cancellationToken = default)
         => _context.Viajes.AnyAsync(v => v.SolicitudReservaId == solicitudReservaId && v.Estado == EstadoViaje.EnCurso, cancellationToken);
 

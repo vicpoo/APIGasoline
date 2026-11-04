@@ -1,4 +1,5 @@
 ﻿using APIGasoline.Application.Features.PuntosRuta.Commands;
+using APIGasoline.Application.Features.PuntosRuta.Common;
 using APIGasoline.Application.Features.PuntosRuta.DTOs;
 using APIGasoline.Application.Features.PuntosRuta.Queries;
 using APIGasoline.Contracts.PuntosRuta;
@@ -31,6 +32,17 @@ public class PuntosRutaController : ControllerBase
     {
         var puntos = await _sender.Send(new GetPuntosRutaByViajeQuery(viajeId), cancellationToken);
         return Ok(puntos);
+    }
+
+    /// <summary>
+    /// La ruta del viaje como archivo GPX, para compararla con otra app (Strava, GPX Studio, Google Earth).
+    /// </summary>
+    [RequierePrivilegio(Permisos.ViajeVerDetalle, Permisos.ViajeRegistrar)]
+    [HttpGet("api/viajes/{viajeId:guid}/puntos-ruta/gpx")]
+    public async Task<IActionResult> GetGpx(Guid viajeId, CancellationToken cancellationToken)
+    {
+        var puntos = await _sender.Send(new GetPuntosRutaByViajeQuery(viajeId), cancellationToken);
+        return File(ExportadorGpx.Generar(viajeId, puntos), "application/gpx+xml", $"viaje-{viajeId}.gpx");
     }
 
     /// <summary>

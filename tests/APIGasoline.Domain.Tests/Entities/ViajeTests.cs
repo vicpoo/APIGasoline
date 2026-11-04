@@ -42,6 +42,33 @@ public class ViajeTests
         Assert.Throws<DomainException>(() => ConstruirViaje(empresaId: empresaId, carroId: carroId, operadorId: operadorId));
     }
 
+    // --- UUID generado en el teléfono (offline-first) ---
+
+    [Fact]
+    public void Iniciar_ConIdDelTelefono_ConservaEseId()
+    {
+        var idTelefono = Guid.Parse("3f2b8c1e-9d4a-4e6b-8f1a-2c7d5e9b0a11");
+
+        var viaje = Viaje.Iniciar(Id(1), Id(1), Id(1), Id(1), Inicio, null, null, 15480m, viajeId: idTelefono);
+
+        Assert.Equal(idTelefono, viaje.ViajeId);
+    }
+
+    [Fact]
+    public void Iniciar_SinIdDelTelefono_GeneraUnoNuevo()
+    {
+        var viaje = ConstruirViaje();
+
+        Assert.NotEqual(Guid.Empty, viaje.ViajeId);
+    }
+
+    [Fact]
+    public void Iniciar_IdDelTelefonoVacio_LanzaDomainException()
+    {
+        Assert.Throws<DomainException>(() =>
+            Viaje.Iniciar(Id(1), Id(1), Id(1), Id(1), Inicio, null, null, 15480m, viajeId: Guid.Empty));
+    }
+
     [Fact]
     public void Iniciar_SolicitudReservaCero_LanzaDomainException()
     {

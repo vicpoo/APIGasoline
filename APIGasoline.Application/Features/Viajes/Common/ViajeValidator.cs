@@ -56,8 +56,20 @@ internal static class ViajeValidator
 
         await CentroCostoValidator.ValidarAsync(unitOfWork, viaje.EmpresaId, viaje.CentroCostoId, cancellationToken);
 
-        if (viaje.EstaEnCurso && await unitOfWork.Viajes.ExisteEnCursoPorCarroAsync(viaje.CarroId, cancellationToken))
-            throw new ConflictException($"El carro {viaje.CarroId} ya tiene un viaje en curso.");
+        if (viaje.EstaEnCurso && await unitOfWork.Viajes.GetEnCursoPorCarroAsync(viaje.CarroId, cancellationToken) is { } enCurso)
+        {
+            // Con el UUID del cliente un reintento ya no llega aquí (se reconoce antes), así que este
+            // sí es OTRO viaje. Se mandan sus datos para que la app (o un supervisor) sepa cuál cerrar.
+            throw new ConflictException(
+                $"El carro {carro.Placas} ya tiene otro viaje en curso (iniciado el {enCurso.FechaInicio:dd/MM/yyyy HH:mm}). Pide a tu supervisor que lo cierre.",
+                CodigosConflicto.ViajeEnCurso,
+                new Dictionary<string, object?>
+                {
+                    ["viajeId"] = enCurso.ViajeId,
+                    ["empleadoOperadorId"] = enCurso.EmpleadoOperadorId,
+                    ["fechaInicio"] = enCurso.FechaInicio
+                });
+        }
 
         return carro;
     }

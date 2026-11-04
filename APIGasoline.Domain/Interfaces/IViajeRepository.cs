@@ -17,6 +17,9 @@ public interface IViajeRepository
         CancellationToken cancellationToken = default);
 
     Task<bool> ExisteEnCursoPorCarroAsync(Guid carroId, CancellationToken cancellationToken = default);
+
+    /// <summary>El viaje en curso del carro (sin rastrear), o null si no tiene.</summary>
+    Task<Viaje?> GetEnCursoPorCarroAsync(Guid carroId, CancellationToken cancellationToken = default);
     Task<bool> ExisteEnCursoPorSolicitudAsync(Guid solicitudReservaId, CancellationToken cancellationToken = default);
     Task<bool> ExistsByCarroAsync(Guid carroId, CancellationToken cancellationToken = default);
     Task<bool> ExistsByCentroCostoAsync(Guid centroCostoId, CancellationToken cancellationToken = default);

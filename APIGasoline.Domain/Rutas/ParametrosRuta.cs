@@ -10,8 +10,9 @@ public sealed record ParametrosRuta
     public static ParametrosRuta PorDefecto { get; } = new();
 
     /// <summary>
-    /// Puntos con un radio de error mayor se descartan. 25 m (antes 50): con el GPS cada 5 s / 10 m
-    /// llegan suficientes puntos para quedarse solo con los buenos. Debe coincidir con la app (RouteFilter).
+    /// Puntos con un radio de error mayor se descartan. 25 m (antes 50): con el GPS cada segundo
+    /// llegan suficientes puntos para quedarse solo con los buenos. Debe coincidir con la app (RouteFilter:
+    /// MAX_ACCURACY_M, y también VelocidadMaximaKmh y VelocidadMovimientoKmh).
     /// </summary>
     public double PrecisionMaximaMetros { get; init; } = 25;
 
