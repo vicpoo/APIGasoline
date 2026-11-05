@@ -118,6 +118,8 @@ public sealed class ReporteFlotaRepository : IReporteFlotaRepository
                 c.Litros,
                 c.Monto,
                 CentroCostoId = c.CentroCostoId ?? v.CentroCostoId,
+                c.UbicacionLat,
+                c.UbicacionLng,
             };
 
         if (carroId is not null)
@@ -148,7 +150,9 @@ public sealed class ReporteFlotaRepository : IReporteFlotaRepository
                     x.Litros,
                     x.Monto,
                     centro?.Clave,
-                    centro?.Nombre);
+                    centro?.Nombre,
+                    x.UbicacionLat,
+                    x.UbicacionLng);
             })
             .ToList();
     }

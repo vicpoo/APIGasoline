@@ -8,6 +8,7 @@ using APIGasoline.Application.Features.CargasCombustible.DTOs;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
+using APIGasoline.Application.Features.CargasCombustible.Notifications;
 using MediatR;
 using APIGasoline.Application.Features.RutasProcesadas.Notifications;
 
@@ -118,8 +119,12 @@ public class UpdateCargaCombustibleCommandHandler : IRequestHandler<UpdateCargaC
         }
 
         // Los litros cambian el rendimiento km/L de un viaje ya cerrado
+        // (con el viaje cerrado, esta notificación también completa la ubicación si faltó)
         if (!viaje.EstaEnCurso)
             await _publisher.Publish(new RutaViajeModificadaNotification(viaje.ViajeId), cancellationToken);
+        // Se corrigió sin ubicación: se ubica con el punto de la ruta más cercano a su hora
+        else if (carga.UbicacionLat is null)
+            await _publisher.Publish(new UbicacionCargasPendienteNotification(viaje.ViajeId), cancellationToken);
 
         return await _mapper.Map<CargaCombustibleDto>(carga).ConUrlsAsync(_storage, cancellationToken);
     }

@@ -53,6 +53,21 @@ internal static class TextosReporte
     public static decimal? PrecioLitro(CargaReporteDto carga)
         => carga.Monto is { } monto && monto > 0 && carga.Litros > 0 ? Math.Round(monto / carga.Litros, 2) : null;
 
+    /// <summary>Texto del enlace a Google Maps de una carga.</summary>
+    public const string VerEnMapa = "Ver en mapa";
+
+    /// <summary>Texto cuando la carga no tiene ubicación.</summary>
+    public const string SinUbicacion = "Sin ubicación";
+
+    /// <summary>
+    /// Enlace que abre Google Maps con un pin en el punto de la carga (app o navegador).
+    /// Coordenadas con punto decimal (cultura invariante) para que la URL sea válida.
+    /// </summary>
+    public static string? UrlMapa(CargaReporteDto carga)
+        => carga is { Latitud: { } lat, Longitud: { } lng }
+            ? $"https://www.google.com/maps/search/?api=1&query={lat.ToString(CultureInfo.InvariantCulture)},{lng.ToString(CultureInfo.InvariantCulture)}"
+            : null;
+
     public static string Vehiculo(CarroReporteDto carro)
         => carro.Anio is { } anio ? $"{carro.Marca} {carro.Modelo} {anio}" : $"{carro.Marca} {carro.Modelo}";
 }

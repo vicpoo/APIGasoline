@@ -32,7 +32,10 @@ public record CargaReporteDto(
     decimal Litros,
     decimal? Monto,
     /// <summary>"CLAVE · Nombre" del centro de costos (el de la carga o, si no tiene, el del viaje); null = sin centro.</summary>
-    string? CentroCosto);
+    string? CentroCosto,
+    /// <summary>Dónde se hizo la carga (null = sin ubicación). En el PDF / Excel es un enlace a Google Maps.</summary>
+    decimal? Latitud = null,
+    decimal? Longitud = null);
 
 public record ResumenFlotaDto(
     int Carros,

@@ -252,14 +252,17 @@ public sealed class ReportePdfGenerator : IReportePdfGenerator
         // ~18.6 cm de ancho útil
         var columnas = new (string Titulo, double Cm, bool Derecha)[]
         {
-            ("Fecha", 3.0, false),
-            ("Placas", 2.0, false),
-            ("Vehículo", 3.6, false),
-            ("Litros", 1.6, true),
-            ("Monto", 2.0, true),
-            ("$/L", 1.4, true),
-            ("Centro de costos", 5.0, false),
+            ("Fecha", 2.7, false),
+            ("Placas", 1.8, false),
+            ("Vehículo", 3.2, false),
+            ("Litros", 1.5, true),
+            ("Monto", 1.9, true),
+            ("$/L", 1.3, true),
+            ("Centro de costos", 4.0, false),
+            ("Ubicación", 2.2, false),
         };
+        const int columnaCentro = 6;
+        const int columnaUbicacion = 7;
 
         var tabla = seccion.AddTable();
         tabla.Borders.Color = GrisBorde;
@@ -305,7 +308,22 @@ public sealed class ReportePdfGenerator : IReportePdfGenerator
 
             // Sin centro de costos: en gris para que se note
             if (carga.CentroCosto is null)
-                fila.Cells[columnas.Length - 1].Format.Font.Color = GrisTexto;
+                fila.Cells[columnaCentro].Format.Font.Color = GrisTexto;
+
+            // Ubicación: enlace que abre Google Maps con el punto donde se cargó
+            var ubicacion = fila.Cells[columnaUbicacion].AddParagraph();
+            if (UrlMapa(carga) is { } url)
+            {
+                var enlace = ubicacion.AddHyperlink(url, HyperlinkType.Web);
+                var texto = enlace.AddFormattedText(VerEnMapa);
+                texto.Color = Azul;
+                texto.Underline = Underline.Single;
+            }
+            else
+            {
+                ubicacion.AddText(SinUbicacion);
+                ubicacion.Format.Font.Color = GrisTexto;
+            }
         }
 
         var total = tabla.AddRow();
@@ -313,7 +331,7 @@ public sealed class ReportePdfGenerator : IReportePdfGenerator
         total.Shading.Color = Color.FromRgb(0xDD, 0xE5, 0xEF);
         var litros = cargas.Sum(c => c.Litros);
         var monto = cargas.Sum(c => c.Monto ?? 0m);
-        var totales = new[] { "Total", $"{Entero(cargas.Count)} cargas", "", Numero(litros), Dinero(monto), "", "" };
+        var totales = new[] { "Total", $"{Entero(cargas.Count)} cargas", "", Numero(litros), Dinero(monto), "", "", "" };
         for (var i = 0; i < totales.Length; i++)
             total.Cells[i].AddParagraph(totales[i]);
     }

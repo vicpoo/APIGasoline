@@ -5,6 +5,7 @@ using APIGasoline.Application.Features.Viajes.Common;
 using APIGasoline.Application.Features.PuntosRuta.DTOs;
 using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Interfaces;
+using APIGasoline.Application.Features.CargasCombustible.Notifications;
 using MediatR;
 using APIGasoline.Application.Features.RutasProcesadas.Notifications;
 
@@ -88,6 +89,9 @@ public class RegistrarLotePuntosRutaCommandHandler : IRequestHandler<RegistrarLo
             // Puntos que llegan después de cerrar el viaje (por ejemplo, sincronización offline)
             if (!viaje.EstaEnCurso)
                 await _publisher.Publish(new RutaViajeModificadaNotification(viaje.ViajeId), cancellationToken);
+            // Viaje en curso: con los puntos nuevos se pueden ubicar cargas que llegaron sin GPS
+            else
+                await _publisher.Publish(new UbicacionCargasPendienteNotification(viaje.ViajeId), cancellationToken);
         }
 
         return new LotePuntosRutaResultadoDto(

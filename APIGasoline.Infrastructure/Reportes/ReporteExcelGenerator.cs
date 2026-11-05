@@ -169,7 +169,10 @@ public sealed class ReporteExcelGenerator : IReporteExcelGenerator
             ("Monto", FormatoDinero),
             ("Precio por litro", FormatoDinero),
             ("Centro de costos", null),
+            ("Ubicación", null),
         };
+        const int columnaCentro = 7;
+        const int columnaUbicacion = 8;
 
         var encabezado = Seccion(hoja, filaInicio, "Cargas de gasolina");
         if (cargas.Count == 0)
@@ -194,10 +197,24 @@ public sealed class ReporteExcelGenerator : IReporteExcelGenerator
                 carga.Monto is { } monto ? (double)monto : Blank.Value,
                 PrecioLitro(carga) is { } precio ? (double)precio : Blank.Value,
                 CentroCosto(carga),
+                UrlMapa(carga) is null ? SinUbicacion : VerEnMapa,
             };
             Valores(hoja, fila, valores, columnas.Select(c => c.Formato).ToArray());
             if (carga.CentroCosto is null)
-                hoja.Cell(fila, columnas.Length).Style.Font.FontColor = XLColor.Gray;
+                hoja.Cell(fila, columnaCentro).Style.Font.FontColor = XLColor.Gray;
+
+            // Ubicación: enlace que abre Google Maps con el punto donde se cargó
+            var ubicacion = hoja.Cell(fila, columnaUbicacion);
+            if (UrlMapa(carga) is { } url)
+            {
+                ubicacion.SetHyperlink(new XLHyperlink(new Uri(url), "Abrir en Google Maps"));
+                ubicacion.Style.Font.FontColor = Azul;
+                ubicacion.Style.Font.Underline = XLFontUnderlineValues.Single;
+            }
+            else
+            {
+                ubicacion.Style.Font.FontColor = XLColor.Gray;
+            }
             fila++;
         }
 

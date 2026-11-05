@@ -115,6 +115,27 @@ public class CargaCombustible
         UbicacionLng = lng;
     }
 
+    /// <summary>
+    /// Completa la ubicación de una carga que llegó SIN ella (estimada con la ruta GPS del viaje).
+    /// Si la carga ya tiene ubicación no la cambia: la que mandó el teléfono es más exacta.
+    /// </summary>
+    /// <returns>true si se asignó la ubicación.</returns>
+    public bool CompletarUbicacion(decimal lat, decimal lng)
+    {
+        if (UbicacionLat is not null || UbicacionLng is not null)
+            return false;
+
+        if (lat is < -90m or > 90m)
+            throw new DomainException("La latitud debe estar entre -90 y 90.");
+
+        if (lng is < -180m or > 180m)
+            throw new DomainException("La longitud debe estar entre -180 y 180.");
+
+        UbicacionLat = lat;
+        UbicacionLng = lng;
+        return true;
+    }
+
     /// <summary>Asigna o quita (null) el centro de costos de la carga.</summary>
     public void CambiarCentroCosto(Guid? centroCostoId)
     {

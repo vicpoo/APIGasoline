@@ -97,7 +97,9 @@ public static class ReporteFlotaCalculo
                     NombreVehiculo(carro),
                     Redondear(c.Litros),
                     c.Monto is { } monto ? Redondear(monto) : null,
-                    NombreCentroCosto(c.CentroCostoClave, c.CentroCostoNombre));
+                    NombreCentroCosto(c.CentroCostoClave, c.CentroCostoNombre),
+                    c.Latitud,
+                    c.Longitud);
             })
             .ToList();
 

@@ -50,6 +50,12 @@ public class CargaCombustibleRepository : ICargaCombustibleRepository
                  && (excludeCargaCombustibleId == null || c.CargaCombustibleId != excludeCargaCombustibleId),
             cancellationToken);
 
+    public async Task<IReadOnlyList<CargaCombustible>> GetSinUbicacionByViajeAsync(Guid viajeId, CancellationToken cancellationToken = default)
+        => await _context.CargasCombustible
+            .Where(c => c.ViajeId == viajeId && (c.UbicacionLat == null || c.UbicacionLng == null))
+            .OrderBy(c => c.FechaCarga)
+            .ToListAsync(cancellationToken);
+
     public Task<bool> ExistsByViajeAsync(Guid viajeId, CancellationToken cancellationToken = default)
         => _context.CargasCombustible.AnyAsync(c => c.ViajeId == viajeId, cancellationToken);
 

@@ -17,6 +17,9 @@ public interface ICargaCombustibleRepository
     /// <summary>Detecta reenvíos de la misma carga (mismo viaje y misma fecha).</summary>
     Task<bool> ExisteEnFechaAsync(Guid viajeId, DateTime fechaCarga, Guid? excludeCargaCombustibleId = null, CancellationToken cancellationToken = default);
 
+    /// <summary>Cargas del viaje que llegaron sin ubicación (con seguimiento, para completarlas).</summary>
+    Task<IReadOnlyList<CargaCombustible>> GetSinUbicacionByViajeAsync(Guid viajeId, CancellationToken cancellationToken = default);
+
     Task<bool> ExistsByViajeAsync(Guid viajeId, CancellationToken cancellationToken = default);
     Task<bool> ExistsByCentroCostoAsync(Guid centroCostoId, CancellationToken cancellationToken = default);
 

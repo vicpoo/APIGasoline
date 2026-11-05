@@ -32,7 +32,10 @@ public record CargaDetalle(
     decimal Litros,
     decimal? Monto,
     string? CentroCostoClave,
-    string? CentroCostoNombre);
+    string? CentroCostoNombre,
+    /// <summary>Dónde se hizo la carga (null = sin ubicación).</summary>
+    decimal? Latitud = null,
+    decimal? Longitud = null);
 
 /// <summary>Km medidos por GPS (rutas procesadas) de los viajes del carro en el periodo.</summary>
 public record KmGpsPorCarro(Guid CarroId, decimal KmGps);
