@@ -1,5 +1,6 @@
 ﻿using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Common.Outbox;
+using APIGasoline.Application.Common.Sesiones;
 using APIGasoline.Application.Features.Auditoria.Common;
 using APIGasoline.Domain.Interfaces;
 using APIGasoline.Infrastructure.Auditoria;
@@ -20,7 +21,7 @@ namespace APIGasoline.Infrastructure;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString, JwtSettings jwtSettings, MinioSettings minioSettings, OutboxSettings outboxSettings, PushSettings pushSettings)
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString, JwtSettings jwtSettings, SesionesSettings sesionesSettings, MinioSettings minioSettings, OutboxSettings outboxSettings, PushSettings pushSettings)
     {
         // Los Guid se guardan como binary(16) en orden RFC 4122 (compatible con UUID_TO_BIN / BIN_TO_UUID).
         // Se fuerza aquí para no depender de que cada cadena de conexión lo traiga.
@@ -48,6 +49,11 @@ public static class DependencyInjection
         services.AddSingleton(jwtSettings);
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
+
+        // Sesiones largas con refresh tokens (rotación + revocación) y limpieza periódica de las viejas
+        sesionesSettings.Validar();
+        services.AddSingleton(sesionesSettings);
+        services.AddHostedService<LimpiezaSesionesWorker>();
 
         // Autorización basada en permisos: privilegios efectivos del usuario (BD + caché corta)
         services.AddMemoryCache();

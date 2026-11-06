@@ -34,6 +34,7 @@ public class AppDbContext : DbContext
     public DbSet<Notificacion> Notificaciones => Set<Notificacion>();
     public DbSet<OutboxMensaje> OutboxMensajes => Set<OutboxMensaje>();
     public DbSet<DispositivoEmpleado> Dispositivos => Set<DispositivoEmpleado>();
+    public DbSet<SesionUsuario> Sesiones => Set<SesionUsuario>();
     public DbSet<AuditoriaEvento> AuditoriaEventos => Set<AuditoriaEvento>();
     public DbSet<RevisionAuditoria> RevisionesAuditoria => Set<RevisionAuditoria>();
 

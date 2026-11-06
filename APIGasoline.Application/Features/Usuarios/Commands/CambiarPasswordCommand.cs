@@ -1,6 +1,8 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Common.Security;
+using APIGasoline.Application.Common.Sesiones;
+using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using MediatR;
 
@@ -8,6 +10,8 @@ namespace APIGasoline.Application.Features.Usuarios.Commands;
 
 /// <summary>
 /// Cambia la contraseña verificando primero la actual.
+/// Cierra las sesiones abiertas del usuario en los demás dispositivos (si la cambia él mismo,
+/// conserva la sesión desde la que lo hizo; si la cambia un administrador, las cierra todas).
 /// </summary>
 public record CambiarPasswordCommand(Guid UsuarioId, string PasswordActual, string PasswordNueva) : IRequest, IRecursoPropio
 {
@@ -22,11 +26,19 @@ public class CambiarPasswordCommandHandler : IRequestHandler<CambiarPasswordComm
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IPasswordHasher _passwordHasher;
+    private readonly IUsuarioActual _usuarioActual;
+    private readonly IDateTimeProvider _dateTime;
 
-    public CambiarPasswordCommandHandler(IUnitOfWork unitOfWork, IPasswordHasher passwordHasher)
+    public CambiarPasswordCommandHandler(
+        IUnitOfWork unitOfWork,
+        IPasswordHasher passwordHasher,
+        IUsuarioActual usuarioActual,
+        IDateTimeProvider dateTime)
     {
         _unitOfWork = unitOfWork;
         _passwordHasher = passwordHasher;
+        _usuarioActual = usuarioActual;
+        _dateTime = dateTime;
     }
 
     public async Task Handle(CambiarPasswordCommand request, CancellationToken cancellationToken)
@@ -43,6 +55,17 @@ public class CambiarPasswordCommandHandler : IRequestHandler<CambiarPasswordComm
         PasswordPolicy.Validar(request.PasswordNueva);
 
         usuario.CambiarPasswordHash(_passwordHasher.Hash(request.PasswordNueva));
+
+        var esPropio = usuario.UsuarioId == _usuarioActual.UsuarioId;
+
+        await _unitOfWork.RevocarDeUsuarioAsync(
+            usuario.UsuarioId,
+            MotivoRevocacionSesion.CambioPassword,
+            _dateTime.Now,
+            _usuarioActual.UsuarioId,
+            exceptoSesionId: esPropio ? _usuarioActual.SesionId : null,
+            cancellationToken: cancellationToken);
+
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

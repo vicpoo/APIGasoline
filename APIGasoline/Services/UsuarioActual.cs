@@ -17,6 +17,7 @@ public sealed class UsuarioActual : IUsuarioActual
     private const string ClaimEmpleadoId = "empleado_id";
     private const string ClaimEmpresaId = "empresa_id";
     private const string ClaimRol = "role";
+    private const string ClaimSesionId = "sid";
 
     private static readonly IReadOnlySet<string> SinPrivilegios = new HashSet<string>();
 
@@ -39,6 +40,8 @@ public sealed class UsuarioActual : IUsuarioActual
     public Guid? EmpleadoId => LeerGuid(ClaimEmpleadoId);
 
     public Guid? EmpresaId => LeerGuid(ClaimEmpresaId);
+
+    public Guid? SesionId => LeerGuid(ClaimSesionId);
 
     public IReadOnlyCollection<string> Roles
         => EstaAutenticado

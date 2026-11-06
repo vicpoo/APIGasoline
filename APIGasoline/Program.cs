@@ -1,9 +1,11 @@
 ﻿using System.Text.Json;
+using System.Threading.RateLimiting;
 using System.Text.Json.Serialization;
 using System.Text;
 using APIGasoline.Application;
 using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Common.Outbox;
+using APIGasoline.Application.Common.Sesiones;
 using APIGasoline.Application.Features.Auth.Commands;
 using APIGasoline.Application.Features.BaseDatos.Commands;
 using APIGasoline.Authorization;
@@ -16,6 +18,7 @@ using APIGasoline.Middleware;
 using APIGasoline.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -42,6 +45,13 @@ builder.Services.AddScoped<IUsuarioActual, UsuarioActual>();
 var jwtSettings = builder.Configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>()
     ?? throw new InvalidOperationException("Falta la sección 'Jwt' en la configuración.");
 
+var sesionesSettings = builder.Configuration.GetSection(SesionesSettings.SectionName).Get<SesionesSettings>()
+    ?? new SesionesSettings();
+
+var limiteAuthSettings = builder.Configuration.GetSection(LimiteAuthSettings.SectionName).Get<LimiteAuthSettings>()
+    ?? new LimiteAuthSettings();
+limiteAuthSettings.Validar();
+
 var minioSettings = builder.Configuration.GetSection(MinioSettings.SectionName).Get<MinioSettings>()
     ?? throw new InvalidOperationException("Falta la sección 'Minio' en la configuración.");
 
@@ -57,7 +67,7 @@ var seguridadSettings = builder.Configuration.GetSection(SeguridadSettings.Secti
 var baseDatosSettings = builder.Configuration.GetSection(BaseDatosSettings.SectionName).Get<BaseDatosSettings>()
     ?? new BaseDatosSettings();
 
-builder.Services.AddInfrastructure(connectionString, jwtSettings, minioSettings, outboxSettings, pushSettings);
+builder.Services.AddInfrastructure(connectionString, jwtSettings, sesionesSettings, minioSettings, outboxSettings, pushSettings);
 
 // Autenticación con JWT (el token lo emite POST /api/auth/login)
 builder.Services
@@ -94,6 +104,38 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddScoped<IAuthorizationHandler, PrivilegioAuthorizationHandler>();
 builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, RespuestaAutorizacionHandler>();
 
+// Límite de peticiones por IP a login / refresh / logout (fuerza bruta). Ventana fija de 1 minuto.
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddPolicy(LimiteAuthSettings.PoliticaLogin, http =>
+        LimitePorIp(http, limiteAuthSettings.Habilitado, limiteAuthSettings.LoginPorMinuto));
+
+    options.AddPolicy(LimiteAuthSettings.PoliticaRefresh, http =>
+        LimitePorIp(http, limiteAuthSettings.Habilitado, limiteAuthSettings.RefreshPorMinuto));
+
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        var segundos = context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var espera)
+            ? (int)Math.Ceiling(espera.TotalSeconds)
+            : 60;
+
+        context.HttpContext.Response.Headers.RetryAfter = segundos.ToString();
+
+        await context.HttpContext.Response.WriteAsJsonAsync(
+            new ProblemDetails
+            {
+                Status = StatusCodes.Status429TooManyRequests,
+                Title = "Demasiadas solicitudes",
+                Detail = $"Hiciste demasiados intentos. Espera {segundos} segundos e inténtalo de nuevo."
+            },
+            options: (JsonSerializerOptions?)null,
+            contentType: "application/problem+json",
+            cancellationToken: cancellationToken);
+    };
+});
+
 var app = builder.Build();
 
 // Esquema de la BD: aplica las migraciones pendientes (la lógica vive en Application/Infrastructure;
@@ -129,8 +171,25 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Partición por IP del cliente. Sin límite si LimiteAuth:Habilitado = false (pruebas de carga).
+static RateLimitPartition<string> LimitePorIp(HttpContext http, bool habilitado, int porMinuto)
+{
+    var ip = http.Connection.RemoteIpAddress?.ToString() ?? "desconocida";
+
+    if (!habilitado)
+        return RateLimitPartition.GetNoLimiter(ip);
+
+    return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
+    {
+        PermitLimit = porMinuto,
+        Window = TimeSpan.FromMinutes(1),
+        QueueLimit = 0
+    });
+}

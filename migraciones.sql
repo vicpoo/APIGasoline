@@ -2438,3 +2438,125 @@ DROP PROCEDURE MigrationsScript;
 
 COMMIT;
 
+START TRANSACTION;
+DROP PROCEDURE IF EXISTS MigrationsScript;
+DELIMITER //
+CREATE PROCEDURE MigrationsScript()
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM `__EFMigrationsHistory` WHERE `MigrationId` = '20261106120000_SesionesUsuario') THEN
+
+    CREATE TABLE `sesion_usuario` (
+        `sesion_usuario_id` binary(16) NOT NULL,
+        `usuario_id` binary(16) NOT NULL,
+        `empresa_id` binary(16) NULL,
+        `token_hash` char(64) CHARACTER SET utf8mb4 NOT NULL,
+        `token_hash_anterior` char(64) CHARACTER SET utf8mb4 NULL,
+        `plataforma` enum('android','ios','web') CHARACTER SET utf8mb4 NULL,
+        `nombre_dispositivo` varchar(100) CHARACTER SET utf8mb4 NULL,
+        `ip` varchar(45) CHARACTER SET utf8mb4 NULL,
+        `user_agent` varchar(255) CHARACTER SET utf8mb4 NULL,
+        `fecha_creacion` timestamp NOT NULL,
+        `fecha_ultimo_uso` timestamp NOT NULL,
+        `fecha_rotacion` timestamp NULL,
+        `expira_en` timestamp NOT NULL,
+        `expira_absoluta_en` timestamp NOT NULL,
+        `fecha_revocacion` timestamp NULL,
+        `motivo_revocacion` enum('cierre_sesion','cerrada_por_usuario','cerrada_por_administrador','cambio_password','usuario_desactivado','empleado_dado_de_baja','empleado_reasignado','empresa_eliminada','reuso_detectado','acceso_revocado','limite_sesiones') CHARACTER SET utf8mb4 NULL,
+        `revocada_por_usuario_id` binary(16) NULL,
+        CONSTRAINT `PK_sesion_usuario` PRIMARY KEY (`sesion_usuario_id`),
+        CONSTRAINT `fk_sesion_usuario_usuario` FOREIGN KEY (`usuario_id`) REFERENCES `usuario` (`usuario_id`) ON DELETE CASCADE
+    ) CHARACTER SET=utf8mb4;
+
+    END IF;
+END //
+DELIMITER ;
+CALL MigrationsScript();
+DROP PROCEDURE MigrationsScript;
+
+DROP PROCEDURE IF EXISTS MigrationsScript;
+DELIMITER //
+CREATE PROCEDURE MigrationsScript()
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM `__EFMigrationsHistory` WHERE `MigrationId` = '20261106120000_SesionesUsuario') THEN
+
+    CREATE UNIQUE INDEX `uq_sesion_usuario_token_hash` ON `sesion_usuario` (`token_hash`);
+
+    END IF;
+END //
+DELIMITER ;
+CALL MigrationsScript();
+DROP PROCEDURE MigrationsScript;
+
+DROP PROCEDURE IF EXISTS MigrationsScript;
+DELIMITER //
+CREATE PROCEDURE MigrationsScript()
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM `__EFMigrationsHistory` WHERE `MigrationId` = '20261106120000_SesionesUsuario') THEN
+
+    CREATE INDEX `ix_sesion_usuario_token_hash_anterior` ON `sesion_usuario` (`token_hash_anterior`);
+
+    END IF;
+END //
+DELIMITER ;
+CALL MigrationsScript();
+DROP PROCEDURE MigrationsScript;
+
+DROP PROCEDURE IF EXISTS MigrationsScript;
+DELIMITER //
+CREATE PROCEDURE MigrationsScript()
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM `__EFMigrationsHistory` WHERE `MigrationId` = '20261106120000_SesionesUsuario') THEN
+
+    CREATE INDEX `ix_sesion_usuario_usuario_id_fecha_revocacion_expira_en` ON `sesion_usuario` (`usuario_id`, `fecha_revocacion`, `expira_en`);
+
+    END IF;
+END //
+DELIMITER ;
+CALL MigrationsScript();
+DROP PROCEDURE MigrationsScript;
+
+DROP PROCEDURE IF EXISTS MigrationsScript;
+DELIMITER //
+CREATE PROCEDURE MigrationsScript()
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM `__EFMigrationsHistory` WHERE `MigrationId` = '20261106120000_SesionesUsuario') THEN
+
+    CREATE INDEX `ix_sesion_usuario_empresa_id_fecha_revocacion` ON `sesion_usuario` (`empresa_id`, `fecha_revocacion`);
+
+    END IF;
+END //
+DELIMITER ;
+CALL MigrationsScript();
+DROP PROCEDURE MigrationsScript;
+
+DROP PROCEDURE IF EXISTS MigrationsScript;
+DELIMITER //
+CREATE PROCEDURE MigrationsScript()
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM `__EFMigrationsHistory` WHERE `MigrationId` = '20261106120000_SesionesUsuario') THEN
+
+    CREATE INDEX `ix_sesion_usuario_expira_en` ON `sesion_usuario` (`expira_en`);
+
+    END IF;
+END //
+DELIMITER ;
+CALL MigrationsScript();
+DROP PROCEDURE MigrationsScript;
+
+DROP PROCEDURE IF EXISTS MigrationsScript;
+DELIMITER //
+CREATE PROCEDURE MigrationsScript()
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM `__EFMigrationsHistory` WHERE `MigrationId` = '20261106120000_SesionesUsuario') THEN
+
+    INSERT INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`)
+    VALUES ('20261106120000_SesionesUsuario', '10.0.12');
+
+    END IF;
+END //
+DELIMITER ;
+CALL MigrationsScript();
+DROP PROCEDURE MigrationsScript;
+
+COMMIT;
+

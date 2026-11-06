@@ -20,6 +20,9 @@ public interface IUsuarioActual
 
     Guid? EmpresaId { get; }
 
+    /// <summary>Sesión (refresh token) que emitió el token de esta petición (claim "sid").</summary>
+    Guid? SesionId { get; }
+
     /// <summary>Nombres de los roles (solo informativo: NO usar para autorizar).</summary>
     IReadOnlyCollection<string> Roles { get; }
 

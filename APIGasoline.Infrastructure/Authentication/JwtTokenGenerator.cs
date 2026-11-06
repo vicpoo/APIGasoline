@@ -11,6 +11,7 @@ public sealed class JwtTokenGenerator : IJwtTokenGenerator
     public const string ClaimEmpleadoId = "empleado_id";
     public const string ClaimEmpresaId = "empresa_id";
     public const string ClaimRol = "role";
+    public const string ClaimSesionId = JwtRegisteredClaimNames.Sid;
 
     private readonly JwtSettings _settings;
     private readonly IDateTimeProvider _dateTime;
@@ -35,6 +36,9 @@ public sealed class JwtTokenGenerator : IJwtTokenGenerator
 
         if (usuario.EmpresaId is not null)
             claims.Add(new Claim(ClaimEmpresaId, usuario.EmpresaId.Value.ToString()));
+
+        if (usuario.SesionId is not null)
+            claims.Add(new Claim(ClaimSesionId, usuario.SesionId.Value.ToString()));
 
         claims.AddRange(usuario.Roles.Select(rol => new Claim(ClaimRol, rol)));
 

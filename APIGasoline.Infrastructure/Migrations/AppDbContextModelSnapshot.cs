@@ -1160,6 +1160,104 @@ namespace APIGasoline.Infrastructure.Migrations
                     b.ToTable("ruta_procesada", (string)null);
                 });
 
+            modelBuilder.Entity("APIGasoline.Domain.Entities.SesionUsuario", b =>
+                {
+                    b.Property<Guid>("SesionUsuarioId")
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("sesion_usuario_id");
+
+                    b.Property<Guid?>("EmpresaId")
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("empresa_id");
+
+                    b.Property<DateTime>("ExpiraAbsolutaEn")
+                        .HasColumnType("timestamp")
+                        .HasColumnName("expira_absoluta_en");
+
+                    b.Property<DateTime>("ExpiraEn")
+                        .HasColumnType("timestamp")
+                        .HasColumnName("expira_en");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("timestamp")
+                        .HasColumnName("fecha_creacion");
+
+                    b.Property<DateTime?>("FechaRevocacion")
+                        .HasColumnType("timestamp")
+                        .HasColumnName("fecha_revocacion");
+
+                    b.Property<DateTime?>("FechaRotacion")
+                        .HasColumnType("timestamp")
+                        .HasColumnName("fecha_rotacion");
+
+                    b.Property<DateTime>("FechaUltimoUso")
+                        .HasColumnType("timestamp")
+                        .HasColumnName("fecha_ultimo_uso");
+
+                    b.Property<string>("Ip")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)")
+                        .HasColumnName("ip");
+
+                    b.Property<string>("MotivoRevocacion")
+                        .HasColumnType("enum('cierre_sesion','cerrada_por_usuario','cerrada_por_administrador','cambio_password','usuario_desactivado','empleado_dado_de_baja','empleado_reasignado','empresa_eliminada','reuso_detectado','acceso_revocado','limite_sesiones')")
+                        .HasColumnName("motivo_revocacion");
+
+                    b.Property<string>("NombreDispositivo")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("nombre_dispositivo");
+
+                    b.Property<string>("Plataforma")
+                        .HasColumnType("enum('android','ios','web')")
+                        .HasColumnName("plataforma");
+
+                    b.Property<Guid?>("RevocadaPorUsuarioId")
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("revocada_por_usuario_id");
+
+                    b.Property<string>("TokenHash")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("char(64)")
+                        .HasColumnName("token_hash");
+
+                    b.Property<string>("TokenHashAnterior")
+                        .HasMaxLength(64)
+                        .HasColumnType("char(64)")
+                        .HasColumnName("token_hash_anterior");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasColumnName("user_agent");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("usuario_id");
+
+                    b.HasKey("SesionUsuarioId");
+
+                    b.HasIndex("ExpiraEn")
+                        .HasDatabaseName("ix_sesion_usuario_expira_en");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique()
+                        .HasDatabaseName("uq_sesion_usuario_token_hash");
+
+                    b.HasIndex("TokenHashAnterior")
+                        .HasDatabaseName("ix_sesion_usuario_token_hash_anterior");
+
+                    b.HasIndex("EmpresaId", "FechaRevocacion")
+                        .HasDatabaseName("ix_sesion_usuario_empresa_id_fecha_revocacion");
+
+                    b.HasIndex("UsuarioId", "FechaRevocacion", "ExpiraEn")
+                        .HasDatabaseName("ix_sesion_usuario_usuario_id_fecha_revocacion_expira_en");
+
+                    b.ToTable("sesion_usuario", (string)null);
+                });
+
             modelBuilder.Entity("APIGasoline.Domain.Entities.SolicitudReserva", b =>
                 {
                     b.Property<Guid>("SolicitudReservaId")
@@ -1760,6 +1858,16 @@ namespace APIGasoline.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_ruta_procesada_viaje");
+                });
+
+            modelBuilder.Entity("APIGasoline.Domain.Entities.SesionUsuario", b =>
+                {
+                    b.HasOne("APIGasoline.Domain.Entities.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_sesion_usuario_usuario");
                 });
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.SolicitudReserva", b =>

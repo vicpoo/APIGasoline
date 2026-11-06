@@ -36,6 +36,7 @@ public class UnitOfWork : IUnitOfWork
         Notificaciones = new NotificacionRepository(context);
         OutboxMensajes = new OutboxMensajeRepository(context);
         Dispositivos = new DispositivoEmpleadoRepository(context);
+        Sesiones = new SesionUsuarioRepository(context);
         AuditoriaEventos = new AuditoriaEventoRepository(context);
         RevisionesAuditoria = new RevisionAuditoriaRepository(context);
         RevisionCombustible = new RevisionCombustibleRepository(context);
@@ -63,6 +64,7 @@ public class UnitOfWork : IUnitOfWork
     public INotificacionRepository Notificaciones { get; }
     public IOutboxMensajeRepository OutboxMensajes { get; }
     public IDispositivoEmpleadoRepository Dispositivos { get; }
+    public ISesionUsuarioRepository Sesiones { get; }
     public IAuditoriaEventoRepository AuditoriaEventos { get; }
     public IRevisionAuditoriaRepository RevisionesAuditoria { get; }
     public IRevisionCombustibleRepository RevisionCombustible { get; }

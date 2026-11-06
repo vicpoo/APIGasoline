@@ -1,7 +1,10 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Common.Interfaces;
+using APIGasoline.Application.Common.Sesiones;
 using APIGasoline.Application.Features.Auth.Common;
 using APIGasoline.Application.Features.Auth.DTOs;
+using APIGasoline.Domain.Entities;
+using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
 using MediatR;
@@ -9,9 +12,10 @@ using MediatR;
 namespace APIGasoline.Application.Features.Auth.Commands;
 
 /// <summary>
-/// Valida email + contraseña y devuelve el token JWT junto con los datos del usuario y su empleado.
+/// Valida email + contraseña, abre una sesión (refresh token) para el dispositivo y devuelve
+/// el JWT de acceso, el refresh token y los datos del usuario y su empleado.
 /// </summary>
-public record LoginCommand(string Email, string Password) : IRequest<LoginResponseDto>;
+public record LoginCommand(string Email, string Password, DatosClienteSesion? Cliente = null) : IRequest<LoginResponseDto>;
 
 public class LoginCommandHandler : IRequestHandler<LoginCommand, LoginResponseDto>
 {
@@ -26,19 +30,25 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, LoginResponseDt
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
     private readonly IFileStorageService _storage;
+    private readonly IDateTimeProvider _dateTime;
+    private readonly SesionesSettings _sesiones;
 
     public LoginCommandHandler(
         IUnitOfWork unitOfWork,
         IMapper mapper,
         IPasswordHasher passwordHasher,
         IJwtTokenGenerator jwtTokenGenerator,
-        IFileStorageService storage)
+        IFileStorageService storage,
+        IDateTimeProvider dateTime,
+        SesionesSettings sesiones)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _passwordHasher = passwordHasher;
         _jwtTokenGenerator = jwtTokenGenerator;
         _storage = storage;
+        _dateTime = dateTime;
+        _sesiones = sesiones;
     }
 
     public async Task<LoginResponseDto> Handle(LoginCommand request, CancellationToken cancellationToken)
@@ -59,13 +69,52 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, LoginResponseDt
         // Valida estado del usuario/empleado/empresa y carga roles y privilegios
         var (perfil, empleado) = await PerfilUsuarioBuilder.ConstruirAsync(_unitOfWork, _mapper, _storage, usuario, cancellationToken);
 
-        var token = _jwtTokenGenerator.Generar(new TokenUsuario(
-            usuario.UsuarioId,
-            usuario.Email,
-            empleado?.EmpleadoId,
-            empleado?.EmpresaId,
-            perfil.Roles));
+        // Sesión del dispositivo: el refresh token se entrega UNA vez y en la BD solo queda su hash
+        var ahora = _dateTime.Now;
+        var cliente = request.Cliente ?? DatosClienteSesion.Vacio;
+        var refreshToken = TokenRefresh.Generar();
 
-        return new LoginResponseDto(token.Token, "Bearer", token.ExpiraEnUtc, perfil);
+        var sesion = SesionUsuario.Iniciar(
+            usuario.UsuarioId,
+            empleado?.EmpresaId,
+            TokenRefresh.Hash(refreshToken),
+            cliente.Plataforma,
+            cliente.NombreDispositivo,
+            cliente.Ip,
+            cliente.UserAgent,
+            ahora,
+            _sesiones.DuracionRefresh,
+            _sesiones.DuracionMaxima);
+
+        await CerrarExcedentesAsync(usuario.UsuarioId, ahora, cancellationToken);
+        await _unitOfWork.Sesiones.AddAsync(sesion, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        var token = EmisionTokens.GenerarAcceso(_jwtTokenGenerator, usuario, empleado, perfil.Roles, sesion.SesionUsuarioId);
+
+        return new LoginResponseDto(
+            token.Token,
+            "Bearer",
+            token.ExpiraEnUtc,
+            refreshToken,
+            EmisionTokens.AUtc(sesion.ExpiraEn),
+            sesion.SesionUsuarioId,
+            perfil);
+    }
+
+    /// <summary>
+    /// Deja lugar para la sesión nueva: si el usuario ya tiene el máximo de sesiones abiertas,
+    /// cierra las que llevan más tiempo sin usarse.
+    /// </summary>
+    private async Task CerrarExcedentesAsync(Guid usuarioId, DateTime ahora, CancellationToken cancellationToken)
+    {
+        var activas = await _unitOfWork.Sesiones.GetActivasByUsuarioAsync(usuarioId, ahora, cancellationToken);
+        var sobran = activas.Count - (_sesiones.MaxSesionesPorUsuario - 1);
+
+        if (sobran <= 0)
+            return;
+
+        foreach (var vieja in activas.OrderBy(s => s.FechaUltimoUso).Take(sobran))
+            vieja.Revocar(MotivoRevocacionSesion.LimiteSesiones, ahora);
     }
 }

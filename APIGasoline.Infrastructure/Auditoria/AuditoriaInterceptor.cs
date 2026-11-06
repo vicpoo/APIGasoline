@@ -23,6 +23,7 @@ public sealed class AuditoriaInterceptor : SaveChangesInterceptor
         typeof(OutboxMensaje),
         typeof(Notificacion),
         typeof(DispositivoEmpleado),
+        typeof(SesionUsuario),   // cada renovación de token la modifica; guarda su propio motivo de cierre
         typeof(PuntoRuta),       // miles de puntos por viaje; nunca se modifican
         typeof(RutaProcesada)    // se recalcula a partir de los puntos
     ];
@@ -31,7 +32,9 @@ public sealed class AuditoriaInterceptor : SaveChangesInterceptor
     private static readonly HashSet<string> ColumnasSensibles = new(StringComparer.OrdinalIgnoreCase)
     {
         "password_hash",
-        "token_fcm"
+        "token_fcm",
+        "token_hash",
+        "token_hash_anterior"
     };
 
     private const string ValorOculto = "***";

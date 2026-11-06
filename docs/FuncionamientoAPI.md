@@ -105,8 +105,9 @@ Todas las respuestas de error usan este formato:
 
 ## 3. Autenticación y autorización
 
-1. **Login:** `POST /api/auth/login` con email y contraseña. Devuelve:
-   - el token JWT;
+1. **Login:** `POST /api/auth/login` con email y contraseña (opcional: `plataforma` y `nombreDispositivo`). Devuelve:
+   - el token JWT de acceso (`token`, dura `Jwt:ExpiracionMinutos` = 15 min);
+   - el refresh token (`refreshToken`, sesión larga de `Sesiones:RefreshDias` = 30 días) y el `sesionId`;
    - el usuario y su empleado;
    - sus roles;
    - sus privilegios y la `versionPrivilegios`.
@@ -114,21 +115,51 @@ Todas las respuestas de error usan este formato:
    - `sub`: el usuario;
    - `empleado_id`;
    - `empresa_id`;
-   - `role`: solo informativo.
-3. **Privilegios efectivos:** son los privilegios activos de los roles activos del usuario, globales o de su empresa.
+   - `role`: solo informativo;
+   - `sid`: la sesión (refresh token) que lo emitió.
+3. **Sesiones largas (refresh tokens):** ver la sección 3.1.
+4. **Privilegios efectivos:** son los privilegios activos de los roles activos del usuario, globales o de su empresa.
    - **No van en el token.** Se consultan en la BD con una caché de 30 segundos, así un cambio aplica sin volver a iniciar sesión.
-4. **Endpoints sin atributo:** todo endpoint que no lleva `[RequierePrivilegio]` igual pide sesión. Solo el login es público.
-5. **Alcance de los datos:**
+5. **Endpoints sin atributo:** todo endpoint que no lleva `[RequierePrivilegio]` igual pide sesión. Solo login, refresh y logout son públicos.
+6. **Alcance de los datos:**
    - Sin `plataforma.multiempresa`, cada quien ve solo la empresa de su token.
    - Sin el privilegio de "ver todos" (`viaje.ver_todos`, `solicitud.ver_todas`, `notificacion.enviar`), la API filtra para devolver solo lo propio.
    - **Autoservicio:** perfil, licencia, contraseña, celular y notificaciones propias no llevan privilegio. Para hacerlo por otro empleado se necesita `empleado.gestionar` o `usuario.gestionar`.
-6. **Siembra al arrancar** (`SembrarSeguridadCommand`):
+7. **Siembra al arrancar** (`SembrarSeguridadCommand`):
    - Crea los privilegios del catálogo que falten.
    - Crea el rol global **Administrador** con todos los privilegios.
    - Crea el usuario admin configurado en `Seguridad:AdminEmail` / `AdminPassword`.
-7. **Sincronización de privilegios en la app:** `GET /api/auth/privilegios` con la versión que tiene la app. Si no cambió responde `304`, y si cambió manda la lista nueva.
+8. **Sincronización de privilegios en la app:** `GET /api/auth/privilegios` con la versión que tiene la app. Si no cambió responde `304`, y si cambió manda la lista nueva.
 
 El catálogo completo de privilegios está en `docs/CatalogoPrivilegios.md`.
+
+### 3.1 Sesiones largas con refresh token
+
+La sesión dura un mes sin bajar la seguridad porque se usan **dos tokens**:
+
+| Token | Dura | Para qué | Dónde se guarda |
+|---|---|---|---|
+| Acceso (JWT) | 15 min (`Jwt:ExpiracionMinutos`) | Header `Authorization: Bearer` en cada petición. | En memoria / almacenamiento seguro. |
+| Refresh | 30 días deslizantes, tope de 90 (`Sesiones`) | Solo para `POST /api/auth/refresh`. | Cifrado (Keystore en Android, Keychain en iOS). En la BD solo su hash SHA-256. |
+
+**Flujo en la app:**
+1. Login → guarda `token`, `refreshToken` y sus expiraciones.
+2. Si una petición responde `401` (o el JWT está por vencer) → `POST /api/auth/refresh` con `{ "refreshToken": "..." }`.
+   - `200`: guarda el `token` y el `refreshToken` NUEVOS (el anterior ya no sirve) y reintenta la petición.
+   - `401`: la sesión terminó → borrar los datos de sesión y mandar al login.
+   - Solo una renovación a la vez: si varias peticiones reciben `401`, esperan a la misma renovación.
+3. Cerrar sesión → `POST /api/auth/logout` con el refresh token (funciona aunque el JWT ya expiró) y borrar los datos locales.
+
+**Reglas de seguridad:**
+- **Rotación:** cada renovación entrega un refresh token nuevo e invalida el anterior.
+- **Detección de robo:** si llega un refresh token que ya fue reemplazado, se cierra la sesión completa (motivo `reuso_detectado`). Excepción: dentro de `Sesiones:GraciaReusoSegundos` (30 s) se toma como dos renovaciones simultáneas del mismo celular y solo se rechaza.
+- **Expiración deslizante con tope:** cada renovación extiende la sesión 30 días, pero nunca más de 90 desde el login.
+- **Se revalida al renovar:** usuario activo, empleado y empresa vigentes; los roles del JWT se actualizan.
+- **Revocación automática** de las sesiones del usuario al: cambiar su contraseña (se conserva la sesión desde la que la cambió), desactivar el usuario, dar de baja o reasignar su empleado, o eliminar la empresa.
+- **Máximo de sesiones** por usuario (`Sesiones:MaxSesionesPorUsuario` = 10): al pasarse se cierra la que lleva más tiempo sin usarse.
+- **Límite de intentos por IP** (`LimiteAuth`): login 10/min y refresh/logout 60/min. Al pasarse responde `429` con `Retry-After`.
+- **Limpieza:** un worker borra cada 6 h las sesiones expiradas o cerradas hace más de 30 días.
+- Al cerrar una sesión, su JWT de acceso sigue sirviendo hasta que expire (máximo 15 min); lo que ya no puede es renovarse.
 
 ---
 
@@ -144,8 +175,16 @@ El catálogo completo de privilegios está en `docs/CatalogoPrivilegios.md`.
 | Método | Ruta | Privilegio | Qué hace |
 |---|---|---|---|
 | POST | `/api/auth/login` | público | Inicia sesión. Devuelve el token, el perfil y los privilegios. |
+| POST | `/api/auth/refresh` | público | Con `{ refreshToken }` devuelve un JWT nuevo y un refresh token nuevo (rotación). `401` = la sesión terminó. |
+| POST | `/api/auth/logout` | público | Con `{ refreshToken }` cierra esa sesión. Siempre `204`. |
 | GET | `/api/auth/perfil` | sesión | Perfil del usuario del token. |
 | GET | `/api/auth/privilegios` | sesión | Privilegios y versión. Responde `304` si no cambiaron. |
+| GET | `/api/auth/sesiones` | sesión | Mis sesiones abiertas (`esActual` marca la de esta petición). |
+| DELETE | `/api/auth/sesiones/{sesionId}` | sesión | Cierra una de mis sesiones (ej. celular perdido). |
+| POST | `/api/auth/sesiones/cerrar-otras` | sesión | Cierra todas mis sesiones menos la actual. |
+| GET | `/api/usuarios/{id}/sesiones` | sesión (el propio) o `usuario.gestionar` | Sesiones abiertas del usuario. |
+| DELETE | `/api/usuarios/{id}/sesiones/{sesionId}` | sesión (el propio) o `usuario.gestionar` | Cierra una sesión del usuario. |
+| POST | `/api/usuarios/{id}/sesiones/cerrar-todas` | sesión (el propio) o `usuario.gestionar` | Cierra todas las sesiones del usuario. |
 
 ### 4.2 Vehículos (carros)
 
@@ -301,7 +340,7 @@ Todos estos módulos siguen el CRUD estándar: `GET` (lista), `GET /{id}`, `POST
 
 ### 5.2 Iniciar sesión (app)
 
-1. `POST /auth/login`. La app guarda el token, el perfil y los privilegios.
+1. `POST /auth/login`. La app guarda el token, el refresh token (cifrado), el perfil y los privilegios. Cuando el token vence, lo renueva con `POST /auth/refresh` (sección 3.1).
 2. Si el empleado no tiene licencia, la app pide subirla con `PUT /empleados/{id}/foto-licencia`.
 3. La app muestra solo las pestañas y botones de los privilegios que tiene el usuario.
 4. Cada cierto tiempo, la app revisa `GET /auth/privilegios` con su versión. Si responde `304`, sus privilegios no cambiaron.
@@ -409,7 +448,9 @@ Operador                         API                                  Supervisor
 | Sección | Para qué |
 |---|---|
 | `ConnectionStrings:DefaultConnection` | MySQL. |
-| `Jwt` | Emisor, audiencia, clave (mínimo 32 caracteres) y expiración (480 min). |
+| `Jwt` | Emisor, audiencia, clave (mínimo 32 caracteres) y expiración del token de acceso (15 min). |
+| `Sesiones` | Refresh token: `RefreshDias` (30), `RefreshMaxDias` (90), `GraciaReusoSegundos` (30), `MaxSesionesPorUsuario` (10) y limpieza (`LimpiezaHabilitada`, `LimpiezaIntervaloHoras`, `LimpiezaRetencionDias`). |
+| `LimiteAuth` | Límite por IP: `LoginPorMinuto` (10), `RefreshPorMinuto` (60). `Habilitado: false` para pruebas de carga. |
 | `Minio` | Endpoint, credenciales y bucket de archivos. |
 | `Outbox` | Intervalo, tamaño de lote y bloqueo del worker. |
 | `Push` | Proveedor `NoOp` (simulado) o `Firebase`, con su archivo de credenciales. |

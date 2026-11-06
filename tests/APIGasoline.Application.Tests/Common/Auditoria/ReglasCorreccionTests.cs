@@ -116,6 +116,8 @@ public class ReglasCorreccionTests
     {
         public OrigenAuditoria Origen => OrigenAuditoria.Web;
 
+        public Guid? SesionId => null;
+
         public Task<IReadOnlySet<string>> GetPrivilegiosAsync(CancellationToken cancellationToken = default)
             => Task.FromResult(Privilegios);
 

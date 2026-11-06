@@ -974,6 +974,8 @@
                   "const j = pm.response.json();",
                   "pm.test('Devuelve un token JWT', () => pm.expect(j.token.split('.').length).to.eql(3));",
                   "pm.collectionVariables.set('tokenOperador', j.token);",
+                  "pm.test('Devuelve el refresh token (sesión larga)', () => { pm.expect(j.refreshToken).to.be.a('string').and.not.empty; pm.expect(j.sesionId).to.be.a('string'); });",
+                  "pm.collectionVariables.set('refreshOperador', j.refreshToken);",
                   "pm.test('El token trae al empleado (su empresa va en el token)', () => pm.expect(j.perfil.empleado).to.not.be.null);"
                 ]
               }
@@ -1213,6 +1215,262 @@
                 "exec": [
                   "pm.test('Código de estado 401', () => pm.response.to.have.status(401));",
                   "pm.test('Respuesta con formato ProblemDetails', () => { const j = pm.response.json(); pm.expect(j).to.have.property('title'); pm.expect(j).to.have.property('detail'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05.7 Renovar sesión con el refresh token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{host}}/api/auth/refresh",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshOperador}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('Devuelve un JWT nuevo', () => pm.expect(j.token.split('.').length).to.eql(3));",
+                  "pm.test('Rota el refresh token (es otro)', () => pm.expect(j.refreshToken).to.not.eql(pm.collectionVariables.get('refreshOperador')));",
+                  "pm.collectionVariables.set('refreshOperadorUsado', pm.collectionVariables.get('refreshOperador'));",
+                  "pm.collectionVariables.set('refreshOperador', j.refreshToken);",
+                  "pm.collectionVariables.set('tokenOperador', j.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05.8 Refresh token ya usado (401)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{host}}/api/auth/refresh",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshOperadorUsado}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Dentro de los 30 s de gracia solo se rechaza; después se cerraría la sesión completa (reuso = robo)",
+                  "pm.test('Código de estado 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05.9 Mis sesiones abiertas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{host}}/api/auth/sesiones",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenOperador}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "const sesiones = pm.response.json();",
+                  "pm.test('Marca la sesión actual', () => pm.expect(sesiones.some(s => s.esActual)).to.be.true);",
+                  "pm.test('Nunca devuelve tokens', () => pm.expect(JSON.stringify(sesiones)).to.not.include('refreshToken'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05.10 Refresh sin token (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{host}}/api/auth/refresh",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05.11 Login del operador en otro dispositivo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{host}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"operador.{{run}}@ejemplo.com\",\n  \"password\": \"Gasolina2026\",\n  \"plataforma\": \"ios\",\n  \"nombreDispositivo\": \"iPhone de prueba\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 200', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('refreshTemporal', pm.response.json().refreshToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05.12 Logout del otro dispositivo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{host}}/api/auth/logout",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshTemporal}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05.13 Refresh con sesión cerrada (401)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{host}}/api/auth/refresh",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshTemporal}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código de estado 401', () => pm.response.to.have.status(401));"
                 ]
               }
             }
@@ -4061,6 +4319,18 @@
     },
     {
       "key": "versionPrivilegios",
+      "value": ""
+    },
+    {
+      "key": "refreshOperador",
+      "value": ""
+    },
+    {
+      "key": "refreshOperadorUsado",
+      "value": ""
+    },
+    {
+      "key": "refreshTemporal",
       "value": ""
     }
   ]

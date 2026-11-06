@@ -23,6 +23,9 @@ public interface IUnitOfWork : IDisposable
     INotificacionRepository Notificaciones { get; }
     IOutboxMensajeRepository OutboxMensajes { get; }
     IDispositivoEmpleadoRepository Dispositivos { get; }
+
+    /// <summary>Sesiones de los usuarios (refresh tokens).</summary>
+    ISesionUsuarioRepository Sesiones { get; }
     IAuditoriaEventoRepository AuditoriaEventos { get; }
     IRevisionAuditoriaRepository RevisionesAuditoria { get; }
     IRevisionCombustibleRepository RevisionCombustible { get; }
