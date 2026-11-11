@@ -31,6 +31,9 @@ public static class DependencyInjection
         // guardián las escrituras (va ANTES que la auditoría: si rechaza, no se registra nada).
         services.AddScoped<AislamientoEmpresaInterceptor>();
 
+        // Row-Level Security: cada conexión le dice a SQL Server de qué empresa es la petición
+        services.AddScoped<ContextoSesionSqlInterceptor>();
+
         // SQL Server. Los Guid se guardan como binary(16) en orden RFC 4122 (ver AppDbContext.ConfigureConventions).
         // Sin EnableRetryOnFailure: la API abre transacciones manuales (IUnitOfWork.BeginTransactionAsync)
         // y la estrategia de reintentos de EF no las permite.
@@ -38,6 +41,7 @@ public static class DependencyInjection
             options
                 .UseSqlServer(connectionString)
                 .AddInterceptors(
+                    serviceProvider.GetRequiredService<ContextoSesionSqlInterceptor>(),
                     serviceProvider.GetRequiredService<AislamientoEmpresaInterceptor>(),
                     serviceProvider.GetRequiredService<AuditoriaInterceptor>()));
 

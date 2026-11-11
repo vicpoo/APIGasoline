@@ -139,6 +139,31 @@ empresa/{empresa_id}/{entidad}/{id}/{carpeta}/{tipo}-{uuid}.{ext}
 - Las validaciones de unicidad global (placas, correo, token del celular) ignoran solo el filtro `Empresa` y devuelven sí/no.
 - Las pruebas `tests/APIGasoline.Api.IntegrationTests` (matriz de fugas) y `tests/APIGasoline.Architecture.Tests` (`AislamientoEmpresaTests`) lo vigilan.
 
+### 3.4. Row-Level Security en SQL Server (fase 6)
+
+Segundo candado, dentro de la base de datos: aunque una consulta se salte el filtro de EF (SQL a mano, `IgnoreQueryFilters`, un error), SQL Server tampoco devuelve ni deja escribir filas de otra empresa.
+
+- **Cómo sabe SQL Server la empresa:** cada vez que EF abre una conexión, `ContextoSesionSqlInterceptor` manda dos valores de `SESSION_CONTEXT`: `apigasoline.empresa_id` (binary(16)) y `apigasoline.ve_todas` (bit, 1 = plataforma o procesos del sistema).
+- **Política:** `rls.aislamiento_empresa` (migración `SeguridadPorFilas`), sobre las mismas 18 tablas que filtra EF:
+
+| Tablas | Leer (FILTER) | Escribir (BLOCK) |
+|---|---|---|
+| carro, centro_costo, empleado, solicitud_reserva, viaje, viaje_pausa, punto_ruta, ruta_procesada, carga_combustible, cambio_estatus_carro, notificacion, dispositivo_empleado, revision_auditoria, empresa, usuario | `rls.fn_misma_empresa(empresa_id)` | La misma, AFTER INSERT y AFTER UPDATE (no se puede dejar una fila en otra empresa) |
+| rol | `rls.fn_rol_visible(empresa_id)`: propios y globales | `rls.fn_misma_empresa(empresa_id)`, también BEFORE UPDATE/DELETE (los globales no se tocan) |
+| usuario_rol | `rls.fn_usuario_de_la_empresa(usuario_id)` | `rls.fn_asignacion_de_la_empresa(usuario_id, rol_id)`: usuario y rol de la empresa |
+| rol_privilegio | `rls.fn_rol_privilegio_visible(rol_id)` | `rls.fn_rol_de_la_empresa(rol_id)` |
+
+- **Sin `SESSION_CONTEXT` no se ve nada** (falla cerrado). Para consultar a mano en SSMS, Azure Data Studio o un script de mantenimiento, ejecuta primero:
+
+  ```sql
+  EXEC sys.sp_set_session_context N'apigasoline.ve_todas', 1;
+  ```
+
+- **Índices únicos de toda la BD** (placas, correo, token del celular): si el valor repetido es de otra empresa, el handler no lo ve y el que lo detecta es el índice. La API responde 409 con un mensaje que no dice el valor ni de quién es (`ViolacionUnicidad`).
+- **La política está con `SCHEMABINDING = ON`:** una migración que quiera cambiar `empresa_id` (o `usuario_id`/`rol_id` en `usuario_rol` y `rol_privilegio`) en estas tablas tiene que quitar la política, cambiar la columna y volver a crearla.
+- **Tablas sin RLS:** `privilegio`, `corporativo`, `division` (catálogos de la plataforma) y `auditoria_evento`, `outbox_mensaje`, `sesion_usuario` (técnicas), igual que en EF.
+- `SeguridadPorFilasTests` (pruebas de integración) habla con SQL Server directo para comprobarlo y falla si una tabla filtrada en EF no tiene su política.
+
 ---
 
 ## 4. Seguridad (RBAC y sesiones)

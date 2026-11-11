@@ -1,6 +1,7 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Domain.Exceptions;
 using Microsoft.AspNetCore.Mvc;
+using APIGasoline.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace APIGasoline.Middleware;
@@ -50,6 +51,12 @@ public class ExceptionHandlingMiddleware
         {
             await WriteProblemAsync(context, StatusCodes.Status409Conflict, "Conflicto",
                 "Otro usuario modificó este registro al mismo tiempo. Actualiza la información e inténtalo de nuevo.");
+        }
+        catch (DbUpdateException ex) when (ViolacionUnicidad.EsDuplicado(ex, out var mensaje))
+        {
+            // Un dato único repetido (placas, correo...) que la validación del handler no vio:
+            // con Row-Level Security pasa cuando el que ya lo tiene es de otra empresa.
+            await WriteProblemAsync(context, StatusCodes.Status409Conflict, "Conflicto", mensaje);
         }
         catch (AlmacenamientoException ex)
         {

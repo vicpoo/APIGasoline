@@ -93,6 +93,9 @@ public sealed class Escenario : IAsyncLifetime
 
     public ApiFactory Factory => _factory ?? throw new InvalidOperationException("El escenario no se ha inicializado.");
 
+    /// <summary>Cadena de conexión a la BD de pruebas (para hablar con SQL Server sin pasar por la API).</summary>
+    public string CadenaConexion { get; private set; } = string.Empty;
+
     public DatosEmpresa A { get; } = new() { Letra = "A" };
     public DatosEmpresa B { get; } = new() { Letra = "B" };
 
@@ -108,6 +111,7 @@ public sealed class Escenario : IAsyncLifetime
             TrustServerCertificate = true,
         }.ConnectionString;
 
+        CadenaConexion = cadena;
         _factory = new ApiFactory(cadena);
 
         // Crear el primer cliente arranca la API: migra la BD y siembra la seguridad (Program.cs)
@@ -235,8 +239,10 @@ public sealed class Escenario : IAsyncLifetime
         return await EnBdAsync(async contexto =>
         {
             var ids = new HashSet<Guid> { empresaId };
+            // Abierta por EF: así pasa por ContextoSesionSqlInterceptor y Row-Level Security deja ver todo
+            // (sin usuario = procesos del sistema). Una conexión abierta a mano no vería ninguna fila.
+            await contexto.Database.OpenConnectionAsync();
             var conexion = contexto.Database.GetDbConnection();
-            await conexion.OpenAsync();
 
             try
             {
@@ -265,7 +271,7 @@ public sealed class Escenario : IAsyncLifetime
             }
             finally
             {
-                await conexion.CloseAsync();
+                await contexto.Database.CloseConnectionAsync();
             }
 
             return (IReadOnlyCollection<Guid>)ids;
@@ -279,8 +285,10 @@ public sealed class Escenario : IAsyncLifetime
     public Task<int> ContarSqlAsync(string sql, Guid empresaId)
         => EnBdAsync(async contexto =>
         {
+            // Abierta por EF: así pasa por ContextoSesionSqlInterceptor y Row-Level Security deja ver todo
+            // (sin usuario = procesos del sistema). Una conexión abierta a mano no vería ninguna fila.
+            await contexto.Database.OpenConnectionAsync();
             var conexion = contexto.Database.GetDbConnection();
-            await conexion.OpenAsync();
 
             try
             {
@@ -291,7 +299,7 @@ public sealed class Escenario : IAsyncLifetime
             }
             finally
             {
-                await conexion.CloseAsync();
+                await contexto.Database.CloseConnectionAsync();
             }
         });
 

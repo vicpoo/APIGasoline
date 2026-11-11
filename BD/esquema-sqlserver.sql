@@ -1,10 +1,13 @@
 -- ============================================================
 --  APIGasoline — Esquema de la base de datos (SQL Server)
 --  Generado con `dotnet ef migrations script` a partir de las migraciones
---  20261111182911_InicialSqlServer y 20261111211442_AgregarEmpresaAUsuario
---  (APIGasoline.Infrastructure/Migrations).
+--  20261111182911_InicialSqlServer, 20261111211442_AgregarEmpresaAUsuario y
+--  20261111222631_SeguridadPorFilas (APIGasoline.Infrastructure/Migrations).
 --
 --  24 tablas · 47 llaves foráneas · 21 CHECK
+--  Row-Level Security: política rls.aislamiento_empresa sobre 18 tablas. Sin
+--  SESSION_CONTEXT no se ve ninguna fila; para consultar a mano, antes:
+--    EXEC sys.sp_set_session_context N'apigasoline.ve_todas', 1;
 --  IDs en binary(16) (UUID v7 en orden RFC 4122) · fechas en datetime2(0)
 --  Intercalación de la BD: Modern_Spanish_CI_AI (la pone EF al crear la BD).
 --
@@ -621,6 +624,130 @@ WHERE u.empresa_id IS NULL;
 
 INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
 VALUES (N'20261111211442_AgregarEmpresaAUsuario', N'10.0.12');
+
+COMMIT;
+GO
+
+BEGIN TRANSACTION;
+EXEC(N'CREATE SCHEMA rls AUTHORIZATION dbo;');
+
+EXEC(N'CREATE FUNCTION rls.fn_misma_empresa(@empresa_id binary(16))
+RETURNS TABLE
+WITH SCHEMABINDING
+AS
+RETURN SELECT 1 AS permitido
+WHERE CAST(SESSION_CONTEXT(N''apigasoline.ve_todas'') AS bit) = 1 OR @empresa_id = CAST(SESSION_CONTEXT(N''apigasoline.empresa_id'') AS binary(16));');
+
+EXEC(N'CREATE FUNCTION rls.fn_rol_visible(@empresa_id binary(16))
+RETURNS TABLE
+WITH SCHEMABINDING
+AS
+RETURN SELECT 1 AS permitido
+WHERE CAST(SESSION_CONTEXT(N''apigasoline.ve_todas'') AS bit) = 1 OR @empresa_id IS NULL OR @empresa_id = CAST(SESSION_CONTEXT(N''apigasoline.empresa_id'') AS binary(16));');
+
+EXEC(N'CREATE FUNCTION rls.fn_usuario_de_la_empresa(@usuario_id binary(16))
+RETURNS TABLE
+WITH SCHEMABINDING
+AS
+RETURN SELECT 1 AS permitido
+WHERE CAST(SESSION_CONTEXT(N''apigasoline.ve_todas'') AS bit) = 1
+   OR EXISTS (SELECT 1 FROM dbo.usuario AS u
+              WHERE u.usuario_id = @usuario_id AND u.empresa_id = CAST(SESSION_CONTEXT(N''apigasoline.empresa_id'') AS binary(16)));');
+
+EXEC(N'CREATE FUNCTION rls.fn_asignacion_de_la_empresa(@usuario_id binary(16), @rol_id binary(16))
+RETURNS TABLE
+WITH SCHEMABINDING
+AS
+RETURN SELECT 1 AS permitido
+WHERE CAST(SESSION_CONTEXT(N''apigasoline.ve_todas'') AS bit) = 1
+   OR (EXISTS (SELECT 1 FROM dbo.usuario AS u
+               WHERE u.usuario_id = @usuario_id AND u.empresa_id = CAST(SESSION_CONTEXT(N''apigasoline.empresa_id'') AS binary(16)))
+       AND EXISTS (SELECT 1 FROM dbo.rol AS r
+                   WHERE r.rol_id = @rol_id AND r.empresa_id = CAST(SESSION_CONTEXT(N''apigasoline.empresa_id'') AS binary(16))));');
+
+EXEC(N'CREATE FUNCTION rls.fn_rol_privilegio_visible(@rol_id binary(16))
+RETURNS TABLE
+WITH SCHEMABINDING
+AS
+RETURN SELECT 1 AS permitido
+WHERE CAST(SESSION_CONTEXT(N''apigasoline.ve_todas'') AS bit) = 1
+   OR EXISTS (SELECT 1 FROM dbo.rol AS r
+              WHERE r.rol_id = @rol_id AND (r.empresa_id IS NULL OR r.empresa_id = CAST(SESSION_CONTEXT(N''apigasoline.empresa_id'') AS binary(16))));');
+
+EXEC(N'CREATE FUNCTION rls.fn_rol_de_la_empresa(@rol_id binary(16))
+RETURNS TABLE
+WITH SCHEMABINDING
+AS
+RETURN SELECT 1 AS permitido
+WHERE CAST(SESSION_CONTEXT(N''apigasoline.ve_todas'') AS bit) = 1
+   OR EXISTS (SELECT 1 FROM dbo.rol AS r
+              WHERE r.rol_id = @rol_id AND r.empresa_id = CAST(SESSION_CONTEXT(N''apigasoline.empresa_id'') AS binary(16)));');
+
+EXEC(N'CREATE SECURITY POLICY rls.aislamiento_empresa
+    ADD FILTER PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.carro,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.carro AFTER INSERT,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.carro AFTER UPDATE,
+    ADD FILTER PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.centro_costo,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.centro_costo AFTER INSERT,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.centro_costo AFTER UPDATE,
+    ADD FILTER PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.empleado,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.empleado AFTER INSERT,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.empleado AFTER UPDATE,
+    ADD FILTER PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.solicitud_reserva,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.solicitud_reserva AFTER INSERT,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.solicitud_reserva AFTER UPDATE,
+    ADD FILTER PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.viaje,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.viaje AFTER INSERT,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.viaje AFTER UPDATE,
+    ADD FILTER PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.viaje_pausa,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.viaje_pausa AFTER INSERT,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.viaje_pausa AFTER UPDATE,
+    ADD FILTER PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.punto_ruta,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.punto_ruta AFTER INSERT,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.punto_ruta AFTER UPDATE,
+    ADD FILTER PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.ruta_procesada,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.ruta_procesada AFTER INSERT,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.ruta_procesada AFTER UPDATE,
+    ADD FILTER PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.carga_combustible,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.carga_combustible AFTER INSERT,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.carga_combustible AFTER UPDATE,
+    ADD FILTER PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.cambio_estatus_carro,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.cambio_estatus_carro AFTER INSERT,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.cambio_estatus_carro AFTER UPDATE,
+    ADD FILTER PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.notificacion,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.notificacion AFTER INSERT,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.notificacion AFTER UPDATE,
+    ADD FILTER PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.dispositivo_empleado,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.dispositivo_empleado AFTER INSERT,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.dispositivo_empleado AFTER UPDATE,
+    ADD FILTER PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.revision_auditoria,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.revision_auditoria AFTER INSERT,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.revision_auditoria AFTER UPDATE,
+    ADD FILTER PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.empresa,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.empresa AFTER INSERT,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.empresa AFTER UPDATE,
+    ADD FILTER PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.usuario,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.usuario AFTER INSERT,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.usuario AFTER UPDATE,
+    ADD FILTER PREDICATE rls.fn_rol_visible(empresa_id) ON dbo.rol,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.rol AFTER INSERT,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.rol AFTER UPDATE,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.rol BEFORE UPDATE,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.rol BEFORE DELETE,
+    ADD FILTER PREDICATE rls.fn_usuario_de_la_empresa(usuario_id) ON dbo.usuario_rol,
+    ADD BLOCK PREDICATE rls.fn_asignacion_de_la_empresa(usuario_id, rol_id) ON dbo.usuario_rol AFTER INSERT,
+    ADD BLOCK PREDICATE rls.fn_asignacion_de_la_empresa(usuario_id, rol_id) ON dbo.usuario_rol AFTER UPDATE,
+    ADD BLOCK PREDICATE rls.fn_asignacion_de_la_empresa(usuario_id, rol_id) ON dbo.usuario_rol BEFORE UPDATE,
+    ADD BLOCK PREDICATE rls.fn_asignacion_de_la_empresa(usuario_id, rol_id) ON dbo.usuario_rol BEFORE DELETE,
+    ADD FILTER PREDICATE rls.fn_rol_privilegio_visible(rol_id) ON dbo.rol_privilegio,
+    ADD BLOCK PREDICATE rls.fn_rol_de_la_empresa(rol_id) ON dbo.rol_privilegio AFTER INSERT,
+    ADD BLOCK PREDICATE rls.fn_rol_de_la_empresa(rol_id) ON dbo.rol_privilegio AFTER UPDATE,
+    ADD BLOCK PREDICATE rls.fn_rol_de_la_empresa(rol_id) ON dbo.rol_privilegio BEFORE UPDATE,
+    ADD BLOCK PREDICATE rls.fn_rol_de_la_empresa(rol_id) ON dbo.rol_privilegio BEFORE DELETE
+WITH (STATE = ON, SCHEMABINDING = ON);');
+
+INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+VALUES (N'20261111222631_SeguridadPorFilas', N'10.0.12');
 
 COMMIT;
 GO

@@ -117,6 +117,10 @@ Un fallo que empieza con **`FUGA:`** es un hueco de seguridad real. La matriz de
 - **De qué empresa es la petición:** `IContextoEmpresa`, que `ContextoEmpresaMiddleware` inicializa justo después de autenticar con la empresa del token. Con `plataforma.multiempresa`, o sin usuario (login, workers, siembra), no hay filtro. Si hay usuario y no se inicializó, falla cerrado.
 - **Usuarios:** `usuario.empresa_id` dice de qué empresa es la cuenta. Un administrador de empresa crea usuarios solo en la suya; la plataforma puede mandar `empresaId` (o ninguno: se asigna al crearle su empleado).
 - `AislamientoEmpresaTests` (pruebas de arquitectura) falla si una tabla nueva queda sin filtro o sin regla en el guardián, o si alguien usa `IgnoreQueryFilters()` sin nombre.
+- **Row-Level Security (segundo candado, en SQL Server):** cada conexión de EF le manda a SQL Server la empresa de la petición (`SESSION_CONTEXT`) y la política `rls.aislamiento_empresa` filtra y bloquea filas aunque la consulta se salte el filtro de EF. `SeguridadPorFilasTests` lo prueba hablando con SQL Server directo. Detalle en `BD/README.md` (sección 3.4).
+
+> **Consultar la BD a mano** (SSMS, Azure Data Studio, scripts): sin contexto de sesión no se ve ninguna fila. Ejecuta primero
+> `EXEC sys.sp_set_session_context N'apigasoline.ve_todas', 1;`
 
 ---
 

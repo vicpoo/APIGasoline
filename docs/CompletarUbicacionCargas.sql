@@ -7,6 +7,9 @@
 -- SQL Server (T-SQL). Correr UNA vez después de desplegar (las cargas nuevas las completa la API sola).
 -- =====================================================================================
 
+-- Row-Level Security: sin esto el script no ve ninguna fila (ver BD/README.md, sección 3.4)
+EXEC sys.sp_set_session_context N'apigasoline.ve_todas', 1;
+
 DROP TABLE IF EXISTS #ubicacion_carga;
 
 SELECT
