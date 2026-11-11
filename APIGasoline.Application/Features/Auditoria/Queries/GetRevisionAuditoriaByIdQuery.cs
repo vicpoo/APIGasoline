@@ -4,13 +4,13 @@ using APIGasoline.Application.Features.Auditoria.Common;
 using APIGasoline.Application.Features.Auditoria.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Auditoria.Queries;
 
-public record GetRevisionAuditoriaByIdQuery(Guid RevisionAuditoriaId) : IRequest<RevisionAuditoriaDto>;
+public sealed record GetRevisionAuditoriaByIdQuery(Guid RevisionAuditoriaId) : IQuery<RevisionAuditoriaDto>;
 
-public class GetRevisionAuditoriaByIdQueryHandler : IRequestHandler<GetRevisionAuditoriaByIdQuery, RevisionAuditoriaDto>
+public sealed class GetRevisionAuditoriaByIdQueryHandler : IQueryHandler<GetRevisionAuditoriaByIdQuery, RevisionAuditoriaDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

@@ -6,7 +6,7 @@ using APIGasoline.Application.Features.Viajes.DTOs;
 using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Viajes.Commands;
 
@@ -15,7 +15,7 @@ namespace APIGasoline.Application.Features.Viajes.Commands;
 /// Idempotente: si llega <see cref="ViajeId"/> (UUID generado en el teléfono) y ya existe ese mismo viaje,
 /// se regresa el existente en lugar de responder "el carro ya tiene un viaje en curso".
 /// </summary>
-public record IniciarViajeCommand(
+public sealed record IniciarViajeCommand(
     Guid EmpresaId,
     Guid CarroId,
     Guid? SolicitudReservaId,
@@ -25,7 +25,7 @@ public record IniciarViajeCommand(
     decimal? UbicacionInicioLng,
     decimal KilometrajeInicial,
     Guid? CentroCostoId = null,
-    Guid? ViajeId = null) : IRequest<ViajeDto>, IRecursoPropio
+    Guid? ViajeId = null) : ICommand<ViajeDto>, IRecursoPropio
 {
     /// <summary>El operador registra SUS viajes; a nombre de otro, solo con viaje.corregir_cerrado.</summary>
     public bool EsPropio(IUsuarioActual usuario)
@@ -34,7 +34,7 @@ public record IniciarViajeCommand(
     public string PrivilegioParaOtros => Permisos.ViajeCorregirCerrado;
 }
 
-public class IniciarViajeCommandHandler : IRequestHandler<IniciarViajeCommand, ViajeDto>
+public sealed class IniciarViajeCommandHandler : ICommandHandler<IniciarViajeCommand, ViajeDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

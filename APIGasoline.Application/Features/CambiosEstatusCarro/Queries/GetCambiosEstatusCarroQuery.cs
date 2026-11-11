@@ -3,20 +3,20 @@ using APIGasoline.Application.Common.Storage;
 using APIGasoline.Application.Features.CambiosEstatusCarro.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.CambiosEstatusCarro.Queries;
 
 /// <summary>
 /// Historial del más reciente al más antiguo. Filtros opcionales: empresa, carro y fechas.
 /// </summary>
-public record GetCambiosEstatusCarroQuery(
+public sealed record GetCambiosEstatusCarroQuery(
     Guid? EmpresaId = null,
     Guid? CarroId = null,
     DateTime? Desde = null,
-    DateTime? Hasta = null) : IRequest<IReadOnlyList<CambioEstatusCarroDto>>;
+    DateTime? Hasta = null) : IQuery<IReadOnlyList<CambioEstatusCarroDto>>;
 
-public class GetCambiosEstatusCarroQueryHandler : IRequestHandler<GetCambiosEstatusCarroQuery, IReadOnlyList<CambioEstatusCarroDto>>
+public sealed class GetCambiosEstatusCarroQueryHandler : IQueryHandler<GetCambiosEstatusCarroQuery, IReadOnlyList<CambioEstatusCarroDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

@@ -8,6 +8,7 @@ using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
+using APIGasoline.Application.Common.Messaging;
 using MediatR;
 using APIGasoline.Application.Features.RutasProcesadas.Notifications;
 
@@ -20,7 +21,7 @@ namespace APIGasoline.Application.Features.Viajes.Commands;
 /// (no se vuelve a crear ni se cierra). La app compara el estado devuelto: si sigue en curso, manda
 /// después sus pausas, cargas y el finalizar como en un viaje en línea.
 /// </summary>
-public record SincronizarViajeCommand(
+public sealed record SincronizarViajeCommand(
     Guid EmpresaId,
     Guid CarroId,
     Guid? SolicitudReservaId,
@@ -39,7 +40,7 @@ public record SincronizarViajeCommand(
     /// <summary>Pausas que se hicieron sin conexión (opcional).</summary>
     IReadOnlyList<DatosPausa>? Pausas = null,
     /// <summary>UUID generado en el teléfono (opcional).</summary>
-    Guid? ViajeId = null) : IRequest<ViajeDto>, IRecursoPropio
+    Guid? ViajeId = null) : ICommand<ViajeDto>, IRecursoPropio
 {
     /// <summary>El operador sube SUS viajes; a nombre de otro, solo con viaje.corregir_cerrado.</summary>
     public bool EsPropio(IUsuarioActual usuario)
@@ -48,7 +49,7 @@ public record SincronizarViajeCommand(
     public string PrivilegioParaOtros => Permisos.ViajeCorregirCerrado;
 }
 
-public class SincronizarViajeCommandHandler : IRequestHandler<SincronizarViajeCommand, ViajeDto>
+public sealed class SincronizarViajeCommandHandler : ICommandHandler<SincronizarViajeCommand, ViajeDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

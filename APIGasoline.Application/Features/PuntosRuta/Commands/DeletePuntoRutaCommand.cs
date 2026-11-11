@@ -1,12 +1,12 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Domain.Interfaces;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.PuntosRuta.Commands;
 
-public record DeletePuntoRutaCommand(Guid PuntoRutaId) : IRequest;
+public sealed record DeletePuntoRutaCommand(Guid PuntoRutaId) : ICommand;
 
-public class DeletePuntoRutaCommandHandler : IRequestHandler<DeletePuntoRutaCommand>
+public sealed class DeletePuntoRutaCommandHandler : ICommandHandler<DeletePuntoRutaCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
 

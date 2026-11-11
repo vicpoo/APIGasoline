@@ -5,6 +5,7 @@ using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Features.Viajes.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
+using APIGasoline.Application.Common.Messaging;
 using MediatR;
 using APIGasoline.Application.Features.RutasProcesadas.Notifications;
 
@@ -14,14 +15,14 @@ namespace APIGasoline.Application.Features.Viajes.Commands;
 /// Finaliza el viaje, calcula la distancia y actualiza el kilometraje del carro.
 /// Si el viaje estaba en pausa, la pausa se cierra a la hora de fin.
 /// </summary>
-public record FinalizarViajeCommand(
+public sealed record FinalizarViajeCommand(
     Guid ViajeId,
     DateTime FechaFin,
     decimal? UbicacionFinLat,
     decimal? UbicacionFinLng,
-    decimal KilometrajeFinal) : IRequest<ViajeDto>;
+    decimal KilometrajeFinal) : ICommand<ViajeDto>;
 
-public class FinalizarViajeCommandHandler : IRequestHandler<FinalizarViajeCommand, ViajeDto>
+public sealed class FinalizarViajeCommandHandler : ICommandHandler<FinalizarViajeCommand, ViajeDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

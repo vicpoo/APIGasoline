@@ -3,7 +3,7 @@ using APIGasoline.Application.Features.Empleados.DTOs;
 using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Empleados.Commands;
 
@@ -11,12 +11,12 @@ namespace APIGasoline.Application.Features.Empleados.Commands;
 /// Crea el empleado sin fotos. La foto de perfil y la licencia se suben después con
 /// <see cref="SubirFotoEmpleadoCommand"/>, porque la llave del archivo usa el id del empleado.
 /// </summary>
-public record CreateEmpleadoCommand(
+public sealed record CreateEmpleadoCommand(
     Guid EmpresaId,
     Guid UsuarioId,
-    string NombreCompleto) : IRequest<EmpleadoDto>;
+    string NombreCompleto) : ICommand<EmpleadoDto>;
 
-public class CreateEmpleadoCommandHandler : IRequestHandler<CreateEmpleadoCommand, EmpleadoDto>
+public sealed class CreateEmpleadoCommandHandler : ICommandHandler<CreateEmpleadoCommand, EmpleadoDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

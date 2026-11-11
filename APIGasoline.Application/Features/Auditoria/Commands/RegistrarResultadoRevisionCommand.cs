@@ -5,7 +5,7 @@ using APIGasoline.Application.Features.Auditoria.DTOs;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Auditoria.Commands;
 
@@ -14,13 +14,13 @@ namespace APIGasoline.Application.Features.Auditoria.Commands;
 /// Si <see cref="Cerrar"/> es true, además la concluye. Cada cambio queda en auditoria_evento,
 /// así se conserva el historial de la revisión.
 /// </summary>
-public record RegistrarResultadoRevisionCommand(
+public sealed record RegistrarResultadoRevisionCommand(
     Guid RevisionAuditoriaId,
     EstadoRevision EstadoRevision,
     string? Observaciones,
-    bool Cerrar) : IRequest<RevisionAuditoriaDto>;
+    bool Cerrar) : ICommand<RevisionAuditoriaDto>;
 
-public class RegistrarResultadoRevisionCommandHandler : IRequestHandler<RegistrarResultadoRevisionCommand, RevisionAuditoriaDto>
+public sealed class RegistrarResultadoRevisionCommandHandler : ICommandHandler<RegistrarResultadoRevisionCommand, RevisionAuditoriaDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

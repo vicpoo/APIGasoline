@@ -1,16 +1,16 @@
 ﻿using APIGasoline.Application.Features.CentrosCosto.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.CentrosCosto.Queries;
 
 /// <summary>
 /// Lista los centros de costo. Se puede filtrar por empresa.
 /// </summary>
-public record GetCentrosCostoQuery(Guid? EmpresaId = null) : IRequest<IReadOnlyList<CentroCostoDto>>;
+public sealed record GetCentrosCostoQuery(Guid? EmpresaId = null) : IQuery<IReadOnlyList<CentroCostoDto>>;
 
-public class GetCentrosCostoQueryHandler : IRequestHandler<GetCentrosCostoQuery, IReadOnlyList<CentroCostoDto>>
+public sealed class GetCentrosCostoQueryHandler : IQueryHandler<GetCentrosCostoQuery, IReadOnlyList<CentroCostoDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

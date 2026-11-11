@@ -3,13 +3,13 @@ using APIGasoline.Application.Features.Divisiones.DTOs;
 using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Divisiones.Commands;
 
-public record CreateDivisionCommand(Guid CorporativoId, string Nombre, bool Activo) : IRequest<DivisionDto>;
+public sealed record CreateDivisionCommand(Guid CorporativoId, string Nombre, bool Activo) : ICommand<DivisionDto>;
 
-public class CreateDivisionCommandHandler : IRequestHandler<CreateDivisionCommand, DivisionDto>
+public sealed class CreateDivisionCommandHandler : ICommandHandler<CreateDivisionCommand, DivisionDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

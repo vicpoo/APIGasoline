@@ -1,16 +1,16 @@
 ﻿using APIGasoline.Application.Features.Empresas.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Empresas.Queries;
 
 /// <summary>
 /// Lista las empresas no eliminadas. Se puede filtrar por corporativo, por división o por ambos.
 /// </summary>
-public record GetEmpresasQuery(Guid? CorporativoId = null, Guid? DivisionId = null) : IRequest<IReadOnlyList<EmpresaDto>>;
+public sealed record GetEmpresasQuery(Guid? CorporativoId = null, Guid? DivisionId = null) : IQuery<IReadOnlyList<EmpresaDto>>;
 
-public class GetEmpresasQueryHandler : IRequestHandler<GetEmpresasQuery, IReadOnlyList<EmpresaDto>>
+public sealed class GetEmpresasQueryHandler : IQueryHandler<GetEmpresasQuery, IReadOnlyList<EmpresaDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

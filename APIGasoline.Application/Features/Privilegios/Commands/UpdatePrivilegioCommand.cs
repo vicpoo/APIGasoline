@@ -3,7 +3,7 @@ using APIGasoline.Application.Features.Privilegios.DTOs;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Privilegios.Commands;
 
@@ -12,15 +12,15 @@ namespace APIGasoline.Application.Features.Privilegios.Commands;
 /// el privilegio se desactiva (Activo = false) o se elimina y se crea otro con la clave nueva.
 /// Modulo null = primer segmento de la clave.
 /// </summary>
-public record UpdatePrivilegioCommand(
+public sealed record UpdatePrivilegioCommand(
     Guid PrivilegioId,
     string? Modulo,
     string Nombre,
     string? Descripcion,
     AmbitoPrivilegio Ambito,
-    bool Activo) : IRequest<PrivilegioDto>;
+    bool Activo) : ICommand<PrivilegioDto>;
 
-public class UpdatePrivilegioCommandHandler : IRequestHandler<UpdatePrivilegioCommand, PrivilegioDto>
+public sealed class UpdatePrivilegioCommandHandler : ICommandHandler<UpdatePrivilegioCommand, PrivilegioDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

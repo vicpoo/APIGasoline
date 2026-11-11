@@ -2,13 +2,13 @@
 using APIGasoline.Application.Features.PuntosRuta.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.PuntosRuta.Queries;
 
-public record GetPuntoRutaByIdQuery(Guid PuntoRutaId) : IRequest<PuntoRutaDto>;
+public sealed record GetPuntoRutaByIdQuery(Guid PuntoRutaId) : IQuery<PuntoRutaDto>;
 
-public class GetPuntoRutaByIdQueryHandler : IRequestHandler<GetPuntoRutaByIdQuery, PuntoRutaDto>
+public sealed class GetPuntoRutaByIdQueryHandler : IQueryHandler<GetPuntoRutaByIdQuery, PuntoRutaDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

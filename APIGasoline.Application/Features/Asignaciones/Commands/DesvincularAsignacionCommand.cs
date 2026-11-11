@@ -8,7 +8,7 @@ using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Asignaciones.Commands;
 
@@ -19,9 +19,9 @@ namespace APIGasoline.Application.Features.Asignaciones.Commands;
 /// - La bitácora queda a nombre del administrador (quién lo desvinculó), no del empleado.
 /// - El empleado recibe una notificación push (abre "Mis solicitudes").
 /// </summary>
-public record DesvincularAsignacionCommand(Guid SolicitudReservaId, string Motivo) : IRequest<SolicitudReservaDto>;
+public sealed record DesvincularAsignacionCommand(Guid SolicitudReservaId, string Motivo) : ICommand<SolicitudReservaDto>;
 
-public class DesvincularAsignacionCommandHandler : IRequestHandler<DesvincularAsignacionCommand, SolicitudReservaDto>
+public sealed class DesvincularAsignacionCommandHandler : ICommandHandler<DesvincularAsignacionCommand, SolicitudReservaDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

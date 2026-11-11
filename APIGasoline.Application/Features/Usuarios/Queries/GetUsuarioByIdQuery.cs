@@ -5,13 +5,13 @@ using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Features.Usuarios.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Usuarios.Queries;
 
-public record GetUsuarioByIdQuery(Guid UsuarioId) : IRequest<UsuarioDto>;
+public sealed record GetUsuarioByIdQuery(Guid UsuarioId) : IQuery<UsuarioDto>;
 
-public class GetUsuarioByIdQueryHandler : IRequestHandler<GetUsuarioByIdQuery, UsuarioDto>
+public sealed class GetUsuarioByIdQueryHandler : IQueryHandler<GetUsuarioByIdQuery, UsuarioDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
@@ -29,4 +29,4 @@ public class GetUsuarioByIdQueryHandler : IRequestHandler<GetUsuarioByIdQuery, U
 
         return _mapper.Map<UsuarioDto>(usuario);
     }
-}
+}

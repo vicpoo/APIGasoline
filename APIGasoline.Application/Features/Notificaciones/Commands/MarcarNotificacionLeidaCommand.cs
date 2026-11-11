@@ -2,13 +2,13 @@
 using APIGasoline.Application.Features.Notificaciones.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Notificaciones.Commands;
 
-public record MarcarNotificacionLeidaCommand(Guid NotificacionId) : IRequest<NotificacionDto>;
+public sealed record MarcarNotificacionLeidaCommand(Guid NotificacionId) : ICommand<NotificacionDto>;
 
-public class MarcarNotificacionLeidaCommandHandler : IRequestHandler<MarcarNotificacionLeidaCommand, NotificacionDto>
+public sealed class MarcarNotificacionLeidaCommandHandler : ICommandHandler<MarcarNotificacionLeidaCommand, NotificacionDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

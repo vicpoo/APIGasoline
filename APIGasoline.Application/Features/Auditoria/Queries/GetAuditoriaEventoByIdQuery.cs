@@ -3,13 +3,13 @@ using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Features.Auditoria.Common;
 using APIGasoline.Application.Features.Auditoria.DTOs;
 using APIGasoline.Domain.Interfaces;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Auditoria.Queries;
 
-public record GetAuditoriaEventoByIdQuery(Guid AuditoriaEventoId) : IRequest<AuditoriaEventoDto>;
+public sealed record GetAuditoriaEventoByIdQuery(Guid AuditoriaEventoId) : IQuery<AuditoriaEventoDto>;
 
-public class GetAuditoriaEventoByIdQueryHandler : IRequestHandler<GetAuditoriaEventoByIdQuery, AuditoriaEventoDto>
+public sealed class GetAuditoriaEventoByIdQueryHandler : IQueryHandler<GetAuditoriaEventoByIdQuery, AuditoriaEventoDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IUsuarioActual _usuarioActual;

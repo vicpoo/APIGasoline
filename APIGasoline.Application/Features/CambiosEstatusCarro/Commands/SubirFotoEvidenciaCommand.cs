@@ -5,7 +5,7 @@ using APIGasoline.Application.Common.Storage;
 using APIGasoline.Application.Features.CambiosEstatusCarro.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.CambiosEstatusCarro.Commands;
 
@@ -14,9 +14,9 @@ namespace APIGasoline.Application.Features.CambiosEstatusCarro.Commands;
 /// Se sube aparte porque desde el celular puede llegar después que los datos (offline).
 /// La foto anterior, si había, no se borra (es evidencia).
 /// </summary>
-public record SubirFotoEvidenciaCommand(Guid CambioEstatusCarroId, ArchivoEntrada Archivo) : IRequest<CambioEstatusCarroDto>;
+public sealed record SubirFotoEvidenciaCommand(Guid CambioEstatusCarroId, ArchivoEntrada Archivo) : ICommand<CambioEstatusCarroDto>;
 
-public class SubirFotoEvidenciaCommandHandler : IRequestHandler<SubirFotoEvidenciaCommand, CambioEstatusCarroDto>
+public sealed class SubirFotoEvidenciaCommandHandler : ICommandHandler<SubirFotoEvidenciaCommand, CambioEstatusCarroDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

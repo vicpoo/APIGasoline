@@ -5,16 +5,16 @@ using APIGasoline.Application.Common.Storage;
 using APIGasoline.Application.Features.Carros.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Carros.Commands;
 
 /// <summary>
 /// Sube (o reemplaza) la foto del vehículo. En la BD solo se guarda la llave del archivo.
 /// </summary>
-public record SubirFotoVehiculoCommand(Guid CarroId, ArchivoEntrada Archivo) : IRequest<CarroDto>;
+public sealed record SubirFotoVehiculoCommand(Guid CarroId, ArchivoEntrada Archivo) : ICommand<CarroDto>;
 
-public class SubirFotoVehiculoCommandHandler : IRequestHandler<SubirFotoVehiculoCommand, CarroDto>
+public sealed class SubirFotoVehiculoCommandHandler : ICommandHandler<SubirFotoVehiculoCommand, CarroDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

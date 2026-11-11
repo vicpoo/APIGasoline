@@ -7,13 +7,14 @@ using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
+using APIGasoline.Application.Common.Messaging;
 using MediatR;
 using APIGasoline.Application.Common.Outbox;
 
 namespace APIGasoline.Application.Features.SolicitudesReserva.Commands;
 
 /// <param name="Motivo">v8. Para qué necesita el carro (obligatorio, máx. 255).</param>
-public record CreateSolicitudReservaCommand(Guid EmpresaId, Guid CarroId, Guid EmpleadoSolicitanteId, string Motivo) : IRequest<SolicitudReservaDto>, IRecursoPropio
+public sealed record CreateSolicitudReservaCommand(Guid EmpresaId, Guid CarroId, Guid EmpleadoSolicitanteId, string Motivo) : ICommand<SolicitudReservaDto>, IRecursoPropio
 {
     /// <summary>Cada quien solicita para sí mismo; a nombre de otro, solo con solicitud.aprobar.</summary>
     public bool EsPropio(IUsuarioActual usuario)
@@ -22,7 +23,7 @@ public record CreateSolicitudReservaCommand(Guid EmpresaId, Guid CarroId, Guid E
     public string PrivilegioParaOtros => Permisos.SolicitudAprobar;
 }
 
-public class CreateSolicitudReservaCommandHandler : IRequestHandler<CreateSolicitudReservaCommand, SolicitudReservaDto>
+public sealed class CreateSolicitudReservaCommandHandler : ICommandHandler<CreateSolicitudReservaCommand, SolicitudReservaDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

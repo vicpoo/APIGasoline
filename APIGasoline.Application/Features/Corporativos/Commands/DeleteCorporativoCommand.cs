@@ -1,12 +1,12 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Domain.Interfaces;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Corporativos.Commands;
 
-public record DeleteCorporativoCommand(Guid CorporativoId) : IRequest;
+public sealed record DeleteCorporativoCommand(Guid CorporativoId) : ICommand;
 
-public class DeleteCorporativoCommandHandler : IRequestHandler<DeleteCorporativoCommand>
+public sealed class DeleteCorporativoCommandHandler : ICommandHandler<DeleteCorporativoCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
 

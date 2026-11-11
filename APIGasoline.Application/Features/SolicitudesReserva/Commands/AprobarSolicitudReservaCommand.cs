@@ -5,7 +5,7 @@ using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 using APIGasoline.Application.Common.Outbox;
 
 namespace APIGasoline.Application.Features.SolicitudesReserva.Commands;
@@ -14,9 +14,9 @@ namespace APIGasoline.Application.Features.SolicitudesReserva.Commands;
 /// Aprueba la solicitud, marca el carro como ocupado y rechaza automáticamente
 /// las demás solicitudes pendientes de ese mismo carro. Todo en un solo SaveChanges (atómico).
 /// </summary>
-public record AprobarSolicitudReservaCommand(Guid SolicitudReservaId, Guid EmpleadoConfirmadorId, string? Motivo) : IRequest<SolicitudReservaDto>;
+public sealed record AprobarSolicitudReservaCommand(Guid SolicitudReservaId, Guid EmpleadoConfirmadorId, string? Motivo) : ICommand<SolicitudReservaDto>;
 
-public class AprobarSolicitudReservaCommandHandler : IRequestHandler<AprobarSolicitudReservaCommand, SolicitudReservaDto>
+public sealed class AprobarSolicitudReservaCommandHandler : ICommandHandler<AprobarSolicitudReservaCommand, SolicitudReservaDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

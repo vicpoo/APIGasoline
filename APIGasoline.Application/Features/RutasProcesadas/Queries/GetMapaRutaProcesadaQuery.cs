@@ -2,13 +2,13 @@
 using APIGasoline.Application.Features.RutasProcesadas.Common;
 using APIGasoline.Application.Features.RutasProcesadas.DTOs;
 using APIGasoline.Domain.Interfaces;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.RutasProcesadas.Queries;
 
-public record GetMapaRutaProcesadaQuery(Guid ViajeId) : IRequest<MapaRutaDto>;
+public sealed record GetMapaRutaProcesadaQuery(Guid ViajeId) : IQuery<MapaRutaDto>;
 
-public class GetMapaRutaProcesadaQueryHandler : IRequestHandler<GetMapaRutaProcesadaQuery, MapaRutaDto>
+public sealed class GetMapaRutaProcesadaQueryHandler : IQueryHandler<GetMapaRutaProcesadaQuery, MapaRutaDto>
 {
     private readonly IUnitOfWork _unitOfWork;
 

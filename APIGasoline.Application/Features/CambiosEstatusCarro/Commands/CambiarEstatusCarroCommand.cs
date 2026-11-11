@@ -7,7 +7,7 @@ using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 using APIGasoline.Application.Common.Outbox;
 
 namespace APIGasoline.Application.Features.CambiosEstatusCarro.Commands;
@@ -20,16 +20,16 @@ namespace APIGasoline.Application.Features.CambiosEstatusCarro.Commands;
 /// <see cref="TipoMotivo"/> clasifica el cambio: falla_mecanica y choque_o_golpe forman el registro de percances.
 /// La foto de evidencia se sube aparte (SubirFotoEvidenciaCommand).
 /// </summary>
-public record CambiarEstatusCarroCommand(
+public sealed record CambiarEstatusCarroCommand(
     Guid CarroId,
     Guid EmpleadoId,
     EstadoCarro EstatusNuevo,
     string? Motivo,
     Guid? ViajeAfectadoId,
     DateTime? FechaCambio,
-    TipoMotivoCambio? TipoMotivo) : IRequest<CambioEstatusCarroDto>;
+    TipoMotivoCambio? TipoMotivo) : ICommand<CambioEstatusCarroDto>;
 
-public class CambiarEstatusCarroCommandHandler : IRequestHandler<CambiarEstatusCarroCommand, CambioEstatusCarroDto>
+public sealed class CambiarEstatusCarroCommandHandler : ICommandHandler<CambiarEstatusCarroCommand, CambioEstatusCarroDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

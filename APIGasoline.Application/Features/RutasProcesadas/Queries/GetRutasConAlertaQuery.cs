@@ -1,16 +1,16 @@
 ﻿using APIGasoline.Application.Features.RutasProcesadas.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.RutasProcesadas.Queries;
 
 /// <summary>
 /// Viajes cuyo kilometraje declarado no cuadra con el GPS (posible fraude o error de captura).
 /// </summary>
-public record GetRutasConAlertaQuery(Guid? EmpresaId = null) : IRequest<IReadOnlyList<RutaProcesadaDto>>;
+public sealed record GetRutasConAlertaQuery(Guid? EmpresaId = null) : IQuery<IReadOnlyList<RutaProcesadaDto>>;
 
-public class GetRutasConAlertaQueryHandler : IRequestHandler<GetRutasConAlertaQuery, IReadOnlyList<RutaProcesadaDto>>
+public sealed class GetRutasConAlertaQueryHandler : IQueryHandler<GetRutasConAlertaQuery, IReadOnlyList<RutaProcesadaDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

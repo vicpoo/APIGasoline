@@ -5,14 +5,14 @@ using APIGasoline.Application.Features.Carros.DTOs;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Carros.Commands;
 
 /// <summary>
 /// Actualiza los datos del carro. La foto NO se cambia aquí: usa SubirFotoVehiculoCommand / EliminarFotoVehiculoCommand.
 /// </summary>
-public record UpdateCarroCommand(
+public sealed record UpdateCarroCommand(
     Guid CarroId,
     Guid EmpresaId,
     string Marca,
@@ -22,9 +22,9 @@ public record UpdateCarroCommand(
     string Placas,
     decimal? CapacidadTanque,
     decimal KilometrajeActual,
-    TipoVehiculo? TipoVehiculo = null) : IRequest<CarroDto>;
+    TipoVehiculo? TipoVehiculo = null) : ICommand<CarroDto>;
 
-public class UpdateCarroCommandHandler : IRequestHandler<UpdateCarroCommand, CarroDto>
+public sealed class UpdateCarroCommandHandler : ICommandHandler<UpdateCarroCommand, CarroDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

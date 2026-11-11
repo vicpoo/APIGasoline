@@ -4,13 +4,13 @@ using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Features.CargasCombustible.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.CargasCombustible.Queries;
 
-public record GetCargaCombustibleByIdQuery(Guid CargaCombustibleId) : IRequest<CargaCombustibleDto>;
+public sealed record GetCargaCombustibleByIdQuery(Guid CargaCombustibleId) : IQuery<CargaCombustibleDto>;
 
-public class GetCargaCombustibleByIdQueryHandler : IRequestHandler<GetCargaCombustibleByIdQuery, CargaCombustibleDto>
+public sealed class GetCargaCombustibleByIdQueryHandler : IQueryHandler<GetCargaCombustibleByIdQuery, CargaCombustibleDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

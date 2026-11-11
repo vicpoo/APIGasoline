@@ -1,13 +1,13 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Domain.Interfaces;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Carros.Commands;
 
-public record DeleteCarroCommand(Guid CarroId) : IRequest;
+public sealed record DeleteCarroCommand(Guid CarroId) : ICommand;
 
-public class DeleteCarroCommandHandler : IRequestHandler<DeleteCarroCommand>
+public sealed class DeleteCarroCommandHandler : ICommandHandler<DeleteCarroCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IFileStorageService _storage;

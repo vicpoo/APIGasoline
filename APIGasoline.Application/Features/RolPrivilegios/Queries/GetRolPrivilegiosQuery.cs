@@ -1,16 +1,16 @@
 ﻿using APIGasoline.Application.Features.RolPrivilegios.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.RolPrivilegios.Queries;
 
 /// <summary>
 /// Lista las asignaciones. Se puede filtrar por rol, por privilegio o por ambos.
 /// </summary>
-public record GetRolPrivilegiosQuery(Guid? RolId = null, Guid? PrivilegioId = null) : IRequest<IReadOnlyList<RolPrivilegioDto>>;
+public sealed record GetRolPrivilegiosQuery(Guid? RolId = null, Guid? PrivilegioId = null) : IQuery<IReadOnlyList<RolPrivilegioDto>>;
 
-public class GetRolPrivilegiosQueryHandler : IRequestHandler<GetRolPrivilegiosQuery, IReadOnlyList<RolPrivilegioDto>>
+public sealed class GetRolPrivilegiosQueryHandler : IQueryHandler<GetRolPrivilegiosQuery, IReadOnlyList<RolPrivilegioDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

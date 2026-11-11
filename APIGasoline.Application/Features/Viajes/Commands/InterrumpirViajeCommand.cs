@@ -5,6 +5,7 @@ using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Features.Viajes.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
+using APIGasoline.Application.Common.Messaging;
 using MediatR;
 using APIGasoline.Application.Features.RutasProcesadas.Notifications;
 
@@ -13,15 +14,15 @@ namespace APIGasoline.Application.Features.Viajes.Commands;
 /// <summary>
 /// Interrumpe el viaje. Si no se manda fecha de fin, se usa la hora actual.
 /// </summary>
-public record InterrumpirViajeCommand(
+public sealed record InterrumpirViajeCommand(
     Guid ViajeId,
     string Motivo,
     DateTime? FechaFin,
     decimal? UbicacionFinLat,
     decimal? UbicacionFinLng,
-    decimal? KilometrajeFinal) : IRequest<ViajeDto>;
+    decimal? KilometrajeFinal) : ICommand<ViajeDto>;
 
-public class InterrumpirViajeCommandHandler : IRequestHandler<InterrumpirViajeCommand, ViajeDto>
+public sealed class InterrumpirViajeCommandHandler : ICommandHandler<InterrumpirViajeCommand, ViajeDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

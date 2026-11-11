@@ -3,7 +3,7 @@ using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Common.Sesiones;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Empleados.Commands;
 
@@ -11,9 +11,9 @@ namespace APIGasoline.Application.Features.Empleados.Commands;
 /// Soft delete: marca el empleado como eliminado (delete = true), no borra el registro.
 /// Cierra las sesiones abiertas de su usuario.
 /// </summary>
-public record DeleteEmpleadoCommand(Guid EmpleadoId) : IRequest;
+public sealed record DeleteEmpleadoCommand(Guid EmpleadoId) : ICommand;
 
-public class DeleteEmpleadoCommandHandler : IRequestHandler<DeleteEmpleadoCommand>
+public sealed class DeleteEmpleadoCommandHandler : ICommandHandler<DeleteEmpleadoCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IUsuarioActual _usuarioActual;

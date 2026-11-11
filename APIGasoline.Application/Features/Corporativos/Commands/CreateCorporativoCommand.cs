@@ -2,13 +2,13 @@
 using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Corporativos.Commands;
 
-public record CreateCorporativoCommand(string Nombre, bool Activo) : IRequest<CorporativoDto>;
+public sealed record CreateCorporativoCommand(string Nombre, bool Activo) : ICommand<CorporativoDto>;
 
-public class CreateCorporativoCommandHandler : IRequestHandler<CreateCorporativoCommand, CorporativoDto>
+public sealed class CreateCorporativoCommandHandler : ICommandHandler<CreateCorporativoCommand, CorporativoDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

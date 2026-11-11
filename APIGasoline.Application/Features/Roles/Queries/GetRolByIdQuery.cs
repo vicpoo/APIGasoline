@@ -2,13 +2,13 @@
 using APIGasoline.Application.Features.Roles.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Roles.Queries;
 
-public record GetRolByIdQuery(Guid RolId) : IRequest<RolDto>;
+public sealed record GetRolByIdQuery(Guid RolId) : IQuery<RolDto>;
 
-public class GetRolByIdQueryHandler : IRequestHandler<GetRolByIdQuery, RolDto>
+public sealed class GetRolByIdQueryHandler : IQueryHandler<GetRolByIdQuery, RolDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

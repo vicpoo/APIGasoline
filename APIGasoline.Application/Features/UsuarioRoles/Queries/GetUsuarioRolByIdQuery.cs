@@ -2,13 +2,13 @@
 using APIGasoline.Application.Features.UsuarioRoles.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.UsuarioRoles.Queries;
 
-public record GetUsuarioRolByIdQuery(Guid UsuarioRolId) : IRequest<UsuarioRolDto>;
+public sealed record GetUsuarioRolByIdQuery(Guid UsuarioRolId) : IQuery<UsuarioRolDto>;
 
-public class GetUsuarioRolByIdQueryHandler : IRequestHandler<GetUsuarioRolByIdQuery, UsuarioRolDto>
+public sealed class GetUsuarioRolByIdQueryHandler : IQueryHandler<GetUsuarioRolByIdQuery, UsuarioRolDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

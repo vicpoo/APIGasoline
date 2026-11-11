@@ -2,16 +2,16 @@
 using APIGasoline.Application.Features.Roles.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Roles.Commands;
 
 /// <summary>
 /// La empresa del rol no se cambia (un rol global ya asignado no puede volverse exclusivo).
 /// </summary>
-public record UpdateRolCommand(Guid RolId, string Nombre, string? Descripcion, bool Activo) : IRequest<RolDto>;
+public sealed record UpdateRolCommand(Guid RolId, string Nombre, string? Descripcion, bool Activo) : ICommand<RolDto>;
 
-public class UpdateRolCommandHandler : IRequestHandler<UpdateRolCommand, RolDto>
+public sealed class UpdateRolCommandHandler : ICommandHandler<UpdateRolCommand, RolDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

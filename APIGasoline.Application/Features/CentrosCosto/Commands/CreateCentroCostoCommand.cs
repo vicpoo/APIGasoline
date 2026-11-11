@@ -3,13 +3,13 @@ using APIGasoline.Application.Features.CentrosCosto.DTOs;
 using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.CentrosCosto.Commands;
 
-public record CreateCentroCostoCommand(Guid EmpresaId, string Nombre, string Clave, bool Activo) : IRequest<CentroCostoDto>;
+public sealed record CreateCentroCostoCommand(Guid EmpresaId, string Nombre, string Clave, bool Activo) : ICommand<CentroCostoDto>;
 
-public class CreateCentroCostoCommandHandler : IRequestHandler<CreateCentroCostoCommand, CentroCostoDto>
+public sealed class CreateCentroCostoCommandHandler : ICommandHandler<CreateCentroCostoCommand, CentroCostoDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

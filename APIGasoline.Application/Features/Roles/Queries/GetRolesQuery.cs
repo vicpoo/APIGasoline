@@ -1,7 +1,7 @@
 ﻿using APIGasoline.Application.Features.Roles.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Roles.Queries;
 
@@ -9,9 +9,9 @@ namespace APIGasoline.Application.Features.Roles.Queries;
 /// EmpresaId → roles disponibles para esa empresa (globales + exclusivos).
 /// SoloGlobales → solo los globales. Sin filtros → todos.
 /// </summary>
-public record GetRolesQuery(Guid? EmpresaId = null, bool SoloGlobales = false) : IRequest<IReadOnlyList<RolDto>>;
+public sealed record GetRolesQuery(Guid? EmpresaId = null, bool SoloGlobales = false) : IQuery<IReadOnlyList<RolDto>>;
 
-public class GetRolesQueryHandler : IRequestHandler<GetRolesQuery, IReadOnlyList<RolDto>>
+public sealed class GetRolesQueryHandler : IQueryHandler<GetRolesQuery, IReadOnlyList<RolDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

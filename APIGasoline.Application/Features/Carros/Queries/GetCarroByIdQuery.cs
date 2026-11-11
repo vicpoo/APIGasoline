@@ -4,13 +4,13 @@ using APIGasoline.Application.Common.Storage;
 using APIGasoline.Application.Features.Carros.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Carros.Queries;
 
-public record GetCarroByIdQuery(Guid CarroId) : IRequest<CarroDto>;
+public sealed record GetCarroByIdQuery(Guid CarroId) : IQuery<CarroDto>;
 
-public class GetCarroByIdQueryHandler : IRequestHandler<GetCarroByIdQuery, CarroDto>
+public sealed class GetCarroByIdQueryHandler : IQueryHandler<GetCarroByIdQuery, CarroDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

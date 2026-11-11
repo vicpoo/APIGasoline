@@ -4,19 +4,19 @@ using APIGasoline.Application.Features.Auditoria.DTOs;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Auditoria.Queries;
 
 /// <summary>Revisiones de la más reciente a la más antigua. ?abiertas=true para las que siguen sin cerrar.</summary>
-public record GetRevisionesAuditoriaQuery(
+public sealed record GetRevisionesAuditoriaQuery(
     Guid? EmpresaId,
     Guid? ViajeId,
     Guid? CarroId,
     EstadoRevision? Estado,
-    bool? Abiertas) : IRequest<IReadOnlyList<RevisionAuditoriaDto>>;
+    bool? Abiertas) : IQuery<IReadOnlyList<RevisionAuditoriaDto>>;
 
-public class GetRevisionesAuditoriaQueryHandler : IRequestHandler<GetRevisionesAuditoriaQuery, IReadOnlyList<RevisionAuditoriaDto>>
+public sealed class GetRevisionesAuditoriaQueryHandler : IQueryHandler<GetRevisionesAuditoriaQuery, IReadOnlyList<RevisionAuditoriaDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

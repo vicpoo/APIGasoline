@@ -1,12 +1,12 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Domain.Interfaces;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.CentrosCosto.Commands;
 
-public record DeleteCentroCostoCommand(Guid CentroCostoId) : IRequest;
+public sealed record DeleteCentroCostoCommand(Guid CentroCostoId) : ICommand;
 
-public class DeleteCentroCostoCommandHandler : IRequestHandler<DeleteCentroCostoCommand>
+public sealed class DeleteCentroCostoCommandHandler : ICommandHandler<DeleteCentroCostoCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
 

@@ -5,7 +5,7 @@ using APIGasoline.Application.Features.Carros.DTOs;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Carros.Commands;
 
@@ -14,9 +14,9 @@ namespace APIGasoline.Application.Features.Carros.Commands;
 /// El carro no se borra: su historial de viajes y cargas se conserva.
 /// Las solicitudes pendientes del carro se cancelan.
 /// </summary>
-public record DarDeBajaCarroCommand(Guid CarroId, DateTime? FechaBaja, string Motivo) : IRequest<CarroDto>;
+public sealed record DarDeBajaCarroCommand(Guid CarroId, DateTime? FechaBaja, string Motivo) : ICommand<CarroDto>;
 
-public class DarDeBajaCarroCommandHandler : IRequestHandler<DarDeBajaCarroCommand, CarroDto>
+public sealed class DarDeBajaCarroCommandHandler : ICommandHandler<DarDeBajaCarroCommand, CarroDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

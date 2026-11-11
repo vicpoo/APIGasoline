@@ -1,16 +1,16 @@
 ﻿using APIGasoline.Application.Features.Divisiones.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Divisiones.Queries;
 
 /// <summary>
 /// Lista las divisiones. Se puede filtrar por corporativo.
 /// </summary>
-public record GetDivisionesQuery(Guid? CorporativoId = null) : IRequest<IReadOnlyList<DivisionDto>>;
+public sealed record GetDivisionesQuery(Guid? CorporativoId = null) : IQuery<IReadOnlyList<DivisionDto>>;
 
-public class GetDivisionesQueryHandler : IRequestHandler<GetDivisionesQuery, IReadOnlyList<DivisionDto>>
+public sealed class GetDivisionesQueryHandler : IQueryHandler<GetDivisionesQuery, IReadOnlyList<DivisionDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

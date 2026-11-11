@@ -1,16 +1,16 @@
 ﻿using APIGasoline.Application.Features.UsuarioRoles.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.UsuarioRoles.Queries;
 
 /// <summary>
 /// Lista las asignaciones. Se puede filtrar por usuario, por rol o por ambos.
 /// </summary>
-public record GetUsuarioRolesQuery(Guid? UsuarioId = null, Guid? RolId = null) : IRequest<IReadOnlyList<UsuarioRolDto>>;
+public sealed record GetUsuarioRolesQuery(Guid? UsuarioId = null, Guid? RolId = null) : IQuery<IReadOnlyList<UsuarioRolDto>>;
 
-public class GetUsuarioRolesQueryHandler : IRequestHandler<GetUsuarioRolesQuery, IReadOnlyList<UsuarioRolDto>>
+public sealed class GetUsuarioRolesQueryHandler : IQueryHandler<GetUsuarioRolesQuery, IReadOnlyList<UsuarioRolDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

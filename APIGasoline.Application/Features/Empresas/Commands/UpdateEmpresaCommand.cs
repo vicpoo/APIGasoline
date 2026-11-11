@@ -3,14 +3,14 @@ using APIGasoline.Application.Features.Empresas.Common;
 using APIGasoline.Application.Features.Empresas.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Empresas.Commands;
 
 /// <param name="Activo">HU-ADM-01: activa o inactiva. null = no cambia.</param>
-public record UpdateEmpresaCommand(Guid EmpresaId, string Nombre, Guid? CorporativoId, Guid? DivisionId, bool? Activo = null) : IRequest<EmpresaDto>;
+public sealed record UpdateEmpresaCommand(Guid EmpresaId, string Nombre, Guid? CorporativoId, Guid? DivisionId, bool? Activo = null) : ICommand<EmpresaDto>;
 
-public class UpdateEmpresaCommandHandler : IRequestHandler<UpdateEmpresaCommand, EmpresaDto>
+public sealed class UpdateEmpresaCommandHandler : ICommandHandler<UpdateEmpresaCommand, EmpresaDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

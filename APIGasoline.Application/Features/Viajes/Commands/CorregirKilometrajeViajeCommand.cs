@@ -7,6 +7,7 @@ using APIGasoline.Application.Features.Viajes.DTOs;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
+using APIGasoline.Application.Common.Messaging;
 using MediatR;
 
 namespace APIGasoline.Application.Features.Viajes.Commands;
@@ -18,13 +19,13 @@ namespace APIGasoline.Application.Features.Viajes.Commands;
 /// El motivo es obligatorio. El viaje queda marcado como corregido y el valor anterior
 /// se conserva en auditoria_evento. Si el viaje ya estaba cerrado, se recalcula su ruta procesada.
 /// </summary>
-public record CorregirKilometrajeViajeCommand(
+public sealed record CorregirKilometrajeViajeCommand(
     Guid ViajeId,
     decimal KilometrajeInicial,
     decimal? KilometrajeFinal,
-    string? Motivo) : IRequest<ViajeDto>;
+    string? Motivo) : ICommand<ViajeDto>;
 
-public class CorregirKilometrajeViajeCommandHandler : IRequestHandler<CorregirKilometrajeViajeCommand, ViajeDto>
+public sealed class CorregirKilometrajeViajeCommandHandler : ICommandHandler<CorregirKilometrajeViajeCommand, ViajeDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

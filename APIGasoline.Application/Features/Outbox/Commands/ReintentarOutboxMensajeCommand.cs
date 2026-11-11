@@ -3,14 +3,14 @@ using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Features.Outbox.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Outbox.Commands;
 
 /// <summary>Vuelve a poner en cola un mensaje fallido (el worker lo toma en la siguiente vuelta).</summary>
-public record ReintentarOutboxMensajeCommand(Guid OutboxMensajeId) : IRequest<OutboxMensajeDto>;
+public sealed record ReintentarOutboxMensajeCommand(Guid OutboxMensajeId) : ICommand<OutboxMensajeDto>;
 
-public class ReintentarOutboxMensajeCommandHandler : IRequestHandler<ReintentarOutboxMensajeCommand, OutboxMensajeDto>
+public sealed class ReintentarOutboxMensajeCommandHandler : ICommandHandler<ReintentarOutboxMensajeCommand, OutboxMensajeDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

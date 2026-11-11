@@ -4,7 +4,7 @@ using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 using APIGasoline.Application.Common.Outbox;
 
 namespace APIGasoline.Application.Features.Notificaciones.Commands;
@@ -13,13 +13,13 @@ namespace APIGasoline.Application.Features.Notificaciones.Commands;
 /// Alta manual de una notificación. Las de reservas y cambios de estatus
 /// se generan automáticamente en sus propios flujos.
 /// </summary>
-public record CreateNotificacionCommand(
+public sealed record CreateNotificacionCommand(
     Guid EmpleadoDestinatarioId,
     TipoNotificacion Tipo,
     Guid? ReferenciaId,
-    string? Mensaje) : IRequest<NotificacionDto>;
+    string? Mensaje) : ICommand<NotificacionDto>;
 
-public class CreateNotificacionCommandHandler : IRequestHandler<CreateNotificacionCommand, NotificacionDto>
+public sealed class CreateNotificacionCommandHandler : ICommandHandler<CreateNotificacionCommand, NotificacionDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

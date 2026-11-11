@@ -1,12 +1,12 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Domain.Interfaces;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.UsuarioRoles.Commands;
 
-public record DeleteUsuarioRolCommand(Guid UsuarioRolId) : IRequest;
+public sealed record DeleteUsuarioRolCommand(Guid UsuarioRolId) : ICommand;
 
-public class DeleteUsuarioRolCommandHandler : IRequestHandler<DeleteUsuarioRolCommand>
+public sealed class DeleteUsuarioRolCommandHandler : ICommandHandler<DeleteUsuarioRolCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
 

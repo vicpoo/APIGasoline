@@ -1,14 +1,14 @@
 ﻿using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Common.Security;
 using APIGasoline.Domain.Interfaces;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Notificaciones.Queries;
 
 /// <summary>
 /// Número para el "badge" de la campana en la app.
 /// </summary>
-public record ContarNotificacionesNoLeidasQuery(Guid EmpleadoDestinatarioId) : IRequest<int>, IRecursoPropio
+public sealed record ContarNotificacionesNoLeidasQuery(Guid EmpleadoDestinatarioId) : IQuery<int>, IRecursoPropio
 {
     /// <summary>Su bandeja, o la de otros con notificacion.enviar.</summary>
     public bool EsPropio(IUsuarioActual usuario)
@@ -17,7 +17,7 @@ public record ContarNotificacionesNoLeidasQuery(Guid EmpleadoDestinatarioId) : I
     public string PrivilegioParaOtros => Permisos.NotificacionEnviar;
 }
 
-public class ContarNotificacionesNoLeidasQueryHandler : IRequestHandler<ContarNotificacionesNoLeidasQuery, int>
+public sealed class ContarNotificacionesNoLeidasQueryHandler : IQueryHandler<ContarNotificacionesNoLeidasQuery, int>
 {
     private readonly IUnitOfWork _unitOfWork;
 

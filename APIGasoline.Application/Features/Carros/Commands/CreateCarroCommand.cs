@@ -5,7 +5,7 @@ using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Carros.Commands;
 
@@ -13,7 +13,7 @@ namespace APIGasoline.Application.Features.Carros.Commands;
 /// Crea el carro sin foto. La foto se sube después con <see cref="SubirFotoVehiculoCommand"/>
 /// (PUT /api/carros/{id}/foto), porque la llave del archivo usa el id del carro.
 /// </summary>
-public record CreateCarroCommand(
+public sealed record CreateCarroCommand(
     Guid EmpresaId,
     string Marca,
     string Modelo,
@@ -23,9 +23,9 @@ public record CreateCarroCommand(
     decimal? CapacidadTanque,
     decimal KilometrajeActual,
     EstadoCarro Estado,
-    TipoVehiculo TipoVehiculo = TipoVehiculo.Carro) : IRequest<CarroDto>;
+    TipoVehiculo TipoVehiculo = TipoVehiculo.Carro) : ICommand<CarroDto>;
 
-public class CreateCarroCommandHandler : IRequestHandler<CreateCarroCommand, CarroDto>
+public sealed class CreateCarroCommandHandler : ICommandHandler<CreateCarroCommand, CarroDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

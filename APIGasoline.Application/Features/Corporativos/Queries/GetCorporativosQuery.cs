@@ -1,13 +1,13 @@
 ﻿using APIGasoline.Application.Features.Corporativos.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Corporativos.Queries;
 
-public record GetCorporativosQuery : IRequest<IReadOnlyList<CorporativoDto>>;
+public sealed record GetCorporativosQuery : IQuery<IReadOnlyList<CorporativoDto>>;
 
-public class GetCorporativosQueryHandler : IRequestHandler<GetCorporativosQuery, IReadOnlyList<CorporativoDto>>
+public sealed class GetCorporativosQueryHandler : IQueryHandler<GetCorporativosQuery, IReadOnlyList<CorporativoDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

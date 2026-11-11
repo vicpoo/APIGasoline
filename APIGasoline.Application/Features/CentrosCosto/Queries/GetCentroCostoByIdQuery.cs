@@ -2,13 +2,13 @@
 using APIGasoline.Application.Features.CentrosCosto.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.CentrosCosto.Queries;
 
-public record GetCentroCostoByIdQuery(Guid CentroCostoId) : IRequest<CentroCostoDto>;
+public sealed record GetCentroCostoByIdQuery(Guid CentroCostoId) : IQuery<CentroCostoDto>;
 
-public class GetCentroCostoByIdQueryHandler : IRequestHandler<GetCentroCostoByIdQuery, CentroCostoDto>
+public sealed class GetCentroCostoByIdQueryHandler : IQueryHandler<GetCentroCostoByIdQuery, CentroCostoDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

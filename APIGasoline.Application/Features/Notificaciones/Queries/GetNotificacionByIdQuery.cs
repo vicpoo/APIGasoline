@@ -2,13 +2,13 @@
 using APIGasoline.Application.Features.Notificaciones.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Notificaciones.Queries;
 
-public record GetNotificacionByIdQuery(Guid NotificacionId) : IRequest<NotificacionDto>;
+public sealed record GetNotificacionByIdQuery(Guid NotificacionId) : IQuery<NotificacionDto>;
 
-public class GetNotificacionByIdQueryHandler : IRequestHandler<GetNotificacionByIdQuery, NotificacionDto>
+public sealed class GetNotificacionByIdQueryHandler : IQueryHandler<GetNotificacionByIdQuery, NotificacionDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

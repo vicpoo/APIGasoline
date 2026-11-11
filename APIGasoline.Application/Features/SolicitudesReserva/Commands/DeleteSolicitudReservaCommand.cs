@@ -1,15 +1,15 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Domain.Interfaces;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.SolicitudesReserva.Commands;
 
 /// <summary>
 /// Borra físicamente la solicitud. No se permite si está aprobada (el carro está en uso).
 /// </summary>
-public record DeleteSolicitudReservaCommand(Guid SolicitudReservaId) : IRequest;
+public sealed record DeleteSolicitudReservaCommand(Guid SolicitudReservaId) : ICommand;
 
-public class DeleteSolicitudReservaCommandHandler : IRequestHandler<DeleteSolicitudReservaCommand>
+public sealed class DeleteSolicitudReservaCommandHandler : ICommandHandler<DeleteSolicitudReservaCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
 

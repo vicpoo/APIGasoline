@@ -6,7 +6,7 @@ using APIGasoline.Application.Common.Storage;
 using APIGasoline.Application.Features.CargasCombustible.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.CargasCombustible.Queries;
 
@@ -14,13 +14,13 @@ namespace APIGasoline.Application.Features.CargasCombustible.Queries;
 /// Lista las cargas de la más reciente a la más antigua.
 /// Filtros opcionales: empresa, viaje y rango de fechas.
 /// </summary>
-public record GetCargasCombustibleQuery(
+public sealed record GetCargasCombustibleQuery(
     Guid? EmpresaId = null,
     Guid? ViajeId = null,
     DateTime? Desde = null,
-    DateTime? Hasta = null) : IRequest<IReadOnlyList<CargaCombustibleDto>>;
+    DateTime? Hasta = null) : IQuery<IReadOnlyList<CargaCombustibleDto>>;
 
-public class GetCargasCombustibleQueryHandler : IRequestHandler<GetCargasCombustibleQuery, IReadOnlyList<CargaCombustibleDto>>
+public sealed class GetCargasCombustibleQueryHandler : IQueryHandler<GetCargasCombustibleQuery, IReadOnlyList<CargaCombustibleDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

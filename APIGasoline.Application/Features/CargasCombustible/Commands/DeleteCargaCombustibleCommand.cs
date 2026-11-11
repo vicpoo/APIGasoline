@@ -3,6 +3,7 @@ using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
+using APIGasoline.Application.Common.Messaging;
 using MediatR;
 using APIGasoline.Application.Features.RutasProcesadas.Notifications;
 
@@ -13,9 +14,9 @@ namespace APIGasoline.Application.Features.CargasCombustible.Commands;
 /// motivo obligatorio; con el viaje en curso, el operador del viaje; con el viaje cerrado, solo quien
 /// tenga viaje.corregir_cerrado. El borrado queda en la auditoría con su motivo.
 /// </summary>
-public record DeleteCargaCombustibleCommand(Guid CargaCombustibleId, string? Motivo) : IRequest;
+public sealed record DeleteCargaCombustibleCommand(Guid CargaCombustibleId, string? Motivo) : ICommand;
 
-public class DeleteCargaCombustibleCommandHandler : IRequestHandler<DeleteCargaCombustibleCommand>
+public sealed class DeleteCargaCombustibleCommandHandler : ICommandHandler<DeleteCargaCombustibleCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IFileStorageService _storage;

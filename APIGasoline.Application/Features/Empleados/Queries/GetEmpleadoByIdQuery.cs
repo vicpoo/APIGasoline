@@ -5,11 +5,11 @@ using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Features.Empleados.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Empleados.Queries;
 
-public record GetEmpleadoByIdQuery(Guid EmpleadoId) : IRequest<EmpleadoDto>, IRecursoPropio
+public sealed record GetEmpleadoByIdQuery(Guid EmpleadoId) : IQuery<EmpleadoDto>, IRecursoPropio
 {
     /// <summary>Su propio perfil, o cualquiera con empleado.ver.</summary>
     public bool EsPropio(IUsuarioActual usuario)
@@ -18,7 +18,7 @@ public record GetEmpleadoByIdQuery(Guid EmpleadoId) : IRequest<EmpleadoDto>, IRe
     public string PrivilegioParaOtros => Permisos.EmpleadoVer;
 }
 
-public class GetEmpleadoByIdQueryHandler : IRequestHandler<GetEmpleadoByIdQuery, EmpleadoDto>
+public sealed class GetEmpleadoByIdQueryHandler : IQueryHandler<GetEmpleadoByIdQuery, EmpleadoDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

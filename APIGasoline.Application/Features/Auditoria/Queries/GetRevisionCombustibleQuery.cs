@@ -3,7 +3,7 @@ using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Features.Auditoria.Common;
 using APIGasoline.Application.Features.Auditoria.DTOs;
 using APIGasoline.Domain.Interfaces;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Auditoria.Queries;
 
@@ -12,9 +12,9 @@ namespace APIGasoline.Application.Features.Auditoria.Queries;
 /// y calcula las observaciones (comprobantes pendientes, kilometrajes inconsistentes, correcciones...).
 /// Las alertas no se guardan; se calculan al consultar.
 /// </summary>
-public record GetRevisionCombustibleQuery(Guid? EmpresaId, Guid? CarroId, DateTime Desde, DateTime Hasta) : IRequest<RevisionCombustibleDto>;
+public sealed record GetRevisionCombustibleQuery(Guid? EmpresaId, Guid? CarroId, DateTime Desde, DateTime Hasta) : IQuery<RevisionCombustibleDto>;
 
-public class GetRevisionCombustibleQueryHandler : IRequestHandler<GetRevisionCombustibleQuery, RevisionCombustibleDto>
+public sealed class GetRevisionCombustibleQueryHandler : IQueryHandler<GetRevisionCombustibleQuery, RevisionCombustibleDto>
 {
     /// <summary>Para que la consulta no recorra años de datos en una sola llamada.</summary>
     public static readonly TimeSpan PeriodoMaximo = TimeSpan.FromDays(366);

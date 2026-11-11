@@ -3,7 +3,7 @@ using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Common.Sesiones;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Empresas.Commands;
 
@@ -11,9 +11,9 @@ namespace APIGasoline.Application.Features.Empresas.Commands;
 /// Soft delete: marca la empresa como eliminada (delete = true), no borra el registro.
 /// Cierra las sesiones abiertas de sus empleados.
 /// </summary>
-public record DeleteEmpresaCommand(Guid EmpresaId) : IRequest;
+public sealed record DeleteEmpresaCommand(Guid EmpresaId) : ICommand;
 
-public class DeleteEmpresaCommandHandler : IRequestHandler<DeleteEmpresaCommand>
+public sealed class DeleteEmpresaCommandHandler : ICommandHandler<DeleteEmpresaCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IUsuarioActual _usuarioActual;

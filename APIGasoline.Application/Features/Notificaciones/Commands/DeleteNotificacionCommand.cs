@@ -1,12 +1,12 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Domain.Interfaces;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Notificaciones.Commands;
 
-public record DeleteNotificacionCommand(Guid NotificacionId) : IRequest;
+public sealed record DeleteNotificacionCommand(Guid NotificacionId) : ICommand;
 
-public class DeleteNotificacionCommandHandler : IRequestHandler<DeleteNotificacionCommand>
+public sealed class DeleteNotificacionCommandHandler : ICommandHandler<DeleteNotificacionCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
 

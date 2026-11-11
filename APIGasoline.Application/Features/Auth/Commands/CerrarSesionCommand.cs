@@ -2,7 +2,7 @@
 using APIGasoline.Application.Common.Sesiones;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Auth.Commands;
 
@@ -11,9 +11,9 @@ namespace APIGasoline.Application.Features.Auth.Commands;
 /// expirado (el refresh token es la prueba de que la sesión es suya).
 /// Es idempotente y nunca revela si el token existía: siempre termina sin error.
 /// </summary>
-public record CerrarSesionCommand(string RefreshToken) : IRequest;
+public sealed record CerrarSesionCommand(string RefreshToken) : ICommand;
 
-public class CerrarSesionCommandHandler : IRequestHandler<CerrarSesionCommand>
+public sealed class CerrarSesionCommandHandler : ICommandHandler<CerrarSesionCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IDateTimeProvider _dateTime;

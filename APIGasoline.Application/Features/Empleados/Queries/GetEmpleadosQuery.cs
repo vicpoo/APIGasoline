@@ -4,16 +4,16 @@ using APIGasoline.Application.Common.Storage;
 using APIGasoline.Application.Features.Empleados.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Empleados.Queries;
 
 /// <summary>
 /// Lista los empleados no eliminados. Se puede filtrar por empresa.
 /// </summary>
-public record GetEmpleadosQuery(Guid? EmpresaId = null) : IRequest<IReadOnlyList<EmpleadoDto>>;
+public sealed record GetEmpleadosQuery(Guid? EmpresaId = null) : IQuery<IReadOnlyList<EmpleadoDto>>;
 
-public class GetEmpleadosQueryHandler : IRequestHandler<GetEmpleadosQuery, IReadOnlyList<EmpleadoDto>>
+public sealed class GetEmpleadosQueryHandler : IQueryHandler<GetEmpleadosQuery, IReadOnlyList<EmpleadoDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

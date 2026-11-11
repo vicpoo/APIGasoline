@@ -2,13 +2,13 @@
 using APIGasoline.Application.Features.Divisiones.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Divisiones.Queries;
 
-public record GetDivisionByIdQuery(Guid DivisionId) : IRequest<DivisionDto>;
+public sealed record GetDivisionByIdQuery(Guid DivisionId) : IQuery<DivisionDto>;
 
-public class GetDivisionByIdQueryHandler : IRequestHandler<GetDivisionByIdQuery, DivisionDto>
+public sealed class GetDivisionByIdQueryHandler : IQueryHandler<GetDivisionByIdQuery, DivisionDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

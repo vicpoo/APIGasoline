@@ -5,13 +5,13 @@ using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Features.Viajes.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Viajes.Queries;
 
-public record GetViajeByIdQuery(Guid ViajeId) : IRequest<ViajeDto>;
+public sealed record GetViajeByIdQuery(Guid ViajeId) : IQuery<ViajeDto>;
 
-public class GetViajeByIdQueryHandler : IRequestHandler<GetViajeByIdQuery, ViajeDto>
+public sealed class GetViajeByIdQueryHandler : IQueryHandler<GetViajeByIdQuery, ViajeDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

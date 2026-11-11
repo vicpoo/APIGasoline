@@ -2,16 +2,16 @@
 using APIGasoline.Application.Features.PuntosRuta.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.PuntosRuta.Queries;
 
 /// <summary>
 /// Puntos del viaje en orden de captura, listos para dibujar la ruta en el mapa.
 /// </summary>
-public record GetPuntosRutaByViajeQuery(Guid ViajeId) : IRequest<IReadOnlyList<PuntoRutaDto>>;
+public sealed record GetPuntosRutaByViajeQuery(Guid ViajeId) : IQuery<IReadOnlyList<PuntoRutaDto>>;
 
-public class GetPuntosRutaByViajeQueryHandler : IRequestHandler<GetPuntosRutaByViajeQuery, IReadOnlyList<PuntoRutaDto>>
+public sealed class GetPuntosRutaByViajeQueryHandler : IQueryHandler<GetPuntosRutaByViajeQuery, IReadOnlyList<PuntoRutaDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

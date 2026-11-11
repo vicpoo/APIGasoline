@@ -3,7 +3,7 @@ using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Common.Security;
 using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Interfaces;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 using Microsoft.Extensions.Logging;
 
 namespace APIGasoline.Application.Features.Auth.Commands;
@@ -18,9 +18,9 @@ namespace APIGasoline.Application.Features.Auth.Commands;
 /// Resuelve el "huevo y la gallina": como todos los endpoints piden privilegios, alguien tiene que
 /// tenerlos desde el principio para crear empresas, roles y usuarios.
 /// </summary>
-public record SembrarSeguridadCommand(string? AdminEmail = null, string? AdminPassword = null) : IRequest;
+public sealed record SembrarSeguridadCommand(string? AdminEmail = null, string? AdminPassword = null) : ICommand;
 
-public class SembrarSeguridadCommandHandler : IRequestHandler<SembrarSeguridadCommand>
+public sealed class SembrarSeguridadCommandHandler : ICommandHandler<SembrarSeguridadCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IPasswordHasher _passwordHasher;

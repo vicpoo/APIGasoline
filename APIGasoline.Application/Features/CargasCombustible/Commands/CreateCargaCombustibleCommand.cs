@@ -9,6 +9,7 @@ using APIGasoline.Application.Features.Viajes.Common;
 using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
+using APIGasoline.Application.Common.Messaging;
 using MediatR;
 using APIGasoline.Application.Features.RutasProcesadas.Notifications;
 
@@ -21,7 +22,7 @@ namespace APIGasoline.Application.Features.CargasCombustible.Commands;
 /// Idempotente: si llega <see cref="CargaCombustibleId"/> (UUID generado en el teléfono) y esa carga ya
 /// existe, se regresa la existente sin duplicarla ni volver a subir el ticket.
 /// </summary>
-public record CreateCargaCombustibleCommand(
+public sealed record CreateCargaCombustibleCommand(
     Guid ViajeId,
     decimal Litros,
     decimal? Monto,
@@ -30,9 +31,9 @@ public record CreateCargaCombustibleCommand(
     decimal? UbicacionLat,
     decimal? UbicacionLng,
     Guid? CentroCostoId = null,
-    Guid? CargaCombustibleId = null) : IRequest<CargaCombustibleDto>;
+    Guid? CargaCombustibleId = null) : ICommand<CargaCombustibleDto>;
 
-public class CreateCargaCombustibleCommandHandler : IRequestHandler<CreateCargaCombustibleCommand, CargaCombustibleDto>
+public sealed class CreateCargaCombustibleCommandHandler : ICommandHandler<CreateCargaCombustibleCommand, CargaCombustibleDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

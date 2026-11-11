@@ -1,5 +1,5 @@
 using APIGasoline.Application.Common.Interfaces;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 using Microsoft.Extensions.Logging;
 
 namespace APIGasoline.Application.Features.BaseDatos.Commands;
@@ -9,9 +9,9 @@ namespace APIGasoline.Application.Features.BaseDatos.Commands;
 /// Se manda ANTES de <see cref="Auth.Commands.SembrarSeguridadCommand"/>, porque la siembra necesita las tablas.
 /// Solo agrega lo que falta: nunca borra la base de datos ni sus datos.
 /// </summary>
-public record AplicarMigracionesCommand : IRequest;
+public sealed record AplicarMigracionesCommand : ICommand;
 
-public class AplicarMigracionesCommandHandler : IRequestHandler<AplicarMigracionesCommand>
+public sealed class AplicarMigracionesCommandHandler : ICommandHandler<AplicarMigracionesCommand>
 {
     private readonly IMigradorBaseDatos _migrador;
     private readonly ILogger<AplicarMigracionesCommandHandler> _logger;

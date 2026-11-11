@@ -5,7 +5,7 @@ using APIGasoline.Application.Features.SolicitudesReserva.DTOs;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.SolicitudesReserva.Queries;
 
@@ -14,13 +14,13 @@ namespace APIGasoline.Application.Features.SolicitudesReserva.Queries;
 /// Filtros opcionales: empresa, carro, empleado solicitante y estado.
 /// Cada solicitud trae el nombre y la foto del solicitante y el carro (para la tarjeta).
 /// </summary>
-public record GetSolicitudesReservaQuery(
+public sealed record GetSolicitudesReservaQuery(
     Guid? EmpresaId = null,
     Guid? CarroId = null,
     Guid? EmpleadoSolicitanteId = null,
-    EstadoSolicitudReserva? Estado = null) : IRequest<IReadOnlyList<SolicitudReservaDto>>;
+    EstadoSolicitudReserva? Estado = null) : IQuery<IReadOnlyList<SolicitudReservaDto>>;
 
-public class GetSolicitudesReservaQueryHandler : IRequestHandler<GetSolicitudesReservaQuery, IReadOnlyList<SolicitudReservaDto>>
+public sealed class GetSolicitudesReservaQueryHandler : IQueryHandler<GetSolicitudesReservaQuery, IReadOnlyList<SolicitudReservaDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

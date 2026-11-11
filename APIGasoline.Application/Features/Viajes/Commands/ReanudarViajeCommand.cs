@@ -5,16 +5,16 @@ using APIGasoline.Application.Features.Viajes.Common;
 using APIGasoline.Application.Features.Viajes.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Viajes.Commands;
 
 /// <summary>
 /// Reanuda un viaje en pausa (cierra la pausa abierta). Si no se manda fecha, se usa la hora actual.
 /// </summary>
-public record ReanudarViajeCommand(Guid ViajeId, DateTime? Fecha) : IRequest<ViajeDto>;
+public sealed record ReanudarViajeCommand(Guid ViajeId, DateTime? Fecha) : ICommand<ViajeDto>;
 
-public class ReanudarViajeCommandHandler : IRequestHandler<ReanudarViajeCommand, ViajeDto>
+public sealed class ReanudarViajeCommandHandler : ICommandHandler<ReanudarViajeCommand, ViajeDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

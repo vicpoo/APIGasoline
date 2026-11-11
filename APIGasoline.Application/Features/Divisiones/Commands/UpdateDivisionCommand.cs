@@ -2,13 +2,13 @@
 using APIGasoline.Application.Features.Divisiones.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Divisiones.Commands;
 
-public record UpdateDivisionCommand(Guid DivisionId, Guid CorporativoId, string Nombre, bool Activo) : IRequest<DivisionDto>;
+public sealed record UpdateDivisionCommand(Guid DivisionId, Guid CorporativoId, string Nombre, bool Activo) : ICommand<DivisionDto>;
 
-public class UpdateDivisionCommandHandler : IRequestHandler<UpdateDivisionCommand, DivisionDto>
+public sealed class UpdateDivisionCommandHandler : ICommandHandler<UpdateDivisionCommand, DivisionDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

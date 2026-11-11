@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Text;
 using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Domain.Interfaces;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Usuarios.Commands;
 
-public record DeleteUsuarioCommand(Guid UsuarioId) : IRequest;
+public sealed record DeleteUsuarioCommand(Guid UsuarioId) : ICommand;
 
-public class DeleteUsuarioCommandHandler : IRequestHandler<DeleteUsuarioCommand>
+public sealed class DeleteUsuarioCommandHandler : ICommandHandler<DeleteUsuarioCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
 

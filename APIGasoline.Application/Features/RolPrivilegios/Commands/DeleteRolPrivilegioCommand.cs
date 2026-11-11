@@ -1,12 +1,12 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Domain.Interfaces;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.RolPrivilegios.Commands;
 
-public record DeleteRolPrivilegioCommand(Guid RolPrivilegioId) : IRequest;
+public sealed record DeleteRolPrivilegioCommand(Guid RolPrivilegioId) : ICommand;
 
-public class DeleteRolPrivilegioCommandHandler : IRequestHandler<DeleteRolPrivilegioCommand>
+public sealed class DeleteRolPrivilegioCommandHandler : ICommandHandler<DeleteRolPrivilegioCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
 

@@ -7,7 +7,7 @@ using APIGasoline.Application.Features.Empleados.Common;
 using APIGasoline.Application.Features.Empleados.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Empleados.Commands;
 
@@ -15,7 +15,7 @@ namespace APIGasoline.Application.Features.Empleados.Commands;
 /// Sube (o reemplaza) la foto de perfil o la licencia del empleado.
 /// En la BD solo se guarda la llave del archivo.
 /// </summary>
-public record SubirFotoEmpleadoCommand(Guid EmpleadoId, TipoFotoEmpleado Tipo, ArchivoEntrada Archivo) : IRequest<EmpleadoDto>, IRecursoPropio
+public sealed record SubirFotoEmpleadoCommand(Guid EmpleadoId, TipoFotoEmpleado Tipo, ArchivoEntrada Archivo) : ICommand<EmpleadoDto>, IRecursoPropio
 {
     /// <summary>Sus propias fotos (perfil / licencia), o las de cualquiera con empleado.gestionar.</summary>
     public bool EsPropio(IUsuarioActual usuario)
@@ -24,7 +24,7 @@ public record SubirFotoEmpleadoCommand(Guid EmpleadoId, TipoFotoEmpleado Tipo, A
     public string PrivilegioParaOtros => Permisos.EmpleadoGestionar;
 }
 
-public class SubirFotoEmpleadoCommandHandler : IRequestHandler<SubirFotoEmpleadoCommand, EmpleadoDto>
+public sealed class SubirFotoEmpleadoCommandHandler : ICommandHandler<SubirFotoEmpleadoCommand, EmpleadoDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

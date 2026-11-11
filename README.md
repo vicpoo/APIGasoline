@@ -82,7 +82,9 @@ Ejemplo de `APIGasoline/appsettings.Local.json`:
 
 ```bash
 dotnet test                                   # todas las pruebas (las de integración requieren Docker abierto)
-dotnet test tests/APIGasoline.Domain.Tests tests/APIGasoline.Application.Tests   # solo unitarias, sin Docker
+dotnet test tests/APIGasoline.Domain.Tests                                     # unitarias de dominio, sin Docker
+dotnet test tests/APIGasoline.Application.Tests                                # unitarias de casos de uso, sin Docker
+dotnet test tests/APIGasoline.Architecture.Tests                               # reglas de arquitectura (CQRS, capas)
 dotnet test tests/APIGasoline.Api.IntegrationTests                              # matriz de fugas entre empresas
 dotnet tool restore                           # instala dotnet-ef (versión fijada en .config/dotnet-tools.json)
 dotnet ef migrations add NombreDelCambio -p APIGasoline.Infrastructure -s APIGasoline
@@ -110,6 +112,33 @@ Un fallo que empieza con **`FUGA:`** es un hueco de seguridad real.
 
 ---
 
+## Commands y Queries
+
+Todo caso de uso en `APIGasoline.Application/Features/<Modulo>/` es un **Command** (cambia algo) o una **Query** (solo lee), con las interfaces de `Common/Messaging`:
+
+```csharp
+// Features/Carros/Commands/DeleteCarroCommand.cs
+public sealed record DeleteCarroCommand(Guid CarroId) : ICommand;                 // sin resultado
+public sealed class DeleteCarroCommandHandler : ICommandHandler<DeleteCarroCommand> { ... }
+
+// Features/Carros/Queries/GetCarroByIdQuery.cs
+public sealed record GetCarroByIdQuery(Guid CarroId) : IQuery<CarroDto>;
+public sealed class GetCarroByIdQueryHandler : IQueryHandler<GetCarroByIdQuery, CarroDto> { ... }
+```
+
+`tests/APIGasoline.Architecture.Tests` hace cumplir las reglas (no necesita Docker):
+
+| Regla | Prueba |
+|---|---|
+| Todo request es `ICommand`, `ICommand<T>` o `IQuery<T>` (nunca `IRequest` a secas) | `CommandsYQueriesTests` |
+| Es `sealed record` inmutable, se llama `XxxCommand`/`XxxQuery` y vive en `Commands`/`Queries` | `CommandsYQueriesTests` |
+| Tiene exactamente un handler `sealed`, llamado igual + `Handler`, que implementa `ICommandHandler`/`IQueryHandler` | `CommandsYQueriesTests` |
+| Una Query no guarda, no abre transacciones, no publica eventos, no sube ni borra archivos y no crea Commands (se revisa el IL compilado) | `QueriesSoloLeenTests` |
+| Los controladores solo reciben `ISender` | `ControladoresTests` |
+| Domain ← Application ← Infrastructure ← API (nadie depende hacia afuera) | `CapasTests` |
+
+---
+
 ## Estructura
 
 ```text
@@ -118,7 +147,7 @@ APIGasoline.Application/     Casos de uso (Commands / Queries con MediatR), DTOs
 APIGasoline.Domain/          Entidades y reglas de negocio
 APIGasoline.Infrastructure/  EF Core (SQL Server), repositorios, migraciones, MinIO, Firebase, reportes
 APIGasoline.AppHost/         Orquestador de desarrollo (Aspire)
-tests/                       Pruebas unitarias y de integración (matriz de fugas)
+tests/                       Pruebas unitarias, de arquitectura y de integración (matriz de fugas)
 BD/                          Esquema y documentación de la base de datos
 docs/                        Documentación de la API
 postman/                     Colecciones de Postman

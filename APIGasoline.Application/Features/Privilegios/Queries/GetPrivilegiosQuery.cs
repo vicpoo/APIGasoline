@@ -1,14 +1,14 @@
 ﻿using APIGasoline.Application.Features.Privilegios.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Privilegios.Queries;
 
 /// <summary>Modulo opcional para filtrar (ej. carro).</summary>
-public record GetPrivilegiosQuery(string? Modulo = null) : IRequest<IReadOnlyList<PrivilegioDto>>;
+public sealed record GetPrivilegiosQuery(string? Modulo = null) : IQuery<IReadOnlyList<PrivilegioDto>>;
 
-public class GetPrivilegiosQueryHandler : IRequestHandler<GetPrivilegiosQuery, IReadOnlyList<PrivilegioDto>>
+public sealed class GetPrivilegiosQueryHandler : IQueryHandler<GetPrivilegiosQuery, IReadOnlyList<PrivilegioDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

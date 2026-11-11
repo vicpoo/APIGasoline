@@ -6,7 +6,7 @@ using APIGasoline.Application.Features.Auth.DTOs;
 using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 using Microsoft.Extensions.Logging;
 
 namespace APIGasoline.Application.Features.Auth.Commands;
@@ -22,9 +22,9 @@ namespace APIGasoline.Application.Features.Auth.Commands;
 /// - Se vuelve a validar que el usuario, su empleado y su empresa sigan activos.
 /// Cualquier rechazo responde 401: la app debe borrar la sesión local y pedir login.
 /// </summary>
-public record RefrescarSesionCommand(string RefreshToken, DatosClienteSesion? Cliente = null) : IRequest<SesionTokensDto>;
+public sealed record RefrescarSesionCommand(string RefreshToken, DatosClienteSesion? Cliente = null) : ICommand<SesionTokensDto>;
 
-public class RefrescarSesionCommandHandler : IRequestHandler<RefrescarSesionCommand, SesionTokensDto>
+public sealed class RefrescarSesionCommandHandler : ICommandHandler<RefrescarSesionCommand, SesionTokensDto>
 {
     private const string SesionInvalida = "La sesión no es válida o ya expiró. Inicia sesión de nuevo.";
     private const string SesionYaRenovada = "La sesión ya se renovó con otra petición. Usa el token más reciente.";

@@ -4,6 +4,7 @@ using APIGasoline.Application.Features.Auditoria.Common;
 using APIGasoline.Application.Features.Reportes.Common;
 using APIGasoline.Application.Features.Reportes.DTOs;
 using APIGasoline.Domain.Interfaces;
+using APIGasoline.Application.Common.Messaging;
 using MediatR;
 
 namespace APIGasoline.Application.Features.Reportes.Queries;
@@ -13,9 +14,9 @@ namespace APIGasoline.Application.Features.Reportes.Queries;
 /// Es parte del módulo de auditoría: usa el privilegio auditoria.ver y las mismas reglas de empresa
 /// (solo la del token, salvo plataforma.multiempresa).
 /// </summary>
-public record GetReporteFlotaQuery(Guid? EmpresaId, Guid? CarroId, DateTime? Desde, DateTime? Hasta) : IRequest<ReporteFlotaDto>;
+public sealed record GetReporteFlotaQuery(Guid? EmpresaId, Guid? CarroId, DateTime? Desde, DateTime? Hasta) : IQuery<ReporteFlotaDto>;
 
-public class GetReporteFlotaQueryHandler : IRequestHandler<GetReporteFlotaQuery, ReporteFlotaDto>
+public sealed class GetReporteFlotaQueryHandler : IQueryHandler<GetReporteFlotaQuery, ReporteFlotaDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IUsuarioActual _usuarioActual;
@@ -66,10 +67,10 @@ public class GetReporteFlotaQueryHandler : IRequestHandler<GetReporteFlotaQuery,
 }
 
 /// <summary>El mismo reporte, como archivo PDF o Excel listo para descargar.</summary>
-public record GetReporteFlotaArchivoQuery(Guid? EmpresaId, Guid? CarroId, DateTime? Desde, DateTime? Hasta, FormatoReporte Formato)
-    : IRequest<ArchivoReporte>;
+public sealed record GetReporteFlotaArchivoQuery(Guid? EmpresaId, Guid? CarroId, DateTime? Desde, DateTime? Hasta, FormatoReporte Formato)
+    : IQuery<ArchivoReporte>;
 
-public class GetReporteFlotaArchivoQueryHandler : IRequestHandler<GetReporteFlotaArchivoQuery, ArchivoReporte>
+public sealed class GetReporteFlotaArchivoQueryHandler : IQueryHandler<GetReporteFlotaArchivoQuery, ArchivoReporte>
 {
     private readonly ISender _sender;
     private readonly IReportePdfGenerator _pdf;

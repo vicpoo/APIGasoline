@@ -4,7 +4,7 @@ using APIGasoline.Application.Features.Auditoria.Common;
 using APIGasoline.Application.Features.Auditoria.DTOs;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Auditoria.Queries;
 
@@ -12,7 +12,7 @@ namespace APIGasoline.Application.Features.Auditoria.Queries;
 /// Historial de cambios, del más reciente al más antiguo (máximo <see cref="Maximo"/> eventos).
 /// Filtros: entidad (tabla) y su id, usuario, acción y rango de fechas.
 /// </summary>
-public record GetAuditoriaEventosQuery(
+public sealed record GetAuditoriaEventosQuery(
     Guid? EmpresaId,
     string? Entidad,
     Guid? EntidadId,
@@ -20,9 +20,9 @@ public record GetAuditoriaEventosQuery(
     AccionAuditoria? Accion,
     DateTime? Desde,
     DateTime? Hasta,
-    int Maximo = 500) : IRequest<IReadOnlyList<AuditoriaEventoDto>>;
+    int Maximo = 500) : IQuery<IReadOnlyList<AuditoriaEventoDto>>;
 
-public class GetAuditoriaEventosQueryHandler : IRequestHandler<GetAuditoriaEventosQuery, IReadOnlyList<AuditoriaEventoDto>>
+public sealed class GetAuditoriaEventosQueryHandler : IQueryHandler<GetAuditoriaEventosQuery, IReadOnlyList<AuditoriaEventoDto>>
 {
     public const int MaximoPermitido = 2000;
 

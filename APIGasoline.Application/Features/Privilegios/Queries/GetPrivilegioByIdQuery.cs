@@ -2,13 +2,13 @@
 using APIGasoline.Application.Features.Privilegios.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Privilegios.Queries;
 
-public record GetPrivilegioByIdQuery(Guid PrivilegioId) : IRequest<PrivilegioDto>;
+public sealed record GetPrivilegioByIdQuery(Guid PrivilegioId) : IQuery<PrivilegioDto>;
 
-public class GetPrivilegioByIdQueryHandler : IRequestHandler<GetPrivilegioByIdQuery, PrivilegioDto>
+public sealed class GetPrivilegioByIdQueryHandler : IQueryHandler<GetPrivilegioByIdQuery, PrivilegioDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

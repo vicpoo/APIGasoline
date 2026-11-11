@@ -7,7 +7,7 @@ using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Auth.Commands;
 
@@ -15,9 +15,9 @@ namespace APIGasoline.Application.Features.Auth.Commands;
 /// Valida email + contraseña, abre una sesión (refresh token) para el dispositivo y devuelve
 /// el JWT de acceso, el refresh token y los datos del usuario y su empleado.
 /// </summary>
-public record LoginCommand(string Email, string Password, DatosClienteSesion? Cliente = null) : IRequest<LoginResponseDto>;
+public sealed record LoginCommand(string Email, string Password, DatosClienteSesion? Cliente = null) : ICommand<LoginResponseDto>;
 
-public class LoginCommandHandler : IRequestHandler<LoginCommand, LoginResponseDto>
+public sealed class LoginCommandHandler : ICommandHandler<LoginCommand, LoginResponseDto>
 {
     private const string CredencialesInvalidas = "Email o contraseña incorrectos.";
 

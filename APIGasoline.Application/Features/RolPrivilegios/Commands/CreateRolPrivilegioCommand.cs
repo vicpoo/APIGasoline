@@ -3,13 +3,13 @@ using APIGasoline.Application.Features.RolPrivilegios.DTOs;
 using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.RolPrivilegios.Commands;
 
-public record CreateRolPrivilegioCommand(Guid RolId, Guid PrivilegioId) : IRequest<RolPrivilegioDto>;
+public sealed record CreateRolPrivilegioCommand(Guid RolId, Guid PrivilegioId) : ICommand<RolPrivilegioDto>;
 
-public class CreateRolPrivilegioCommandHandler : IRequestHandler<CreateRolPrivilegioCommand, RolPrivilegioDto>
+public sealed class CreateRolPrivilegioCommandHandler : ICommandHandler<CreateRolPrivilegioCommand, RolPrivilegioDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

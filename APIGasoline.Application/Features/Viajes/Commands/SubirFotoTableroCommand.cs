@@ -6,7 +6,7 @@ using APIGasoline.Application.Features.Viajes.Common;
 using APIGasoline.Application.Features.Viajes.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Viajes.Commands;
 
@@ -15,9 +15,9 @@ namespace APIGasoline.Application.Features.Viajes.Commands;
 /// Se sube aparte de los datos del viaje porque desde el celular puede llegar después (offline).
 /// En la BD solo se guarda la llave del archivo.
 /// </summary>
-public record SubirFotoTableroCommand(Guid ViajeId, MomentoTablero Momento, ArchivoEntrada Archivo) : IRequest<ViajeDto>;
+public sealed record SubirFotoTableroCommand(Guid ViajeId, MomentoTablero Momento, ArchivoEntrada Archivo) : ICommand<ViajeDto>;
 
-public class SubirFotoTableroCommandHandler : IRequestHandler<SubirFotoTableroCommand, ViajeDto>
+public sealed class SubirFotoTableroCommandHandler : ICommandHandler<SubirFotoTableroCommand, ViajeDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

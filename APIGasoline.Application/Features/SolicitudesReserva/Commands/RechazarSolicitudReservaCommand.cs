@@ -5,14 +5,14 @@ using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 using APIGasoline.Application.Common.Outbox;
 
 namespace APIGasoline.Application.Features.SolicitudesReserva.Commands;
 
-public record RechazarSolicitudReservaCommand(Guid SolicitudReservaId, Guid EmpleadoConfirmadorId, string Motivo) : IRequest<SolicitudReservaDto>;
+public sealed record RechazarSolicitudReservaCommand(Guid SolicitudReservaId, Guid EmpleadoConfirmadorId, string Motivo) : ICommand<SolicitudReservaDto>;
 
-public class RechazarSolicitudReservaCommandHandler : IRequestHandler<RechazarSolicitudReservaCommand, SolicitudReservaDto>
+public sealed class RechazarSolicitudReservaCommandHandler : ICommandHandler<RechazarSolicitudReservaCommand, SolicitudReservaDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

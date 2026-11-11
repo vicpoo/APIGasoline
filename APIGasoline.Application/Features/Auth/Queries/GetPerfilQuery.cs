@@ -5,16 +5,16 @@ using APIGasoline.Application.Features.Auth.Common;
 using APIGasoline.Application.Features.Auth.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Auth.Queries;
 
 /// <summary>
 /// Perfil del usuario autenticado (el id viene del token).
 /// </summary>
-public record GetPerfilQuery(Guid UsuarioId) : IRequest<PerfilUsuarioDto>;
+public sealed record GetPerfilQuery(Guid UsuarioId) : IQuery<PerfilUsuarioDto>;
 
-public class GetPerfilQueryHandler : IRequestHandler<GetPerfilQuery, PerfilUsuarioDto>
+public sealed class GetPerfilQueryHandler : IQueryHandler<GetPerfilQuery, PerfilUsuarioDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

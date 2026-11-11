@@ -3,7 +3,7 @@ using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Common.Security;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Sesiones.Commands;
 
@@ -12,14 +12,14 @@ namespace APIGasoline.Application.Features.Sesiones.Commands;
 /// La propia, o la de cualquiera con usuario.gestionar. El dispositivo ya no podrá renovar su token;
 /// su JWT de acceso deja de servir cuando expire (máximo Jwt:ExpiracionMinutos).
 /// </summary>
-public record CerrarSesionUsuarioCommand(Guid UsuarioId, Guid SesionId) : IRequest, IRecursoPropio
+public sealed record CerrarSesionUsuarioCommand(Guid UsuarioId, Guid SesionId) : ICommand, IRecursoPropio
 {
     public bool EsPropio(IUsuarioActual usuario) => UsuarioId == usuario.UsuarioId;
 
     public string PrivilegioParaOtros => Permisos.UsuarioGestionar;
 }
 
-public class CerrarSesionUsuarioCommandHandler : IRequestHandler<CerrarSesionUsuarioCommand>
+public sealed class CerrarSesionUsuarioCommandHandler : ICommandHandler<CerrarSesionUsuarioCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IUsuarioActual _usuarioActual;

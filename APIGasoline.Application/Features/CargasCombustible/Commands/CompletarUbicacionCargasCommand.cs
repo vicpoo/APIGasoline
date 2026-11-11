@@ -2,7 +2,7 @@
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using APIGasoline.Domain.Rutas;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.CargasCombustible.Commands;
 
@@ -13,9 +13,9 @@ namespace APIGasoline.Application.Features.CargasCombustible.Commands;
 /// llegaron antes que la ruta por estar sin internet), se vuelve a intentar cuando lleguen.
 /// </summary>
 /// <returns>Cuántas cargas se ubicaron.</returns>
-public record CompletarUbicacionCargasCommand(Guid ViajeId) : IRequest<int>;
+public sealed record CompletarUbicacionCargasCommand(Guid ViajeId) : ICommand<int>;
 
-public class CompletarUbicacionCargasCommandHandler : IRequestHandler<CompletarUbicacionCargasCommand, int>
+public sealed class CompletarUbicacionCargasCommandHandler : ICommandHandler<CompletarUbicacionCargasCommand, int>
 {
     public const string MotivoAuditoria = "Ubicación estimada con el punto GPS de la ruta más cercano a la hora de la carga.";
 

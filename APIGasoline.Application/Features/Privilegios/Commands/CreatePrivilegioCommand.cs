@@ -4,22 +4,22 @@ using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Privilegios.Commands;
 
 /// <summary>
 /// Clave = código inmutable modulo.accion (ej. carro.crear). Modulo null = primer segmento de la clave.
 /// </summary>
-public record CreatePrivilegioCommand(
+public sealed record CreatePrivilegioCommand(
     string Clave,
     string? Modulo,
     string Nombre,
     string? Descripcion,
     AmbitoPrivilegio Ambito,
-    bool Activo) : IRequest<PrivilegioDto>;
+    bool Activo) : ICommand<PrivilegioDto>;
 
-public class CreatePrivilegioCommandHandler : IRequestHandler<CreatePrivilegioCommand, PrivilegioDto>
+public sealed class CreatePrivilegioCommandHandler : ICommandHandler<CreatePrivilegioCommand, PrivilegioDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

@@ -4,16 +4,16 @@ using APIGasoline.Application.Common.Security;
 using APIGasoline.Application.Features.SolicitudesReserva.Common;
 using APIGasoline.Application.Features.SolicitudesReserva.DTOs;
 using APIGasoline.Domain.Interfaces;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.SolicitudesReserva.Queries;
 
 /// <summary>
 /// Detalle de una solicitud: motivo, solicitante (foto y licencia), carro y confirmador.
 /// </summary>
-public record GetSolicitudReservaByIdQuery(Guid SolicitudReservaId) : IRequest<SolicitudReservaDetalleDto>;
+public sealed record GetSolicitudReservaByIdQuery(Guid SolicitudReservaId) : IQuery<SolicitudReservaDetalleDto>;
 
-public class GetSolicitudReservaByIdQueryHandler : IRequestHandler<GetSolicitudReservaByIdQuery, SolicitudReservaDetalleDto>
+public sealed class GetSolicitudReservaByIdQueryHandler : IQueryHandler<GetSolicitudReservaByIdQuery, SolicitudReservaDetalleDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IFileStorageService _storage;

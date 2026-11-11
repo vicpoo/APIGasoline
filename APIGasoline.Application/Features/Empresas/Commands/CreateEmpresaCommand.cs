@@ -3,13 +3,13 @@ using APIGasoline.Application.Features.Empresas.DTOs;
 using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Empresas.Commands;
 
-public record CreateEmpresaCommand(string Nombre, Guid? CorporativoId, Guid? DivisionId) : IRequest<EmpresaDto>;
+public sealed record CreateEmpresaCommand(string Nombre, Guid? CorporativoId, Guid? DivisionId) : ICommand<EmpresaDto>;
 
-public class CreateEmpresaCommandHandler : IRequestHandler<CreateEmpresaCommand, EmpresaDto>
+public sealed class CreateEmpresaCommandHandler : ICommandHandler<CreateEmpresaCommand, EmpresaDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

@@ -2,13 +2,13 @@
 using APIGasoline.Application.Features.Corporativos.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Corporativos.Queries;
 
-public record GetCorporativoByIdQuery(Guid CorporativoId) : IRequest<CorporativoDto>;
+public sealed record GetCorporativoByIdQuery(Guid CorporativoId) : IQuery<CorporativoDto>;
 
-public class GetCorporativoByIdQueryHandler : IRequestHandler<GetCorporativoByIdQuery, CorporativoDto>
+public sealed class GetCorporativoByIdQueryHandler : IQueryHandler<GetCorporativoByIdQuery, CorporativoDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

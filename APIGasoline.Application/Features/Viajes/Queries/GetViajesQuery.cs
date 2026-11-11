@@ -6,7 +6,7 @@ using APIGasoline.Application.Features.Viajes.DTOs;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Viajes.Queries;
 
@@ -14,14 +14,14 @@ namespace APIGasoline.Application.Features.Viajes.Queries;
 /// Lista los viajes del más reciente al más antiguo.
 /// Filtros opcionales: empresa, carro, operador, solicitud de reserva y estado.
 /// </summary>
-public record GetViajesQuery(
+public sealed record GetViajesQuery(
     Guid? EmpresaId = null,
     Guid? CarroId = null,
     Guid? EmpleadoOperadorId = null,
     Guid? SolicitudReservaId = null,
-    EstadoViaje? Estado = null) : IRequest<IReadOnlyList<ViajeDto>>;
+    EstadoViaje? Estado = null) : IQuery<IReadOnlyList<ViajeDto>>;
 
-public class GetViajesQueryHandler : IRequestHandler<GetViajesQuery, IReadOnlyList<ViajeDto>>
+public sealed class GetViajesQueryHandler : IQueryHandler<GetViajesQuery, IReadOnlyList<ViajeDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

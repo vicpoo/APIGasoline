@@ -5,7 +5,7 @@ using APIGasoline.Application.Features.SolicitudesReserva.Common;
 using APIGasoline.Application.Features.SolicitudesReserva.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.SolicitudesReserva.Commands;
 
@@ -17,12 +17,12 @@ namespace APIGasoline.Application.Features.SolicitudesReserva.Commands;
 /// (para eso la app usa "Desvincular", que además pide motivo y avisa al empleado).
 /// </summary>
 /// <param name="FechaLiberacion">Hora del celular (puede registrarse offline). Si no viene, la del servidor.</param>
-public record LiberarSolicitudReservaCommand(
+public sealed record LiberarSolicitudReservaCommand(
     Guid SolicitudReservaId,
     DateTime? FechaLiberacion,
-    string? Observaciones) : IRequest<SolicitudReservaDto>;
+    string? Observaciones) : ICommand<SolicitudReservaDto>;
 
-public class LiberarSolicitudReservaCommandHandler : IRequestHandler<LiberarSolicitudReservaCommand, SolicitudReservaDto>
+public sealed class LiberarSolicitudReservaCommandHandler : ICommandHandler<LiberarSolicitudReservaCommand, SolicitudReservaDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

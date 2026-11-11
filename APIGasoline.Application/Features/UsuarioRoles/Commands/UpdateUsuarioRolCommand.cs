@@ -2,13 +2,13 @@
 using APIGasoline.Application.Features.UsuarioRoles.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.UsuarioRoles.Commands;
 
-public record UpdateUsuarioRolCommand(Guid UsuarioRolId, Guid UsuarioId, Guid RolId) : IRequest<UsuarioRolDto>;
+public sealed record UpdateUsuarioRolCommand(Guid UsuarioRolId, Guid UsuarioId, Guid RolId) : ICommand<UsuarioRolDto>;
 
-public class UpdateUsuarioRolCommandHandler : IRequestHandler<UpdateUsuarioRolCommand, UsuarioRolDto>
+public sealed class UpdateUsuarioRolCommandHandler : ICommandHandler<UpdateUsuarioRolCommand, UsuarioRolDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

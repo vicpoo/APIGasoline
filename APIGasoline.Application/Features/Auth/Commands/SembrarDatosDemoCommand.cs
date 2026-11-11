@@ -3,7 +3,7 @@ using APIGasoline.Application.Common.Security;
 using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 using Microsoft.Extensions.Logging;
 
 namespace APIGasoline.Application.Features.Auth.Commands;
@@ -26,9 +26,9 @@ namespace APIGasoline.Application.Features.Auth.Commands;
 /// Idempotente: si ya existe admin.a@demo.local no hace nada. Debe correr después de
 /// <see cref="SembrarSeguridadCommand"/> (necesita el catálogo de privilegios).
 /// </summary>
-public record SembrarDatosDemoCommand : IRequest;
+public sealed record SembrarDatosDemoCommand : ICommand;
 
-public class SembrarDatosDemoCommandHandler : IRequestHandler<SembrarDatosDemoCommand>
+public sealed class SembrarDatosDemoCommandHandler : ICommandHandler<SembrarDatosDemoCommand>
 {
     public const string PasswordDemo = "Demo#Gasolina2026";
     public const string RolAdministradorEmpresa = "Administrador de empresa";

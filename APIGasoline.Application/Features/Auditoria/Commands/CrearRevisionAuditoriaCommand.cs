@@ -5,7 +5,7 @@ using APIGasoline.Application.Features.Auditoria.DTOs;
 using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Auditoria.Commands;
 
@@ -15,14 +15,14 @@ namespace APIGasoline.Application.Features.Auditoria.Commands;
 /// El revisor es el empleado del token, nunca el que mande el cliente.
 /// Revisar NO es aprobar: la aprobación operativa es la de la solicitud de reserva.
 /// </summary>
-public record CrearRevisionAuditoriaCommand(
+public sealed record CrearRevisionAuditoriaCommand(
     Guid? ViajeId,
     Guid? CarroId,
     DateOnly? PeriodoDesde,
     DateOnly? PeriodoHasta,
-    string? Observaciones) : IRequest<RevisionAuditoriaDto>;
+    string? Observaciones) : ICommand<RevisionAuditoriaDto>;
 
-public class CrearRevisionAuditoriaCommandHandler : IRequestHandler<CrearRevisionAuditoriaCommand, RevisionAuditoriaDto>
+public sealed class CrearRevisionAuditoriaCommandHandler : ICommandHandler<CrearRevisionAuditoriaCommand, RevisionAuditoriaDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

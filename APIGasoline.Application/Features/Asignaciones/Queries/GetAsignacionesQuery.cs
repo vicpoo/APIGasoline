@@ -4,7 +4,7 @@ using APIGasoline.Application.Features.Asignaciones.Common;
 using APIGasoline.Application.Features.Asignaciones.DTOs;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Asignaciones.Queries;
 
@@ -12,9 +12,9 @@ namespace APIGasoline.Application.Features.Asignaciones.Queries;
 /// Vista Asignaciones (asignacion.gestionar): solo lo vinculado (carros con quién los tiene y
 /// empleados con sus carros), en una sola llamada. Solo la empresa del token, salvo plataforma.multiempresa.
 /// </summary>
-public record GetAsignacionesQuery(Guid? EmpresaId = null) : IRequest<AsignacionesDto>;
+public sealed record GetAsignacionesQuery(Guid? EmpresaId = null) : IQuery<AsignacionesDto>;
 
-public class GetAsignacionesQueryHandler : IRequestHandler<GetAsignacionesQuery, AsignacionesDto>
+public sealed class GetAsignacionesQueryHandler : IQueryHandler<GetAsignacionesQuery, AsignacionesDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IUsuarioActual _usuarioActual;

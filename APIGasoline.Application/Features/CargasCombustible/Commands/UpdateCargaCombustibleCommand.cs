@@ -9,6 +9,7 @@ using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
 using APIGasoline.Application.Features.CargasCombustible.Notifications;
+using APIGasoline.Application.Common.Messaging;
 using MediatR;
 using APIGasoline.Application.Features.RutasProcesadas.Notifications;
 
@@ -20,7 +21,7 @@ namespace APIGasoline.Application.Features.CargasCombustible.Commands;
 /// Es una corrección: el motivo es obligatorio, se aplican las reglas de <see cref="ReglasCorreccion"/>,
 /// la carga queda marcada como corregida y el valor anterior se conserva en auditoria_evento.
 /// </summary>
-public record UpdateCargaCombustibleCommand(
+public sealed record UpdateCargaCombustibleCommand(
     Guid CargaCombustibleId,
     decimal Litros,
     decimal? Monto,
@@ -30,9 +31,9 @@ public record UpdateCargaCombustibleCommand(
     decimal? UbicacionLng,
     string? Motivo,
     /// <summary>null = conservar el centro de costos actual.</summary>
-    Guid? CentroCostoId = null) : IRequest<CargaCombustibleDto>;
+    Guid? CentroCostoId = null) : ICommand<CargaCombustibleDto>;
 
-public class UpdateCargaCombustibleCommandHandler : IRequestHandler<UpdateCargaCombustibleCommand, CargaCombustibleDto>
+public sealed class UpdateCargaCombustibleCommandHandler : ICommandHandler<UpdateCargaCombustibleCommand, CargaCombustibleDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

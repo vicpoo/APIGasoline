@@ -1,12 +1,12 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Domain.Interfaces;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Divisiones.Commands;
 
-public record DeleteDivisionCommand(Guid DivisionId) : IRequest;
+public sealed record DeleteDivisionCommand(Guid DivisionId) : ICommand;
 
-public class DeleteDivisionCommandHandler : IRequestHandler<DeleteDivisionCommand>
+public sealed class DeleteDivisionCommandHandler : ICommandHandler<DeleteDivisionCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
 

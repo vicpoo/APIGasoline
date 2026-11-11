@@ -4,20 +4,20 @@ using APIGasoline.Application.Features.Notificaciones.DTOs;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Notificaciones.Queries;
 
 /// <summary>
 /// Bandeja de la más reciente a la más antigua.
 /// </summary>
-public record GetNotificacionesQuery(
+public sealed record GetNotificacionesQuery(
     Guid? EmpresaId = null,
     Guid? EmpleadoDestinatarioId = null,
     bool SoloNoLeidas = false,
-    TipoNotificacion? Tipo = null) : IRequest<IReadOnlyList<NotificacionDto>>;
+    TipoNotificacion? Tipo = null) : IQuery<IReadOnlyList<NotificacionDto>>;
 
-public class GetNotificacionesQueryHandler : IRequestHandler<GetNotificacionesQuery, IReadOnlyList<NotificacionDto>>
+public sealed class GetNotificacionesQueryHandler : IQueryHandler<GetNotificacionesQuery, IReadOnlyList<NotificacionDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

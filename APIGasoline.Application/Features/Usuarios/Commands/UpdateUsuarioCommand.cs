@@ -5,13 +5,13 @@ using APIGasoline.Application.Features.Usuarios.DTOs;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Usuarios.Commands;
 
-public record UpdateUsuarioCommand(Guid UsuarioId, string Email, EstadoUsuario Estado) : IRequest<UsuarioDto>;
+public sealed record UpdateUsuarioCommand(Guid UsuarioId, string Email, EstadoUsuario Estado) : ICommand<UsuarioDto>;
 
-public class UpdateUsuarioCommandHandler : IRequestHandler<UpdateUsuarioCommand, UsuarioDto>
+public sealed class UpdateUsuarioCommandHandler : ICommandHandler<UpdateUsuarioCommand, UsuarioDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

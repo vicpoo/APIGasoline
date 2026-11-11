@@ -6,6 +6,7 @@ using APIGasoline.Application.Features.PuntosRuta.DTOs;
 using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Interfaces;
 using APIGasoline.Application.Features.CargasCombustible.Notifications;
+using APIGasoline.Application.Common.Messaging;
 using MediatR;
 using APIGasoline.Application.Features.RutasProcesadas.Notifications;
 
@@ -20,11 +21,11 @@ namespace APIGasoline.Application.Features.PuntosRuta.Commands;
 /// - Los puntos que caen dentro de una pausa del viaje se descartan (la app apaga el GPS en pausa;
 ///   esto es solo la red de seguridad para que la ruta no cuente el tiempo detenido).
 /// </summary>
-public record RegistrarLotePuntosRutaCommand(
+public sealed record RegistrarLotePuntosRutaCommand(
     Guid ViajeId,
-    IReadOnlyList<PuntoRutaNuevoDto> Puntos) : IRequest<LotePuntosRutaResultadoDto>;
+    IReadOnlyList<PuntoRutaNuevoDto> Puntos) : ICommand<LotePuntosRutaResultadoDto>;
 
-public class RegistrarLotePuntosRutaCommandHandler : IRequestHandler<RegistrarLotePuntosRutaCommand, LotePuntosRutaResultadoDto>
+public sealed class RegistrarLotePuntosRutaCommandHandler : ICommandHandler<RegistrarLotePuntosRutaCommand, LotePuntosRutaResultadoDto>
 {
     public const int MaxPuntosPorLote = 1000;
 

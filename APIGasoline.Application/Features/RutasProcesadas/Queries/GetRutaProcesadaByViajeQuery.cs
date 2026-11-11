@@ -2,7 +2,7 @@
 using APIGasoline.Application.Features.RutasProcesadas.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.RutasProcesadas.Queries;
 
@@ -10,9 +10,9 @@ namespace APIGasoline.Application.Features.RutasProcesadas.Queries;
 /// Resumen procesado de un viaje. Si el viaje existe pero aún no se procesa
 /// (sigue en curso o falló el proceso), responde 404 con un mensaje claro.
 /// </summary>
-public record GetRutaProcesadaByViajeQuery(Guid ViajeId) : IRequest<RutaProcesadaDto>;
+public sealed record GetRutaProcesadaByViajeQuery(Guid ViajeId) : IQuery<RutaProcesadaDto>;
 
-public class GetRutaProcesadaByViajeQueryHandler : IRequestHandler<GetRutaProcesadaByViajeQuery, RutaProcesadaDto>
+public sealed class GetRutaProcesadaByViajeQueryHandler : IQueryHandler<GetRutaProcesadaByViajeQuery, RutaProcesadaDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

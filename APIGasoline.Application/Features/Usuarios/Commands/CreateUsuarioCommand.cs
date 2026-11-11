@@ -6,16 +6,16 @@ using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Usuarios.Commands;
 
 /// <summary>
 /// Crea un usuario con su contraseña (se guarda solo el hash).
 /// </summary>
-public record CreateUsuarioCommand(string Email, string Password, EstadoUsuario Estado) : IRequest<UsuarioDto>;
+public sealed record CreateUsuarioCommand(string Email, string Password, EstadoUsuario Estado) : ICommand<UsuarioDto>;
 
-public class CreateUsuarioCommandHandler : IRequestHandler<CreateUsuarioCommand, UsuarioDto>
+public sealed class CreateUsuarioCommandHandler : ICommandHandler<CreateUsuarioCommand, UsuarioDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

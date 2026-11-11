@@ -4,16 +4,16 @@ using APIGasoline.Application.Features.Carros.DTOs;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Carros.Queries;
 
 /// <summary>
 /// Lista los carros. Se puede filtrar por empresa, por estado o por ambos.
 /// </summary>
-public record GetCarrosQuery(Guid? EmpresaId = null, EstadoCarro? Estado = null) : IRequest<IReadOnlyList<CarroDto>>;
+public sealed record GetCarrosQuery(Guid? EmpresaId = null, EstadoCarro? Estado = null) : IQuery<IReadOnlyList<CarroDto>>;
 
-public class GetCarrosQueryHandler : IRequestHandler<GetCarrosQuery, IReadOnlyList<CarroDto>>
+public sealed class GetCarrosQueryHandler : IQueryHandler<GetCarrosQuery, IReadOnlyList<CarroDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

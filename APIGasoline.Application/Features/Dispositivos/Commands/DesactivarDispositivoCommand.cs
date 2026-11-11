@@ -1,13 +1,13 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Domain.Interfaces;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Dispositivos.Commands;
 
 /// <summary>Al cerrar sesión: ese celular deja de recibir push. Se conserva el registro.</summary>
-public record DesactivarDispositivoCommand(Guid DispositivoEmpleadoId) : IRequest;
+public sealed record DesactivarDispositivoCommand(Guid DispositivoEmpleadoId) : ICommand;
 
-public class DesactivarDispositivoCommandHandler : IRequestHandler<DesactivarDispositivoCommand>
+public sealed class DesactivarDispositivoCommandHandler : ICommandHandler<DesactivarDispositivoCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
 

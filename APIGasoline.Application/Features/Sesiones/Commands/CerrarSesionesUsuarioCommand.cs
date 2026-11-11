@@ -3,7 +3,7 @@ using APIGasoline.Application.Common.Security;
 using APIGasoline.Application.Common.Sesiones;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Sesiones.Commands;
 
@@ -12,14 +12,14 @@ namespace APIGasoline.Application.Features.Sesiones.Commands;
 /// Con <see cref="ConservarActual"/> = true no se cierra la sesión desde la que se hace la petición
 /// ("cerrar sesión en todos los demás dispositivos"). Devuelve cuántas cerró.
 /// </summary>
-public record CerrarSesionesUsuarioCommand(Guid UsuarioId, bool ConservarActual) : IRequest<int>, IRecursoPropio
+public sealed record CerrarSesionesUsuarioCommand(Guid UsuarioId, bool ConservarActual) : ICommand<int>, IRecursoPropio
 {
     public bool EsPropio(IUsuarioActual usuario) => UsuarioId == usuario.UsuarioId;
 
     public string PrivilegioParaOtros => Permisos.UsuarioGestionar;
 }
 
-public class CerrarSesionesUsuarioCommandHandler : IRequestHandler<CerrarSesionesUsuarioCommand, int>
+public sealed class CerrarSesionesUsuarioCommandHandler : ICommandHandler<CerrarSesionesUsuarioCommand, int>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IUsuarioActual _usuarioActual;

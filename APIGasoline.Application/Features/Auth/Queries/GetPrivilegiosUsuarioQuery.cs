@@ -2,7 +2,7 @@
 using APIGasoline.Application.Features.Auth.Common;
 using APIGasoline.Application.Features.Auth.DTOs;
 using APIGasoline.Domain.Interfaces;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Auth.Queries;
 
@@ -10,9 +10,9 @@ namespace APIGasoline.Application.Features.Auth.Queries;
 /// Privilegios efectivos del usuario autenticado (el id viene del token).
 /// Es más ligero que el perfil: no arma el empleado ni genera URLs de fotos.
 /// </summary>
-public record GetPrivilegiosUsuarioQuery(Guid UsuarioId) : IRequest<PrivilegiosUsuarioDto>;
+public sealed record GetPrivilegiosUsuarioQuery(Guid UsuarioId) : IQuery<PrivilegiosUsuarioDto>;
 
-public class GetPrivilegiosUsuarioQueryHandler : IRequestHandler<GetPrivilegiosUsuarioQuery, PrivilegiosUsuarioDto>
+public sealed class GetPrivilegiosUsuarioQueryHandler : IQueryHandler<GetPrivilegiosUsuarioQuery, PrivilegiosUsuarioDto>
 {
     private readonly IUnitOfWork _unitOfWork;
 

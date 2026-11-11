@@ -1,15 +1,15 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Domain.Interfaces;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Viajes.Commands;
 
 /// <summary>
 /// Borra físicamente el viaje. No se permite mientras está en curso.
 /// </summary>
-public record DeleteViajeCommand(Guid ViajeId) : IRequest;
+public sealed record DeleteViajeCommand(Guid ViajeId) : ICommand;
 
-public class DeleteViajeCommandHandler : IRequestHandler<DeleteViajeCommand>
+public sealed class DeleteViajeCommandHandler : ICommandHandler<DeleteViajeCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
 

@@ -8,7 +8,7 @@ using APIGasoline.Application.Features.Empleados.DTOs;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Empleados.Commands;
 
@@ -17,11 +17,11 @@ namespace APIGasoline.Application.Features.Empleados.Commands;
 /// Si cambia de usuario o de empresa, se cierran las sesiones del usuario anterior y del nuevo
 /// (sus tokens traen el empleado y la empresa viejos).
 /// </summary>
-public record UpdateEmpleadoCommand(
+public sealed record UpdateEmpleadoCommand(
     Guid EmpleadoId,
     Guid EmpresaId,
     Guid UsuarioId,
-    string NombreCompleto) : IRequest<EmpleadoDto>, IRecursoPropio
+    string NombreCompleto) : ICommand<EmpleadoDto>, IRecursoPropio
 {
     /// <summary>El empleado puede editar su nombre, pero no moverse de empresa ni de usuario; con empleado.gestionar, cualquiera.</summary>
     public bool EsPropio(IUsuarioActual usuario)
@@ -32,7 +32,7 @@ public record UpdateEmpleadoCommand(
     public string PrivilegioParaOtros => Permisos.EmpleadoGestionar;
 }
 
-public class UpdateEmpleadoCommandHandler : IRequestHandler<UpdateEmpleadoCommand, EmpleadoDto>
+public sealed class UpdateEmpleadoCommandHandler : ICommandHandler<UpdateEmpleadoCommand, EmpleadoDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

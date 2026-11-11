@@ -1,16 +1,16 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Domain.Interfaces;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Carros.Commands;
 
 /// <summary>
 /// Quita la foto del vehículo: limpia la llave en BD y después elimina el archivo.
 /// </summary>
-public record EliminarFotoVehiculoCommand(Guid CarroId) : IRequest;
+public sealed record EliminarFotoVehiculoCommand(Guid CarroId) : ICommand;
 
-public class EliminarFotoVehiculoCommandHandler : IRequestHandler<EliminarFotoVehiculoCommand>
+public sealed class EliminarFotoVehiculoCommandHandler : ICommandHandler<EliminarFotoVehiculoCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IFileStorageService _storage;

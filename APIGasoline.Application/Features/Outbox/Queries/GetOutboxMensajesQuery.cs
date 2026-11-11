@@ -2,14 +2,14 @@
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Outbox.Queries;
 
 /// <summary>Para revisar qué push se enviaron, cuáles están en reintento y por qué fallaron.</summary>
-public record GetOutboxMensajesQuery(Guid? EmpresaId, EstadoOutbox? Estado, int Limite) : IRequest<IReadOnlyList<OutboxMensajeDto>>;
+public sealed record GetOutboxMensajesQuery(Guid? EmpresaId, EstadoOutbox? Estado, int Limite) : IQuery<IReadOnlyList<OutboxMensajeDto>>;
 
-public class GetOutboxMensajesQueryHandler : IRequestHandler<GetOutboxMensajesQuery, IReadOnlyList<OutboxMensajeDto>>
+public sealed class GetOutboxMensajesQueryHandler : IQueryHandler<GetOutboxMensajesQuery, IReadOnlyList<OutboxMensajeDto>>
 {
     public const int LimiteMaximo = 500;
 

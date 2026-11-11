@@ -10,14 +10,14 @@ namespace APIGasoline.Application.Features.CargasCombustible.Notifications;
 /// llegó una carga sin ubicación o llegaron puntos GPS de un viaje en curso.
 /// (Para viajes cerrados basta con <see cref="RutaViajeModificadaNotification"/>.)
 /// </summary>
-public record UbicacionCargasPendienteNotification(Guid ViajeId) : INotification;
+public sealed record UbicacionCargasPendienteNotification(Guid ViajeId) : INotification;
 
 /// <summary>
 /// Cuando cambia la ruta de un viaje cerrado (se finaliza, se interrumpe, se sincroniza o llegan
 /// puntos tarde por estar sin internet) se intenta ubicar las cargas que llegaron sin ubicación.
 /// Un fallo aquí no deshace la operación original: solo se registra en el log.
 /// </summary>
-public class CompletarUbicacionCargasHandler :
+public sealed class CompletarUbicacionCargasHandler :
     INotificationHandler<RutaViajeModificadaNotification>,
     INotificationHandler<UbicacionCargasPendienteNotification>
 {

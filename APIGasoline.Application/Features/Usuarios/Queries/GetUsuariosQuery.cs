@@ -5,13 +5,13 @@ using System.Text;
 using APIGasoline.Application.Features.Usuarios.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Usuarios.Queries;
 
-public record GetUsuariosQuery : IRequest<IReadOnlyList<UsuarioDto>>;
+public sealed record GetUsuariosQuery : IQuery<IReadOnlyList<UsuarioDto>>;
 
-public class GetUsuariosQueryHandler : IRequestHandler<GetUsuariosQuery, IReadOnlyList<UsuarioDto>>
+public sealed class GetUsuariosQueryHandler : IQueryHandler<GetUsuariosQuery, IReadOnlyList<UsuarioDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

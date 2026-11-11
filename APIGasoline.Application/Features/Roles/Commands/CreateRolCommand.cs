@@ -3,14 +3,14 @@ using APIGasoline.Application.Features.Roles.DTOs;
 using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Roles.Commands;
 
 /// <summary>EmpresaId null = rol global; con valor = rol exclusivo de esa empresa.</summary>
-public record CreateRolCommand(Guid? EmpresaId, string Nombre, string? Descripcion, bool Activo) : IRequest<RolDto>;
+public sealed record CreateRolCommand(Guid? EmpresaId, string Nombre, string? Descripcion, bool Activo) : ICommand<RolDto>;
 
-public class CreateRolCommandHandler : IRequestHandler<CreateRolCommand, RolDto>
+public sealed class CreateRolCommandHandler : ICommandHandler<CreateRolCommand, RolDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

@@ -6,7 +6,7 @@ using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Dispositivos.Commands;
 
@@ -14,10 +14,10 @@ namespace APIGasoline.Application.Features.Dispositivos.Commands;
 /// La app lo llama al iniciar sesión y cada vez que Firebase le renueva el token.
 /// Si el token ya existe se reasigna al empleado (mismo celular, otro usuario) en lugar de duplicarlo.
 /// </summary>
-public record RegistrarDispositivoCommand(
+public sealed record RegistrarDispositivoCommand(
     Guid EmpleadoId,
     string TokenFcm,
-    PlataformaDispositivo Plataforma) : IRequest<DispositivoDto>, IRecursoPropio
+    PlataformaDispositivo Plataforma) : ICommand<DispositivoDto>, IRecursoPropio
 {
     /// <summary>Cada quien registra su celular; para otro empleado se necesita empleado.gestionar.</summary>
     public bool EsPropio(IUsuarioActual usuario)
@@ -26,7 +26,7 @@ public record RegistrarDispositivoCommand(
     public string PrivilegioParaOtros => Permisos.EmpleadoGestionar;
 }
 
-public class RegistrarDispositivoCommandHandler : IRequestHandler<RegistrarDispositivoCommand, DispositivoDto>
+public sealed class RegistrarDispositivoCommandHandler : ICommandHandler<RegistrarDispositivoCommand, DispositivoDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

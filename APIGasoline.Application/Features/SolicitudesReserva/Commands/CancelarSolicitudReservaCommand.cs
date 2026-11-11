@@ -5,16 +5,16 @@ using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.SolicitudesReserva.Commands;
 
 /// <summary>
 /// Cancela una solicitud pendiente o aprobada. Si estaba aprobada, libera el carro.
 /// </summary>
-public record CancelarSolicitudReservaCommand(Guid SolicitudReservaId, string? Motivo) : IRequest<SolicitudReservaDto>;
+public sealed record CancelarSolicitudReservaCommand(Guid SolicitudReservaId, string? Motivo) : ICommand<SolicitudReservaDto>;
 
-public class CancelarSolicitudReservaCommandHandler : IRequestHandler<CancelarSolicitudReservaCommand, SolicitudReservaDto>
+public sealed class CancelarSolicitudReservaCommandHandler : ICommandHandler<CancelarSolicitudReservaCommand, SolicitudReservaDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

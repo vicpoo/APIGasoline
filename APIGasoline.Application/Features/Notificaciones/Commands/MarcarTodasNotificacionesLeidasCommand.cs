@@ -1,14 +1,14 @@
 ﻿using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Common.Security;
 using APIGasoline.Domain.Interfaces;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Notificaciones.Commands;
 
 /// <summary>
 /// Marca como leídas todas las notificaciones pendientes de un empleado. Devuelve cuántas se marcaron.
 /// </summary>
-public record MarcarTodasNotificacionesLeidasCommand(Guid EmpleadoDestinatarioId) : IRequest<int>, IRecursoPropio
+public sealed record MarcarTodasNotificacionesLeidasCommand(Guid EmpleadoDestinatarioId) : ICommand<int>, IRecursoPropio
 {
     /// <summary>Su bandeja, o la de otros con notificacion.enviar.</summary>
     public bool EsPropio(IUsuarioActual usuario)
@@ -17,7 +17,7 @@ public record MarcarTodasNotificacionesLeidasCommand(Guid EmpleadoDestinatarioId
     public string PrivilegioParaOtros => Permisos.NotificacionEnviar;
 }
 
-public class MarcarTodasNotificacionesLeidasCommandHandler : IRequestHandler<MarcarTodasNotificacionesLeidasCommand, int>
+public sealed class MarcarTodasNotificacionesLeidasCommandHandler : ICommandHandler<MarcarTodasNotificacionesLeidasCommand, int>
 {
     private readonly IUnitOfWork _unitOfWork;
 

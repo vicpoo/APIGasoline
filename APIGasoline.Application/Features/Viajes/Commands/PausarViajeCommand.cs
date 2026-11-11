@@ -5,7 +5,7 @@ using APIGasoline.Application.Features.Viajes.Common;
 using APIGasoline.Application.Features.Viajes.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Viajes.Commands;
 
@@ -14,14 +14,14 @@ namespace APIGasoline.Application.Features.Viajes.Commands;
 /// Si no se manda fecha, se usa la hora actual. Las reglas (en curso, sin otra pausa abierta, fechas)
 /// las valida el dominio en <see cref="Domain.Entities.Viaje.Pausar"/>.
 /// </summary>
-public record PausarViajeCommand(
+public sealed record PausarViajeCommand(
     Guid ViajeId,
     DateTime? Fecha,
     string? Motivo,
     decimal? UbicacionLat,
-    decimal? UbicacionLng) : IRequest<ViajeDto>;
+    decimal? UbicacionLng) : ICommand<ViajeDto>;
 
-public class PausarViajeCommandHandler : IRequestHandler<PausarViajeCommand, ViajeDto>
+public sealed class PausarViajeCommandHandler : ICommandHandler<PausarViajeCommand, ViajeDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;

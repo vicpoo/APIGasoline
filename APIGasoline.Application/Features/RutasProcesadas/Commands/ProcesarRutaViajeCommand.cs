@@ -4,7 +4,7 @@ using APIGasoline.Application.Features.RutasProcesadas.Common;
 using APIGasoline.Application.Features.RutasProcesadas.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using MediatR;
+using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.RutasProcesadas.Commands;
 
@@ -13,9 +13,9 @@ namespace APIGasoline.Application.Features.RutasProcesadas.Commands;
 /// limpia los puntos GPS, mide distancia y tiempos, compara contra el odómetro,
 /// calcula km/L y genera la polyline. Los puntos crudos no se modifican.
 /// </summary>
-public record ProcesarRutaViajeCommand(Guid ViajeId) : IRequest<RutaProcesadaDto>;
+public sealed record ProcesarRutaViajeCommand(Guid ViajeId) : ICommand<RutaProcesadaDto>;
 
-public class ProcesarRutaViajeCommandHandler : IRequestHandler<ProcesarRutaViajeCommand, RutaProcesadaDto>
+public sealed class ProcesarRutaViajeCommandHandler : ICommandHandler<ProcesarRutaViajeCommand, RutaProcesadaDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
