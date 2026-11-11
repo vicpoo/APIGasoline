@@ -4,11 +4,12 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace APIGasoline.Infrastructure.Persistence.Converters;
 
 /// <summary>
-/// TipoMotivoCambio ⇄ enum('liberacion','falla_mecanica','choque_o_golpe','servicio','emergencia','otro') de MySQL.
+/// TipoMotivoCambio ⇄ 'liberacion' | 'falla_mecanica' | 'choque_o_golpe' | 'servicio' | 'emergencia' | 'otro'.
 /// </summary>
 public class TipoMotivoCambioConverter : ValueConverter<TipoMotivoCambio, string>
 {
-    public const string ColumnType = "enum('liberacion','falla_mecanica','choque_o_golpe','servicio','emergencia','otro')";
+    /// <summary>Valores permitidos en la columna (varchar + CHECK, ver TiposSql.EsEnum).</summary>
+    public static readonly string[] Valores = ["liberacion", "falla_mecanica", "choque_o_golpe", "servicio", "emergencia", "otro"];
 
     public TipoMotivoCambioConverter()
         : base(

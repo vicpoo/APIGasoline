@@ -13,7 +13,7 @@
   <ItemGroup>
     <PackageReference Include="FirebaseAdmin" Version="3.7.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.12" />
-    <PackageReference Include="Microting.EntityFrameworkCore.MySql" Version="10.0.12" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.12" />
     <!-- JWT: generar (Infrastructure) y validar (API, lo recibe por referencia) -->
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.12" />
     <!-- Almacenamiento de archivos (SDK oficial de MinIO, compatible con S3) -->

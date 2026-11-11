@@ -35,8 +35,8 @@ public class DivisionConfiguration : IEntityTypeConfiguration<Division>
         // La BD la llena al insertar; EF la lee de vuelta y nunca la envía.
         builder.Property(d => d.FechaRegistro)
             .HasColumnName("fecha_registro")
-            .HasColumnType("timestamp")
-            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .HasColumnType(TiposSql.FechaHora)
+            .HasDefaultValueSql(TiposSql.Ahora)
             .ValueGeneratedOnAdd();
 
         // Restrict: no se puede borrar un corporativo que todavía tiene divisiones.

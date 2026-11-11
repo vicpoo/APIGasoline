@@ -1,0 +1,675 @@
+// ============================================================
+// APIGasoline — Base de datos (MySQL 8)
+// GENERADO desde la API: migraciones de EF Core aplicadas a un MySQL vacío
+// y leídas de information_schema. Versión del modelo: 10 (20261106120000_SesionesUsuario).
+// Pegar en https://dbdiagram.io para ver el diagrama.
+// ============================================================
+
+Enum auditoria_evento_accion {
+  crear
+  actualizar
+  eliminar
+  aprobar
+  rechazar
+  cancelar
+  cambiar_estado
+  corregir
+}
+
+Enum auditoria_evento_origen {
+  movil
+  web
+  sistema
+}
+
+Enum cambio_estatus_carro_estatus_anterior {
+  disponible
+  ocupado
+  en_mantenimiento
+}
+
+Enum cambio_estatus_carro_tipo_motivo {
+  liberacion
+  falla_mecanica
+  choque_o_golpe
+  servicio
+  emergencia
+  otro
+}
+
+Enum carro_tipo_vehiculo {
+  carro
+  moto
+  camioneta
+  camion
+}
+
+Enum dispositivo_empleado_plataforma {
+  android
+  ios
+  web
+}
+
+Enum notificacion_tipo {
+  nueva_solicitud
+  resultado_solicitud
+  cambio_estatus_forzado
+  reporte_mantenimiento
+}
+
+Enum outbox_mensaje_estado {
+  pendiente
+  procesando
+  enviado
+  fallido
+}
+
+Enum privilegio_ambito {
+  plataforma
+  empresa
+}
+
+Enum revision_auditoria_estado_revision {
+  pendiente_informacion
+  revisado
+  con_observaciones
+}
+
+Enum sesion_usuario_motivo_revocacion {
+  cierre_sesion
+  cerrada_por_usuario
+  cerrada_por_administrador
+  cambio_password
+  usuario_desactivado
+  empleado_dado_de_baja
+  empleado_reasignado
+  empresa_eliminada
+  reuso_detectado
+  acceso_revocado
+  limite_sesiones
+}
+
+Enum solicitud_reserva_estado {
+  pendiente
+  aprobada
+  rechazada
+  cancelada
+  finalizada
+}
+
+Enum usuario_estado {
+  activo
+  inactivo
+}
+
+Enum viaje_estado {
+  en_curso
+  finalizado
+  interrumpido
+}
+
+// ---------------- Seguridad (RBAC y sesiones)
+Table usuario {
+  usuario_id binary(16) [pk, note: 'Identificador (UUID v7 generado por la app).']
+  email varchar(150) [not null, unique, note: 'Correo; es el usuario de acceso. Único en todo el sistema.']
+  password_hash varchar(255) [not null, note: 'Contraseña cifrada con PBKDF2. Nunca en texto plano.']
+  estado usuario_estado [not null, default: 'activo', note: 'Un usuario inactivo no puede iniciar sesión (403).']
+  fecha_registro timestamp [default: `now()`, note: 'Fecha de alta.']
+
+  indexes {
+    email [name: 'uq_usuario_email', unique]
+  }
+
+  Note: 'Credenciales para iniciar sesión (correo + contraseña cifrada con PBKDF2).'
+}
+
+Table rol {
+  rol_id binary(16) [pk, note: 'Identificador (UUID v7 generado por la app).']
+  empresa_id binary(16) [note: 'NULL = rol global (plataforma); con valor = rol propio de esa empresa.']
+  nombre varchar(100) [not null, note: 'Nombre visible del rol. Único dentro de la empresa (y entre roles globales).']
+  descripcion varchar(255) [note: 'Descripción opcional.']
+  activo tinyint(1) [not null, default: 1, note: 'Un rol inactivo no da privilegios.']
+  empresa_clave binary(16) [note: 'Columna GENERADA (STORED): COALESCE(empresa_id, 0x00…). Solo existe para que el índice único también aplique a roles globales. La API no la escribe. GENERATED ALWAYS AS coalesce(`empresa_id`,0x00000000000000000000000000000000)']
+
+  indexes {
+    empresa_id [name: 'ix_rol_empresa_id']
+    (empresa_clave, nombre) [name: 'uq_rol_empresa_clave_nombre', unique]
+  }
+
+  Note: 'Agrupa privilegios con un nombre. empresa_id NULL = rol global.'
+}
+
+Table privilegio {
+  privilegio_id binary(16) [pk, note: 'Identificador (UUID v7 generado por la app).']
+  nombre varchar(100) [not null, note: 'Texto visible; se puede cambiar sin afectar permisos.']
+  descripcion varchar(255) [note: 'Qué permite.']
+  activo tinyint(1) [not null, default: 1, note: 'Un privilegio inactivo no cuenta.']
+  clave varchar(100) [not null, unique, default: '', note: 'Clave inmutable modulo.accion (ej. viaje.registrar). Es lo que revisa el código.']
+  modulo varchar(50) [not null, default: '', note: 'Módulo para agruparlo en la pantalla de roles.']
+  ambito privilegio_ambito [not null, default: 'empresa', note: 'plataforma = solo roles globales; empresa = cualquier rol.']
+
+  indexes {
+    modulo [name: 'ix_privilegio_modulo']
+    clave [name: 'uq_privilegio_clave', unique]
+  }
+
+  Note: 'Catálogo de acciones del sistema (modulo.accion). Lo siembra la API al arrancar.'
+}
+
+Table usuario_rol {
+  usuario_rol_id binary(16) [pk, note: 'Identificador (UUID v7 generado por la app).']
+  usuario_id binary(16) [not null, note: 'Referencia a usuario.']
+  rol_id binary(16) [not null, note: 'Referencia a rol.']
+
+  indexes {
+    rol_id [name: 'ix_usuario_rol_rol_id']
+    usuario_id [name: 'ix_usuario_rol_usuario_id']
+    (usuario_id, rol_id) [name: 'uq_usuario_rol_usuario_id_rol_id', unique]
+  }
+
+  Note: 'Roles asignados a cada usuario (N:M).'
+}
+
+Table rol_privilegio {
+  rol_privilegio_id binary(16) [pk, note: 'Identificador (UUID v7 generado por la app).']
+  rol_id binary(16) [not null, note: 'Referencia a rol.']
+  privilegio_id binary(16) [not null, note: 'Referencia a privilegio.']
+
+  indexes {
+    privilegio_id [name: 'ix_rol_privilegio_privilegio_id']
+    rol_id [name: 'ix_rol_privilegio_rol_id']
+    (rol_id, privilegio_id) [name: 'uq_rol_privilegio_rol_id_privilegio_id', unique]
+  }
+
+  Note: 'Privilegios de cada rol (N:M).'
+}
+
+Table sesion_usuario {
+  sesion_usuario_id binary(16) [pk, note: 'Identificador (UUID v7 generado por la app).']
+  usuario_id binary(16) [not null, note: 'Usuario dueño de la sesión. Al borrar el usuario se borran sus sesiones (CASCADE).']
+  empresa_id binary(16) [note: 'Empresa del empleado al iniciar sesión (NULL = usuario sin empleado). Sirve para revocar por empresa. Sin FK.']
+  token_hash char(64) [not null, unique, note: 'SHA-256 (hex, 64) del refresh token vigente. El token nunca se guarda. Es token de concurrencia: si llegan dos renovaciones a la vez, solo una gana.']
+  token_hash_anterior char(64) [note: 'Hash del token reemplazado en la última rotación. Si alguien lo reutiliza se revoca toda la sesión (señal de robo).']
+  plataforma dispositivo_empleado_plataforma [note: 'Sistema del dispositivo.']
+  nombre_dispositivo varchar(100) [note: 'Nombre que manda la app (para la lista de sesiones).']
+  ip varchar(45) [note: 'IP del cliente (IPv4 o IPv6).']
+  user_agent varchar(255) [note: 'User-Agent del cliente.']
+  fecha_creacion timestamp [not null, note: 'Inicio de sesión.']
+  fecha_ultimo_uso timestamp [not null, note: 'Última renovación.']
+  fecha_rotacion timestamp [note: 'Última vez que se rotó el refresh token.']
+  expira_en timestamp [not null, note: 'Expiración deslizante (Sesiones:RefreshDias, 30 por defecto). Se extiende en cada renovación.']
+  expira_absoluta_en timestamp [not null, note: 'Tope desde el inicio de sesión (Sesiones:RefreshMaxDias, 90 por defecto). Después hay que volver a escribir la contraseña.']
+  fecha_revocacion timestamp [note: 'NULL = sesión activa.']
+  motivo_revocacion sesion_usuario_motivo_revocacion [note: 'Por qué se cerró (logout, cambio de contraseña, reuso detectado, límite de sesiones…).']
+  revocada_por_usuario_id binary(16) [note: 'Quién la cerró (si fue un administrador). Sin FK.']
+
+  indexes {
+    (empresa_id, fecha_revocacion) [name: 'ix_sesion_usuario_empresa_id_fecha_revocacion']
+    expira_en [name: 'ix_sesion_usuario_expira_en']
+    token_hash_anterior [name: 'ix_sesion_usuario_token_hash_anterior']
+    (usuario_id, fecha_revocacion, expira_en) [name: 'ix_sesion_usuario_usuario_id_fecha_revocacion_expira_en']
+    token_hash [name: 'uq_sesion_usuario_token_hash', unique]
+  }
+
+  Note: 'Una fila por inicio de sesión en un dispositivo (refresh token rotativo, solo se guarda su hash).'
+}
+
+// ---------------- Estructura corporativa
+Table corporativo {
+  corporativo_id binary(16) [pk, note: 'Identificador (UUID v7 generado por la app).']
+  nombre varchar(150) [not null, note: 'Nombre del corporativo.']
+  activo tinyint(1) [not null, default: 1, note: 'Activo / inactivo.']
+  fecha_registro timestamp [default: `now()`, note: 'Fecha de alta.']
+
+  Note: 'Grupo corporativo que agrupa empresas.'
+}
+
+Table division {
+  division_id binary(16) [pk, note: 'Identificador (UUID v7 generado por la app).']
+  corporativo_id binary(16) [not null, note: 'Referencia a corporativo.']
+  nombre varchar(100) [not null, note: 'Nombre de la división.']
+  activo tinyint(1) [not null, default: 1, note: 'Activo / inactivo.']
+  fecha_registro timestamp [default: `now()`, note: 'Fecha de alta.']
+
+  indexes {
+    corporativo_id [name: 'ix_division_corporativo_id']
+    (corporativo_id, division_id) [name: 'uq_division_corporativo_id_division_id', unique]
+  }
+
+  Note: 'División dentro de un corporativo.'
+}
+
+Table empresa {
+  empresa_id binary(16) [pk, note: 'Identificador (UUID v7 generado por la app).']
+  corporativo_id binary(16) [note: 'Corporativo (opcional).']
+  division_id binary(16) [note: 'División (opcional). FK compuesta (corporativo_id, division_id): la división debe ser del mismo corporativo.']
+  nombre varchar(150) [not null, note: 'Nombre (aparece en los reportes).']
+  eliminado tinyint(1) [not null, default: 0, note: 'Borrado lógico. Filtro global de EF (HasQueryFilter). Sus empleados ya no pueden iniciar sesión.']
+  fecha_registro timestamp [default: `now()`, note: 'Fecha de alta.']
+  activo tinyint(1) [not null, default: 1, note: 'Empresa activa o inactiva (no es lo mismo que eliminada).']
+
+  indexes {
+    corporativo_id [name: 'ix_empresa_corporativo_id']
+    (corporativo_id, division_id) [name: 'ix_empresa_corporativo_id_division_id']
+    division_id [name: 'ix_empresa_division_id']
+    (corporativo_id, empresa_id) [name: 'uq_empresa_corporativo_id_empresa_id', unique]
+  }
+
+  Note: 'El tenant: todo lo de negocio cuelga de una empresa.'
+}
+
+Table centro_costo {
+  centro_costo_id binary(16) [pk, note: 'Identificador (UUID v7 generado por la app).']
+  empresa_id binary(16) [not null, note: 'Empresa (tenant).']
+  nombre varchar(150) [not null, note: 'Nombre (ej. Operaciones central).']
+  clave varchar(100) [not null, note: 'Clave del centro (ej. CC-104). Única dentro de la empresa.']
+  activo tinyint(1) [not null, default: 1, note: 'Solo los activos se pueden elegir.']
+  fecha_registro timestamp [default: `now()`, note: 'Fecha de alta.']
+
+  indexes {
+    empresa_id [name: 'ix_centro_costo_empresa_id']
+    (empresa_id, centro_costo_id) [name: 'uq_centro_costo_empresa_id_centro_costo_id', unique]
+    (empresa_id, clave) [name: 'uq_centro_costo_empresa_id_clave', unique]
+  }
+
+  Note: 'Área a la que se carga el gasto de viajes y cargas.'
+}
+
+// ---------------- Personas
+Table empleado {
+  empleado_id binary(16) [pk, note: 'Identificador (UUID v7 generado por la app).']
+  empresa_id binary(16) [not null, note: 'Empresa (tenant).']
+  usuario_id binary(16) [not null, unique, note: 'Usuario con el que inicia sesión (1:1, único).']
+  nombre_completo varchar(150) [not null, note: 'Nombre de la persona.']
+  foto_perfil varchar(255) [note: 'Llave en MinIO de la foto de perfil.']
+  foto_licencia varchar(255) [note: 'Llave en MinIO de la licencia de conducir.']
+  eliminado tinyint(1) [not null, default: 0, note: 'Borrado lógico. Filtro global de EF (HasQueryFilter).']
+  fecha_alta timestamp [default: `now()`, note: 'Fecha de alta.']
+  fecha_carga_licencia timestamp [note: 'NULL = no ha subido licencia y no puede solicitar carros.']
+
+  indexes {
+    empresa_id [name: 'ix_empleado_empresa_id']
+    (empresa_id, empleado_id) [name: 'uq_empleado_empresa_id_empleado_id', unique]
+    usuario_id [name: 'uq_empleado_usuario_id', unique]
+  }
+
+  Note: 'La persona (nombre, fotos, licencia), ligada 1:1 a un usuario.'
+}
+
+Table dispositivo_empleado {
+  dispositivo_empleado_id binary(16) [pk, note: 'Identificador (UUID v7 generado por la app).']
+  empresa_id binary(16) [not null, note: 'Empresa (tenant).']
+  empleado_id binary(16) [not null, note: 'Referencia a empleado.']
+  token_fcm varchar(512) [not null, unique, note: 'Token de Firebase Cloud Messaging. Único.']
+  plataforma dispositivo_empleado_plataforma [not null, note: 'Sistema del dispositivo.']
+  activo tinyint(1) [not null, default: 1, note: 'Se desactiva al cerrar sesión o si Firebase rechaza el token.']
+  fecha_registro timestamp [not null, default: `now()`, note: 'Fecha de alta.']
+  fecha_ultimo_uso timestamp [note: 'Última renovación o último push exitoso.']
+
+  indexes {
+    (empleado_id, activo) [name: 'ix_dispositivo_empleado_empleado_id_activo']
+    empresa_id [name: 'ix_dispositivo_empleado_empresa_id']
+    (empresa_id, empleado_id) [name: 'ix_dispositivo_empleado_empresa_id_empleado_id']
+    (empresa_id, dispositivo_empleado_id) [name: 'uq_dispositivo_empleado_empresa_id_dispositivo_empleado_id', unique]
+    token_fcm [name: 'uq_dispositivo_empleado_token_fcm', unique]
+  }
+
+  Note: 'Celulares (tokens FCM) de cada empleado para push.'
+}
+
+// ---------------- Vehículos
+Table carro {
+  carro_id binary(16) [pk, note: 'Identificador (UUID v7 generado por la app).']
+  empresa_id binary(16) [not null, note: 'Empresa (tenant).']
+  marca varchar(80) [not null, note: 'Marca.']
+  modelo varchar(80) [not null, note: 'Modelo.']
+  anio int [note: 'Año del modelo.']
+  color varchar(50) [note: 'Color.']
+  placas varchar(20) [not null, unique, note: 'Únicas en todo el sistema (no por empresa).']
+  foto_vehiculo varchar(255) [note: 'Llave en MinIO.']
+  capacidad_tanque decimal(6,2) [note: 'Litros. Sirve para alertar cargas imposibles.']
+  kilometraje_actual decimal(10,2) [not null, default: 0.00, note: 'Último kilometraje conocido. Avanza al finalizar cada viaje.']
+  estado cambio_estatus_carro_estatus_anterior [not null, default: 'disponible', note: 'Estado operativo. Es token de concurrencia: si dos aprueban el mismo carro a la vez, el segundo recibe 409.']
+  fecha_alta timestamp [default: `now()`, note: 'Fecha de alta.']
+  dado_de_baja tinyint(1) [not null, default: 0, note: 'Baja del vehículo (ya no se puede pedir). El historial se conserva.']
+  fecha_baja timestamp [note: 'Cuándo se dio de baja.']
+  motivo_baja varchar(255) [note: 'Por qué se dio de baja.']
+  tipo_vehiculo carro_tipo_vehiculo [not null, default: 'carro', note: 'v9. La app cambia el ícono según el tipo.']
+
+  indexes {
+    empresa_id [name: 'ix_carro_empresa_id']
+    (empresa_id, carro_id) [name: 'uq_carro_empresa_id_carro_id', unique]
+    placas [name: 'uq_carro_placas', unique]
+  }
+
+  Note: 'Vehículos de la empresa, su estado, tipo y kilometraje.'
+}
+
+Table cambio_estatus_carro {
+  cambio_estatus_carro_id binary(16) [pk, note: 'Identificador (UUID v7 generado por la app).']
+  empresa_id binary(16) [not null, note: 'Empresa (tenant).']
+  carro_id binary(16) [not null, note: 'Referencia a carro.']
+  empleado_id binary(16) [not null, note: 'Quién hizo el cambio.']
+  viaje_afectado_id binary(16) [note: 'Viaje que se interrumpió por el cambio.']
+  estatus_anterior cambio_estatus_carro_estatus_anterior [not null, note: 'Estado antes del cambio.']
+  estatus_nuevo cambio_estatus_carro_estatus_anterior [not null, note: 'Estado después del cambio.']
+  motivo varchar(255) [note: 'Descripción libre.']
+  fecha_cambio timestamp [default: `now()`, note: 'Cuándo ocurrió (hora del celular).']
+  fecha_recepcion timestamp [default: `now()`, note: 'Cuándo llegó al servidor (hora del servidor).']
+  foto_evidencia varchar(255) [note: 'Llave en MinIO de la foto de la falla o daño.']
+  tipo_motivo cambio_estatus_carro_tipo_motivo [note: 'Clasificación del motivo (sirve como registro de percances).']
+
+  indexes {
+    empresa_id [name: 'ix_cambio_estatus_carro_empresa_id']
+    (empresa_id, carro_id) [name: 'ix_cambio_estatus_carro_empresa_id_carro_id']
+    (empresa_id, empleado_id) [name: 'ix_cambio_estatus_carro_empresa_id_empleado_id']
+    (empresa_id, tipo_motivo) [name: 'ix_cambio_estatus_carro_empresa_id_tipo_motivo']
+    (empresa_id, viaje_afectado_id) [name: 'ix_cambio_estatus_carro_empresa_id_viaje_afectado_id']
+    (empresa_id, cambio_estatus_carro_id) [name: 'uq_cambio_estatus_carro_empresa_id_cambio_estatus_carro_id', unique]
+  }
+
+  Note: 'Bitácora de cambios de estado del carro (fallas, mantenimiento, liberación).'
+}
+
+// ---------------- Reservas
+Table solicitud_reserva {
+  solicitud_reserva_id binary(16) [pk, note: 'Identificador (UUID v7 generado por la app).']
+  empresa_id binary(16) [not null, note: 'Empresa (tenant).']
+  carro_id binary(16) [not null, note: 'Referencia a carro.']
+  empleado_solicitante_id binary(16) [not null, note: 'Quién pide el carro.']
+  fecha_solicitud timestamp [default: `now()`, note: 'Cuándo se pidió.']
+  estado solicitud_reserva_estado [not null, default: 'pendiente', note: 'pendiente → aprobada → finalizada; o rechazada / cancelada.']
+  empleado_confirmador_id binary(16) [note: 'Quién la aprobó o rechazó.']
+  fecha_resolucion timestamp [note: 'Cuándo se aprobó o rechazó.']
+  motivo_resolucion varchar(255) [note: 'Comentario de quien resolvió (obligatorio al rechazar).']
+  fecha_liberacion timestamp [note: 'Cuándo se devolvió el carro.']
+  observaciones_liberacion varchar(500) [note: 'Comentarios al devolver el carro.']
+  motivo_solicitud varchar(255) [note: 'v8. Para qué necesita el carro. La API lo exige en solicitudes nuevas.']
+
+  indexes {
+    empresa_id [name: 'ix_solicitud_reserva_empresa_id']
+    (empresa_id, carro_id) [name: 'ix_solicitud_reserva_empresa_id_carro_id']
+    (empresa_id, carro_id, estado) [name: 'ix_solicitud_reserva_empresa_id_carro_id_estado']
+    (empresa_id, empleado_confirmador_id) [name: 'ix_solicitud_reserva_empresa_id_empleado_confirmador_id']
+    (empresa_id, empleado_solicitante_id) [name: 'ix_solicitud_reserva_empresa_id_empleado_solicitante_id']
+    (empresa_id, solicitud_reserva_id) [name: 'uq_solicitud_reserva_empresa_id_solicitud_reserva_id', unique]
+  }
+
+  Note: 'Solicitud de un empleado para usar un carro; se aprueba o rechaza.'
+}
+
+// ---------------- Viajes
+Table viaje {
+  viaje_id binary(16) [pk, note: 'Identificador (UUID v7, lo genera el celular: el viaje existe aunque no haya red).']
+  empresa_id binary(16) [not null, note: 'Empresa (tenant).']
+  carro_id binary(16) [not null, note: 'Referencia a carro.']
+  solicitud_reserva_id binary(16) [note: 'Reserva aprobada que permite el viaje.']
+  empleado_operador_id binary(16) [not null, note: 'Quién maneja.']
+  fecha_inicio timestamp [not null, note: 'Inicio (hora del celular).']
+  ubicacion_inicio_lat decimal(9,6) [note: 'Latitud.']
+  ubicacion_inicio_lng decimal(9,6) [note: 'Longitud.']
+  kilometraje_inicial decimal(10,2) [not null, note: 'Odómetro al iniciar.']
+  fecha_fin timestamp [note: 'Fin del viaje.']
+  ubicacion_fin_lat decimal(9,6) [note: 'Latitud.']
+  ubicacion_fin_lng decimal(9,6) [note: 'Longitud.']
+  kilometraje_final decimal(10,2) [note: 'No puede ser menor al inicial.']
+  distancia_recorrida decimal(10,2) [note: 'kilometraje_final − kilometraje_inicial.']
+  estado viaje_estado [not null, default: 'en_curso', note: 'en_curso → finalizado o interrumpido (la pausa no es estado: es una viaje_pausa abierta).']
+  motivo_interrupcion varchar(255) [note: 'Por qué se interrumpió.']
+  corregido tinyint(1) [not null, default: 0, note: 'Se corrigió el kilometraje después de capturarlo (detalle en auditoria_evento).']
+  fecha_recepcion timestamp [default: `now()`, note: 'Cuándo llegó al servidor (hora del servidor).']
+  foto_tablero_final varchar(255) [note: 'Llave en MinIO de la foto del odómetro al terminar.']
+  foto_tablero_inicial varchar(255) [note: 'Llave en MinIO de la foto del odómetro al iniciar.']
+  centro_costo_id binary(16) [note: 'v6. Área a la que se carga el viaje (opcional).']
+
+  indexes {
+    empresa_id [name: 'ix_viaje_empresa_id']
+    (empresa_id, carro_id) [name: 'ix_viaje_empresa_id_carro_id']
+    (empresa_id, carro_id, fecha_inicio) [name: 'ix_viaje_empresa_id_carro_id_fecha_inicio']
+    (empresa_id, centro_costo_id) [name: 'ix_viaje_empresa_id_centro_costo_id']
+    (empresa_id, empleado_operador_id) [name: 'ix_viaje_empresa_id_empleado_operador_id']
+    (empresa_id, solicitud_reserva_id) [name: 'ix_viaje_empresa_id_solicitud_reserva_id']
+    (empresa_id, viaje_id) [name: 'uq_viaje_empresa_id_viaje_id', unique]
+  }
+
+  Note: 'Cada uso del carro: km inicial/final, fotos del tablero, estado.'
+}
+
+Table viaje_pausa {
+  viaje_pausa_id binary(16) [pk, note: 'Identificador (UUID v7 generado por la app).']
+  empresa_id binary(16) [not null, note: 'Empresa (tenant).']
+  viaje_id binary(16) [not null, note: 'Referencia a viaje.']
+  fecha_inicio timestamp [not null, note: 'Cuándo se pausó.']
+  fecha_fin timestamp [note: 'NULL = la pausa sigue abierta (solo una abierta por viaje).']
+  motivo varchar(255) [note: 'Motivo opcional (comida, espera...).']
+  ubicacion_lat decimal(9,6) [note: 'Latitud.']
+  ubicacion_lng decimal(9,6) [note: 'Longitud.']
+
+  indexes {
+    empresa_id [name: 'ix_viaje_pausa_empresa_id']
+    (empresa_id, viaje_id) [name: 'ix_viaje_pausa_empresa_id_viaje_id']
+    (viaje_id, fecha_inicio) [name: 'ix_viaje_pausa_viaje_id_fecha_inicio']
+  }
+
+  Note: 'Pausas de un viaje (no cuentan como tiempo ni recorrido).'
+}
+
+Table punto_ruta {
+  punto_ruta_id binary(16) [pk, note: 'UUID v7 generado por el celular: reenviar un lote no duplica puntos.']
+  empresa_id binary(16) [not null, note: 'Empresa (tenant).']
+  viaje_id binary(16) [not null, note: 'Referencia a viaje.']
+  latitud decimal(9,6) [not null, note: 'Latitud.']
+  longitud decimal(9,6) [not null, note: 'Longitud.']
+  precision_metros decimal(6,2) [note: 'Radio de error del GPS (los de más de 50 m se descartan al procesar).']
+  altitud decimal(7,2) [note: 'Metros sobre el nivel del mar.']
+  velocidad decimal(6,2) [note: 'Velocidad instantánea (m/s). Solo para descartar puntos erróneos.']
+  timestamp_captura timestamp [not null, note: 'Hora del celular.']
+  fecha_recepcion timestamp [default: `now()`, note: 'Cuándo llegó al servidor (hora del servidor).']
+
+  indexes {
+    empresa_id [name: 'ix_punto_ruta_empresa_id']
+    (empresa_id, viaje_id) [name: 'ix_punto_ruta_empresa_id_viaje_id']
+    (viaje_id, timestamp_captura) [name: 'ix_punto_ruta_viaje_id_timestamp_captura']
+    (empresa_id, punto_ruta_id) [name: 'uq_punto_ruta_empresa_id_punto_ruta_id', unique]
+  }
+
+  Note: 'Puntos GPS crudos capturados por el celular (nunca se modifican).'
+}
+
+Table ruta_procesada {
+  ruta_procesada_id binary(16) [pk, note: 'Identificador (UUID v7 generado por la app).']
+  empresa_id binary(16) [not null, note: 'Empresa (tenant).']
+  viaje_id binary(16) [not null, unique, note: 'Viaje (1:1, único). Al recalcular se actualiza la misma fila.']
+  puntos_recibidos int [not null, default: 0, note: 'Puntos crudos del viaje.']
+  puntos_descartados int [not null, default: 0, note: 'Mala precisión, saltos imposibles, duplicados o dentro de una pausa.']
+  distancia_gps_km decimal(10,3) [not null, default: 0.000, note: 'Km según el GPS.']
+  tiempo_movimiento_seg int [not null, default: 0, note: 'Tiempo a más de 3 km/h.']
+  tiempo_detenido_seg int [not null, default: 0, note: 'Tiempo detenido.']
+  velocidad_promedio_kmh decimal(6,2) [note: 'Uso interno.']
+  velocidad_maxima_kmh decimal(6,2) [note: 'Velocidad máxima.']
+  distancia_odometro_km decimal(10,2) [note: 'kilometraje_final − kilometraje_inicial del viaje.']
+  diferencia_km decimal(10,2) [note: 'Odómetro − GPS. Positivo = se declararon más km.']
+  diferencia_porcentaje decimal(7,2) [note: 'Diferencia en %.']
+  alerta_kilometraje tinyint(1) [not null, default: 0, note: 'Diferencia GPS vs odómetro mayor al 10 % y a 2 km.']
+  litros_cargados decimal(8,2) [not null, default: 0.00, note: 'Suma de litros de las cargas del viaje.']
+  rendimiento_km_por_litro decimal(6,2) [note: 'Uso interno y reportes.']
+  polyline text [note: 'Ruta simplificada (Douglas-Peucker, Google Polyline) para el mapa.']
+  version_algoritmo varchar(20) [not null, note: 'Versión del cálculo (para reprocesar si cambia).']
+  fecha_proceso timestamp [not null, default: `now()`, note: 'Cuándo se calculó.']
+
+  indexes {
+    empresa_id [name: 'ix_ruta_procesada_empresa_id']
+    (empresa_id, alerta_kilometraje) [name: 'ix_ruta_procesada_empresa_id_alerta_kilometraje']
+    (empresa_id, viaje_id) [name: 'ix_ruta_procesada_empresa_id_viaje_id']
+    (empresa_id, ruta_procesada_id) [name: 'uq_ruta_procesada_empresa_id_ruta_procesada_id', unique]
+    viaje_id [name: 'uq_ruta_procesada_viaje_id', unique]
+  }
+
+  Note: 'Resumen calculado de la ruta (km GPS, polyline, km/L, alertas). 1:1 con viaje.'
+}
+
+// ---------------- Combustible
+Table carga_combustible {
+  carga_combustible_id binary(16) [pk, note: 'Identificador (UUID v7, lo genera el celular).']
+  empresa_id binary(16) [not null, note: 'Empresa (tenant).']
+  viaje_id binary(16) [not null, note: 'Referencia a viaje.']
+  litros decimal(8,2) [not null, note: 'Litros cargados (dato principal).']
+  monto decimal(10,2) [note: 'Importe pagado.']
+  foto_comprobante varchar(255) [not null, note: 'Llave en MinIO del ticket (obligatoria).']
+  fecha_carga timestamp [not null, note: 'Cuándo se cargó (hora del celular).']
+  ubicacion_lat decimal(9,6) [note: 'Latitud.']
+  ubicacion_lng decimal(9,6) [note: 'Longitud.']
+  corregido tinyint(1) [not null, default: 0, note: 'Se corrigieron litros o monto (detalle en auditoria_evento).']
+  fecha_recepcion timestamp [default: `now()`, note: 'Cuándo llegó al servidor (hora del servidor).']
+  fecha_subida_comprobante timestamp [note: 'NULL = los datos llegaron pero la foto todavía no.']
+  centro_costo_id binary(16) [note: 'v6. Área a la que se carga el gasto (opcional).']
+
+  indexes {
+    empresa_id [name: 'ix_carga_combustible_empresa_id']
+    (empresa_id, centro_costo_id) [name: 'ix_carga_combustible_empresa_id_centro_costo_id']
+    (empresa_id, viaje_id) [name: 'ix_carga_combustible_empresa_id_viaje_id']
+    (empresa_id, carga_combustible_id) [name: 'uq_carga_combustible_empresa_id_carga_combustible_id', unique]
+  }
+
+  Note: 'Cada carga de gasolina: litros, monto y foto del ticket.'
+}
+
+// ---------------- Notificaciones
+Table notificacion {
+  notificacion_id binary(16) [pk, note: 'Identificador (UUID v7 generado por la app).']
+  empresa_id binary(16) [not null, note: 'Empresa (tenant).']
+  empleado_destinatario_id binary(16) [not null, note: 'A quién va.']
+  tipo notificacion_tipo [not null, note: 'Tipo de aviso.']
+  referencia_id binary(16) [note: 'Registro relacionado según el tipo. Sin FK.']
+  mensaje varchar(255) [note: 'Texto.']
+  leida tinyint(1) [not null, default: 0, note: 'Si ya la leyó.']
+  fecha_envio timestamp [default: `now()`, note: 'Cuándo se creó (el envío push está en outbox_mensaje).']
+
+  indexes {
+    (empleado_destinatario_id, leida) [name: 'ix_notificacion_empleado_destinatario_id_leida']
+    empresa_id [name: 'ix_notificacion_empresa_id']
+    (empresa_id, empleado_destinatario_id) [name: 'ix_notificacion_empresa_id_empleado_destinatario_id']
+    (empresa_id, notificacion_id) [name: 'uq_notificacion_empresa_id_notificacion_id', unique]
+  }
+
+  Note: 'Bandeja de avisos de cada empleado.'
+}
+
+Table outbox_mensaje {
+  outbox_mensaje_id binary(16) [pk, note: 'Identificador (UUID v7 generado por la app).']
+  empresa_id binary(16) [not null, note: 'Empresa (tenant).']
+  tipo varchar(100) [not null, note: 'Tipo de mensaje (ej. notificacion.push).']
+  agregado_id binary(16) [not null, note: 'Registro de negocio que lo originó. Sin FK.']
+  payload json [not null, note: 'Datos del push (título, cuerpo, destino).']
+  estado outbox_mensaje_estado [not null, default: 'pendiente', note: 'pendiente → procesando → enviado / fallido.']
+  intentos int [not null, default: 0, note: 'Cuántas veces se intentó.']
+  proximo_intento timestamp [not null, default: `now()`, note: 'Cuándo se vuelve a intentar (backoff).']
+  ultimo_error varchar(500) [note: 'Último error de Firebase.']
+  fecha_creacion timestamp [not null, default: `now()`, note: 'Cuándo se creó.']
+  fecha_procesado timestamp [note: 'Cuándo quedó enviado o fallido definitivamente.']
+
+  indexes {
+    agregado_id [name: 'ix_outbox_mensaje_agregado_id']
+    empresa_id [name: 'ix_outbox_mensaje_empresa_id']
+    (estado, proximo_intento) [name: 'ix_outbox_mensaje_estado_proximo_intento']
+    (empresa_id, outbox_mensaje_id) [name: 'uq_outbox_mensaje_empresa_id_outbox_mensaje_id', unique]
+  }
+
+  Note: 'Cola de mensajes push pendientes (patrón Outbox).'
+}
+
+// ---------------- Auditoría
+Table auditoria_evento {
+  auditoria_evento_id binary(16) [pk, note: 'Identificador (UUID v7 generado por la app).']
+  empresa_id binary(16) [note: 'Empresa. NULL en acciones de plataforma.']
+  usuario_id binary(16) [note: 'Quién hizo la acción (del token). NULL si fue un proceso automático.']
+  accion auditoria_evento_accion [not null, note: 'Qué se hizo.']
+  entidad varchar(60) [not null, note: 'Tabla afectada.']
+  entidad_id binary(16) [not null, note: 'Registro afectado. Sin FK (depende de entidad).']
+  valores_anteriores json [note: 'Solo los campos que cambiaron, con su valor previo.']
+  valores_nuevos json [note: 'Solo los campos que cambiaron, con su valor nuevo.']
+  motivo varchar(500) [note: 'Obligatorio en correcciones, rechazos y bajas.']
+  origen auditoria_evento_origen [not null, note: 'De dónde vino (header X-Origen).']
+  fecha_hora timestamp [default: `now()`, note: 'Hora del servidor.']
+
+  indexes {
+    (empresa_id, entidad, entidad_id) [name: 'ix_auditoria_evento_empresa_id_entidad_entidad_id']
+    (empresa_id, fecha_hora) [name: 'ix_auditoria_evento_empresa_id_fecha_hora']
+    (usuario_id, fecha_hora) [name: 'ix_auditoria_evento_usuario_id_fecha_hora']
+  }
+
+  Note: 'Historial de quién cambió qué, cuándo y por qué (solo inserción).'
+}
+
+Table revision_auditoria {
+  revision_auditoria_id binary(16) [pk, note: 'Identificador (UUID v7 generado por la app).']
+  empresa_id binary(16) [not null, note: 'Empresa (tenant).']
+  viaje_id binary(16) [note: 'Alcance \'un viaje\'.']
+  carro_id binary(16) [note: 'Alcance \'un carro en un periodo\' (con periodo_desde y periodo_hasta).']
+  periodo_desde date [note: 'Inicio del periodo revisado.']
+  periodo_hasta date [note: 'Fin del periodo revisado.']
+  empleado_revisor_id binary(16) [not null, note: 'Quién revisó.']
+  fecha_revision timestamp [default: `now()`, note: 'Cuándo se revisó.']
+  estado_revision revision_auditoria_estado_revision [not null, default: 'pendiente_informacion', note: 'Resultado de la revisión.']
+  observaciones varchar(1000) [note: 'Comentarios del revisor.']
+  fecha_cierre timestamp [note: 'NULL = la revisión sigue abierta.']
+
+  indexes {
+    empresa_id [name: 'ix_revision_auditoria_empresa_id']
+    (empresa_id, carro_id, periodo_desde) [name: 'ix_revision_auditoria_empresa_id_carro_id_periodo_desde']
+    (empresa_id, empleado_revisor_id) [name: 'ix_revision_auditoria_empresa_id_empleado_revisor_id']
+    (empresa_id, estado_revision) [name: 'ix_revision_auditoria_empresa_id_estado_revision']
+    (empresa_id, viaje_id) [name: 'ix_revision_auditoria_empresa_id_viaje_id']
+    (empresa_id, revision_auditoria_id) [name: 'uq_revision_auditoria_empresa_id_revision_auditoria_id', unique]
+  }
+
+  Note: 'Revisiones de un responsable sobre un viaje o un carro en un periodo.'
+}
+
+// ---------------- Relaciones (las compuestas garantizan que no se crucen empresas)
+Ref fk_auditoria_evento_empresa: auditoria_evento.empresa_id > empresa.empresa_id [delete: restrict]
+Ref fk_auditoria_evento_usuario: auditoria_evento.usuario_id > usuario.usuario_id [delete: restrict]
+Ref fk_cambio_estatus_carro_carro: cambio_estatus_carro.(empresa_id, carro_id) > carro.(empresa_id, carro_id) [delete: restrict]
+Ref fk_cambio_estatus_carro_empleado: cambio_estatus_carro.(empresa_id, empleado_id) > empleado.(empresa_id, empleado_id) [delete: restrict]
+Ref fk_cambio_estatus_carro_empresa: cambio_estatus_carro.empresa_id > empresa.empresa_id [delete: restrict]
+Ref fk_cambio_estatus_carro_viaje: cambio_estatus_carro.(empresa_id, viaje_afectado_id) > viaje.(empresa_id, viaje_id) [delete: restrict]
+Ref fk_carga_combustible_centro_costo: carga_combustible.(empresa_id, centro_costo_id) > centro_costo.(empresa_id, centro_costo_id) [delete: restrict]
+Ref fk_carga_combustible_empresa: carga_combustible.empresa_id > empresa.empresa_id [delete: restrict]
+Ref fk_carga_combustible_viaje: carga_combustible.(empresa_id, viaje_id) > viaje.(empresa_id, viaje_id) [delete: restrict]
+Ref fk_carro_empresa: carro.empresa_id > empresa.empresa_id [delete: restrict]
+Ref fk_centro_costo_empresa: centro_costo.empresa_id > empresa.empresa_id [delete: restrict]
+Ref fk_dispositivo_empleado_empleado: dispositivo_empleado.(empresa_id, empleado_id) > empleado.(empresa_id, empleado_id) [delete: cascade]
+Ref fk_dispositivo_empleado_empresa: dispositivo_empleado.empresa_id > empresa.empresa_id [delete: restrict]
+Ref fk_division_corporativo: division.corporativo_id > corporativo.corporativo_id [delete: restrict]
+Ref fk_empleado_empresa: empleado.empresa_id > empresa.empresa_id [delete: restrict]
+Ref fk_empleado_usuario: empleado.usuario_id - usuario.usuario_id [delete: restrict]
+Ref fk_empresa_corporativo: empresa.corporativo_id > corporativo.corporativo_id [delete: restrict]
+Ref fk_empresa_division: empresa.(corporativo_id, division_id) > division.(corporativo_id, division_id) [delete: restrict]
+Ref fk_notificacion_empleado_destinatario: notificacion.(empresa_id, empleado_destinatario_id) > empleado.(empresa_id, empleado_id) [delete: restrict]
+Ref fk_notificacion_empresa: notificacion.empresa_id > empresa.empresa_id [delete: restrict]
+Ref fk_outbox_mensaje_empresa: outbox_mensaje.empresa_id > empresa.empresa_id [delete: restrict]
+Ref fk_punto_ruta_empresa: punto_ruta.empresa_id > empresa.empresa_id [delete: restrict]
+Ref fk_punto_ruta_viaje: punto_ruta.(empresa_id, viaje_id) > viaje.(empresa_id, viaje_id) [delete: cascade]
+Ref fk_revision_auditoria_carro: revision_auditoria.(empresa_id, carro_id) > carro.(empresa_id, carro_id) [delete: restrict]
+Ref fk_revision_auditoria_empleado_revisor: revision_auditoria.(empresa_id, empleado_revisor_id) > empleado.(empresa_id, empleado_id) [delete: restrict]
+Ref fk_revision_auditoria_empresa: revision_auditoria.empresa_id > empresa.empresa_id [delete: restrict]
+Ref fk_revision_auditoria_viaje: revision_auditoria.(empresa_id, viaje_id) > viaje.(empresa_id, viaje_id) [delete: restrict]
+Ref fk_rol_empresa: rol.empresa_id > empresa.empresa_id [delete: restrict]
+Ref fk_rol_privilegio_privilegio: rol_privilegio.privilegio_id > privilegio.privilegio_id [delete: cascade]
+Ref fk_rol_privilegio_rol: rol_privilegio.rol_id > rol.rol_id [delete: cascade]
+Ref fk_ruta_procesada_empresa: ruta_procesada.empresa_id > empresa.empresa_id [delete: restrict]
+Ref fk_ruta_procesada_viaje: ruta_procesada.(empresa_id, viaje_id) - viaje.(empresa_id, viaje_id) [delete: cascade]
+Ref fk_sesion_usuario_usuario: sesion_usuario.usuario_id > usuario.usuario_id [delete: cascade]
+Ref fk_solicitud_reserva_carro: solicitud_reserva.(empresa_id, carro_id) > carro.(empresa_id, carro_id) [delete: restrict]
+Ref fk_solicitud_reserva_empleado_confirmador: solicitud_reserva.(empresa_id, empleado_confirmador_id) > empleado.(empresa_id, empleado_id) [delete: restrict]
+Ref fk_solicitud_reserva_empleado_solicitante: solicitud_reserva.(empresa_id, empleado_solicitante_id) > empleado.(empresa_id, empleado_id) [delete: restrict]
+Ref fk_solicitud_reserva_empresa: solicitud_reserva.empresa_id > empresa.empresa_id [delete: restrict]
+Ref fk_usuario_rol_rol: usuario_rol.rol_id > rol.rol_id [delete: cascade]
+Ref fk_usuario_rol_usuario: usuario_rol.usuario_id > usuario.usuario_id [delete: cascade]
+Ref fk_viaje_carro: viaje.(empresa_id, carro_id) > carro.(empresa_id, carro_id) [delete: restrict]
+Ref fk_viaje_centro_costo: viaje.(empresa_id, centro_costo_id) > centro_costo.(empresa_id, centro_costo_id) [delete: restrict]
+Ref fk_viaje_empleado_operador: viaje.(empresa_id, empleado_operador_id) > empleado.(empresa_id, empleado_id) [delete: restrict]
+Ref fk_viaje_empresa: viaje.empresa_id > empresa.empresa_id [delete: restrict]
+Ref fk_viaje_solicitud_reserva: viaje.(empresa_id, solicitud_reserva_id) > solicitud_reserva.(empresa_id, solicitud_reserva_id) [delete: restrict]
+Ref fk_viaje_pausa_empresa: viaje_pausa.empresa_id > empresa.empresa_id [delete: restrict]
+Ref fk_viaje_pausa_viaje: viaje_pausa.(empresa_id, viaje_id) > viaje.(empresa_id, viaje_id) [delete: cascade]

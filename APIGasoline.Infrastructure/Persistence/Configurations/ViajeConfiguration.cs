@@ -25,7 +25,7 @@ public class ViajeConfiguration : IEntityTypeConfiguration<Viaje>
         // Inicio (la fecha la manda la app: puede registrarse offline)
         builder.Property(v => v.FechaInicio)
             .HasColumnName("fecha_inicio")
-            .HasColumnType("timestamp")
+            .HasColumnType(TiposSql.FechaHora)
             .IsRequired();
 
         builder.Property(v => v.UbicacionInicioLat).HasColumnName("ubicacion_inicio_lat").HasPrecision(9, 6);
@@ -43,7 +43,7 @@ public class ViajeConfiguration : IEntityTypeConfiguration<Viaje>
         // Fin
         builder.Property(v => v.FechaFin)
             .HasColumnName("fecha_fin")
-            .HasColumnType("timestamp");
+            .HasColumnType(TiposSql.FechaHora);
 
         builder.Property(v => v.UbicacionFinLat).HasColumnName("ubicacion_fin_lat").HasPrecision(9, 6);
         builder.Property(v => v.UbicacionFinLng).HasColumnName("ubicacion_fin_lng").HasPrecision(9, 6);
@@ -54,10 +54,10 @@ public class ViajeConfiguration : IEntityTypeConfiguration<Viaje>
             .HasMaxLength(Viaje.FotoMaxLength);
         builder.Property(v => v.DistanciaRecorrida).HasColumnName("distancia_recorrida").HasPrecision(10, 2);
 
-        // enum('en_curso','finalizado','interrumpido') en MySQL
+        // Valores fijos: 'en_curso','finalizado','interrumpido' (varchar + CHECK)
         builder.Property(v => v.Estado)
             .HasColumnName("estado")
-            .HasColumnType("enum('en_curso','finalizado','interrumpido')")
+            .EsEnum("en_curso", "finalizado", "interrumpido")
             .HasConversion(
                 e => e == EstadoViaje.EnCurso ? "en_curso"
                    : e == EstadoViaje.Finalizado ? "finalizado"
@@ -82,8 +82,8 @@ public class ViajeConfiguration : IEntityTypeConfiguration<Viaje>
         // Hora del servidor en que llegó el viaje. Reemplaza a "sincronizado" (v4).
         builder.Property(v => v.FechaRecepcion)
             .HasColumnName("fecha_recepcion")
-            .HasColumnType("timestamp")
-            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .HasColumnType(TiposSql.FechaHora)
+            .HasDefaultValueSql(TiposSql.Ahora)
             .ValueGeneratedOnAdd();
 
         // Propiedad calculada en el dominio, no es columna

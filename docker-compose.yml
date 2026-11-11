@@ -1,9 +1,9 @@
 # ============================================================
 #  APIGasoline - Infraestructura (Fase 1)
-#  Servicios: MySQL 8.0 + MinIO (almacenamiento de imágenes)
+#  Servicios: SQL Server 2022 + MinIO (almacenamiento de imágenes)
 #
 #  Uso:
-#    docker compose up -d          -> levanta MySQL y MinIO
+#    docker compose up -d          -> levanta SQL Server y MinIO
 #    docker compose ps             -> ver estado (deben decir "healthy")
 #    docker compose logs -f minio  -> ver logs de un servicio
 #    docker compose down           -> detener (los datos se conservan)
@@ -18,24 +18,26 @@ name: apigasoline
 services:
 
   # ---------- Base de datos ----------
+  # La BD "apigasoline" no se crea aquí: la crea la API al arrancar (BaseDatos:MigrarAlIniciar)
+  # con la intercalación Modern_Spanish_CI_AI, o "dotnet ef database update".
   db:
-    image: mysql:8.0
+    image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: apigasoline-db
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-apigasoline}
+      ACCEPT_EULA: "Y"
+      # Developer = gratis y completa, solo para desarrollo (en producción se usa Express)
+      MSSQL_PID: Developer
+      # Mínimo 8 caracteres con mayúscula, minúscula, número y símbolo (si no, el contenedor no arranca)
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
       TZ: America/Mexico_City
-    command:
-      - --character-set-server=utf8mb4
-      - --collation-server=utf8mb4_unicode_ci
     ports:
-      # 3307 en tu PC -> 3306 en el contenedor (evita choque con un MySQL local)
-      - "${MYSQL_PORT:-3307}:3306"
+      # 1433 en tu PC -> 1433 en el contenedor (cámbialo en .env si ya tienes un SQL Server local)
+      - "${MSSQL_PORT:-1433}:1433"
     volumes:
-      - mysql-data:/var/lib/mysql
+      - mssql-data:/var/opt/mssql
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q \"SELECT 1\" -b -o /dev/null"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -87,5 +89,5 @@ services:
     restart: "no"
 
 volumes:
-  mysql-data:
+  mssql-data:
   minio-data:

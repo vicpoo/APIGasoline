@@ -38,15 +38,16 @@ public class OutboxMensajeRepository : IOutboxMensajeRepository
             .ToListAsync(cancellationToken);
     }
 
-    // SKIP LOCKED: si otra instancia de la API ya apartó un mensaje, este worker lo salta en lugar de esperar
+    // UPDLOCK + READPAST (equivalente a FOR UPDATE SKIP LOCKED de MySQL): aparta las filas hasta el
+    // commit y, si otra instancia de la API ya apartó un mensaje, este worker lo salta en lugar de esperar.
+    // ROWLOCK evita que SQL Server bloquee la página completa. Debe correr dentro de una transacción
+    // (ProcesadorOutbox.TomarAsync la abre).
     public async Task<IReadOnlyList<OutboxMensaje>> TomarPendientesAsync(int cantidad, DateTime ahora, CancellationToken cancellationToken = default)
         => await _context.OutboxMensajes
             .FromSql($"""
-                SELECT * FROM outbox_mensaje
+                SELECT TOP ({cantidad}) * FROM outbox_mensaje WITH (UPDLOCK, READPAST, ROWLOCK)
                 WHERE estado IN ('pendiente', 'procesando') AND proximo_intento <= {ahora}
                 ORDER BY proximo_intento
-                LIMIT {cantidad}
-                FOR UPDATE SKIP LOCKED
                 """)
             .ToListAsync(cancellationToken);
 

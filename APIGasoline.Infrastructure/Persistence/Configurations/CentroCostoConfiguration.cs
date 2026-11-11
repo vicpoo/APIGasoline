@@ -40,8 +40,8 @@ public class CentroCostoConfiguration : IEntityTypeConfiguration<CentroCosto>
         // La BD la llena al insertar; EF la lee de vuelta y nunca la envía.
         builder.Property(cc => cc.FechaRegistro)
             .HasColumnName("fecha_registro")
-            .HasColumnType("timestamp")
-            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .HasColumnType(TiposSql.FechaHora)
+            .HasDefaultValueSql(TiposSql.Ahora)
             .ValueGeneratedOnAdd();
 
         // Restrict: la empresa usa soft delete, nunca se borra físicamente con centros de costo.

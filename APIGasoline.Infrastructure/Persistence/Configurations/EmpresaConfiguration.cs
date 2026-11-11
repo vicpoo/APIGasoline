@@ -43,8 +43,8 @@ public class EmpresaConfiguration : IEntityTypeConfiguration<Empresa>
         // La BD la llena al insertar; EF la lee de vuelta y nunca la envía.
         builder.Property(e => e.FechaRegistro)
             .HasColumnName("fecha_registro")
-            .HasColumnType("timestamp")
-            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .HasColumnType(TiposSql.FechaHora)
+            .HasDefaultValueSql(TiposSql.Ahora)
             .ValueGeneratedOnAdd();
 
         // Filtro global: todas las consultas ignoran las empresas eliminadas.

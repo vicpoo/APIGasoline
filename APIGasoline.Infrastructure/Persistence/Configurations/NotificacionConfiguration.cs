@@ -19,10 +19,10 @@ public class NotificacionConfiguration : IEntityTypeConfiguration<Notificacion>
         builder.Property(n => n.EmpresaId).HasColumnName("empresa_id").IsRequired();
         builder.Property(n => n.EmpleadoDestinatarioId).HasColumnName("empleado_destinatario_id").IsRequired();
 
-        // enum('nueva_solicitud','resultado_solicitud','cambio_estatus_forzado','reporte_mantenimiento') en MySQL
+        // Valores fijos: 'nueva_solicitud','resultado_solicitud','cambio_estatus_forzado','reporte_mantenimiento' (varchar + CHECK)
         builder.Property(n => n.Tipo)
             .HasColumnName("tipo")
-            .HasColumnType("enum('nueva_solicitud','resultado_solicitud','cambio_estatus_forzado','reporte_mantenimiento')")
+            .EsEnum("nueva_solicitud", "resultado_solicitud", "cambio_estatus_forzado", "reporte_mantenimiento")
             .HasConversion(
                 v => v == TipoNotificacion.NuevaSolicitud ? "nueva_solicitud"
                    : v == TipoNotificacion.ResultadoSolicitud ? "resultado_solicitud"
@@ -49,8 +49,8 @@ public class NotificacionConfiguration : IEntityTypeConfiguration<Notificacion>
         // La BD la llena al insertar; EF la lee de vuelta y nunca la envía.
         builder.Property(n => n.FechaEnvio)
             .HasColumnName("fecha_envio")
-            .HasColumnType("timestamp")
-            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .HasColumnType(TiposSql.FechaHora)
+            .HasDefaultValueSql(TiposSql.Ahora)
             .ValueGeneratedOnAdd();
 
         builder.HasOne<Empresa>()

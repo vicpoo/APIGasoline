@@ -96,7 +96,7 @@ public sealed class RevisionCombustibleRepository : IRevisionCombustibleReposito
     {
         var resultado = new Dictionary<Guid, decimal>();
 
-        // Una consulta por carro (son pocos por revisión) para no depender de GroupBy + First en MySQL
+        // Una consulta por carro (son pocos por revisión) para no depender de GroupBy + First en la BD
         foreach (var carroId in carroIds)
         {
             var kilometraje = await _context.Viajes.AsNoTracking()

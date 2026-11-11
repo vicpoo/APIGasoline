@@ -21,12 +21,12 @@ public class ViajePausaConfiguration : IEntityTypeConfiguration<ViajePausa>
         // La hora la manda la app (la pausa puede registrarse sin conexión)
         builder.Property(p => p.FechaInicio)
             .HasColumnName("fecha_inicio")
-            .HasColumnType("timestamp")
+            .HasColumnType(TiposSql.FechaHora)
             .IsRequired();
 
         builder.Property(p => p.FechaFin)
             .HasColumnName("fecha_fin")
-            .HasColumnType("timestamp");
+            .HasColumnType(TiposSql.FechaHora);
 
         builder.Property(p => p.Motivo)
             .HasColumnName("motivo")

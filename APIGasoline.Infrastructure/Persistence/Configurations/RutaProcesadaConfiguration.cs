@@ -78,7 +78,7 @@ public class RutaProcesadaConfiguration : IEntityTypeConfiguration<RutaProcesada
         // --- Mapa ---
         builder.Property(r => r.Polyline)
             .HasColumnName("polyline")
-            .HasColumnType("text");
+            .HasColumnType(TiposSql.TextoLargo);
 
         // --- Control de versiones del algoritmo ---
         builder.Property(r => r.VersionAlgoritmo)
@@ -89,8 +89,8 @@ public class RutaProcesadaConfiguration : IEntityTypeConfiguration<RutaProcesada
         // El dominio siempre la asigna (también al recalcular), por eso EF sí la envía.
         builder.Property(r => r.FechaProceso)
             .HasColumnName("fecha_proceso")
-            .HasColumnType("timestamp")
-            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .HasColumnType(TiposSql.FechaHora)
+            .HasDefaultValueSql(TiposSql.Ahora)
             .ValueGeneratedNever()
             .IsRequired();
 

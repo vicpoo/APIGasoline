@@ -1,6 +1,7 @@
 ﻿# ============================================================
 #  APIGasoline - PRODUCCIÓN (EC2)
-#  Servicios: API + MySQL 8.0 + MinIO
+#  Servicios: API + SQL Server 2022 (Express) + MinIO
+#  OJO: SQL Server necesita x64 (no corre en instancias ARM/Graviton) y al menos 2 GB de RAM.
 #
 #  Uso en el servidor:
 #    docker compose -f docker-compose.prod.yml up -d --build
@@ -28,7 +29,7 @@ services:
         condition: service_healthy
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      ConnectionStrings__DefaultConnection: "Server=db;Port=3306;Database=${MYSQL_DATABASE:-apigasoline};User=root;Password=${MYSQL_ROOT_PASSWORD};"
+      ConnectionStrings__DefaultConnection: "Server=db,1433;Database=${MSSQL_DATABASE:-apigasoline};User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;"
       Jwt__Key: ${JWT_KEY}
       Minio__Endpoint: minio:9000
       # "auto" = las URLs de las fotos se firman con el host que usó el cliente (IP pública de EC2) + puerto 9000
@@ -50,24 +51,25 @@ services:
       - "${API_PORT:-80}:8080"
 
   # ---------- Base de datos (sin puerto público) ----------
+  # La BD la crea la API al arrancar (BaseDatos__MigrarAlIniciar = true).
   db:
-    image: mysql:8.0
+    image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: apigasoline-db
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-apigasoline}
+      ACCEPT_EULA: "Y"
+      # Express = gratis para producción (límite: 10 GB por BD, 1 socket / 4 núcleos, 1.4 GB de RAM para el buffer).
+      # Developer NO tiene licencia para producción.
+      MSSQL_PID: ${MSSQL_PID:-Express}
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
       TZ: America/Mexico_City
-    command:
-      - --character-set-server=utf8mb4
-      - --collation-server=utf8mb4_unicode_ci
     # Solo accesible desde el propio servidor (útil para un túnel SSH)
     ports:
-      - "127.0.0.1:3306:3306"
+      - "127.0.0.1:1433:1433"
     volumes:
-      - mysql-data:/var/lib/mysql
+      - mssql-data:/var/opt/mssql
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q \"SELECT 1\" -b -o /dev/null"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -116,5 +118,5 @@ services:
     restart: "no"
 
 volumes:
-  mysql-data:
+  mssql-data:
   minio-data:

@@ -36,13 +36,13 @@ public class SolicitudReservaConfiguration : IEntityTypeConfiguration<SolicitudR
         // La BD la llena al insertar; EF la lee de vuelta y nunca la envía.
         builder.Property(s => s.FechaSolicitud)
             .HasColumnName("fecha_solicitud")
-            .HasColumnType("timestamp")
-            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .HasColumnType(TiposSql.FechaHora)
+            .HasDefaultValueSql(TiposSql.Ahora)
             .ValueGeneratedOnAdd();
 
         builder.Property(s => s.Estado)
             .HasColumnName("estado")
-            .HasColumnType("enum('pendiente','aprobada','rechazada','cancelada','finalizada')")
+            .EsEnum("pendiente", "aprobada", "rechazada", "cancelada", "finalizada")
             .HasConversion(
                 v => v.ToString().ToLowerInvariant(),
                 v => Enum.Parse<EstadoSolicitudReserva>(v, true))
@@ -55,7 +55,7 @@ public class SolicitudReservaConfiguration : IEntityTypeConfiguration<SolicitudR
 
         builder.Property(s => s.FechaResolucion)
             .HasColumnName("fecha_resolucion")
-            .HasColumnType("timestamp");
+            .HasColumnType(TiposSql.FechaHora);
 
         builder.Property(s => s.MotivoResolucion)
             .HasColumnName("motivo_resolucion")
@@ -64,7 +64,7 @@ public class SolicitudReservaConfiguration : IEntityTypeConfiguration<SolicitudR
         // Liberación del carro (HU-USO-04 / HU-EST-02)
         builder.Property(s => s.FechaLiberacion)
             .HasColumnName("fecha_liberacion")
-            .HasColumnType("timestamp");
+            .HasColumnType(TiposSql.FechaHora);
 
         builder.Property(s => s.ObservacionesLiberacion)
             .HasColumnName("observaciones_liberacion")

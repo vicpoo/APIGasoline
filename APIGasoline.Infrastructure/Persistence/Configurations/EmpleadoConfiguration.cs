@@ -39,7 +39,7 @@ public class EmpleadoConfiguration : IEntityTypeConfiguration<Empleado>
         // HU-LOG-01: null = licencia pendiente
         builder.Property(e => e.FechaCargaLicencia)
             .HasColumnName("fecha_carga_licencia")
-            .HasColumnType("timestamp");
+            .HasColumnType(TiposSql.FechaHora);
 
         // Propiedad calculada en el dominio, no es columna
         builder.Ignore(e => e.TieneLicencia);
@@ -54,8 +54,8 @@ public class EmpleadoConfiguration : IEntityTypeConfiguration<Empleado>
         // La BD la llena al insertar; EF la lee de vuelta y nunca la envía.
         builder.Property(e => e.FechaAlta)
             .HasColumnName("fecha_alta")
-            .HasColumnType("timestamp")
-            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .HasColumnType(TiposSql.FechaHora)
+            .HasDefaultValueSql(TiposSql.Ahora)
             .ValueGeneratedOnAdd();
 
         // Filtro global: todas las consultas ignoran los empleados eliminados.

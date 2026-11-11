@@ -35,10 +35,10 @@ public class SesionUsuarioConfiguration : IEntityTypeConfiguration<SesionUsuario
             .HasColumnType("char(64)")
             .HasMaxLength(SesionUsuario.TokenHashLength);
 
-        // enum('android','ios','web') en MySQL (igual que dispositivo_empleado)
+        // Valores fijos: 'android','ios','web' (varchar + CHECK) (igual que dispositivo_empleado)
         builder.Property(s => s.Plataforma)
             .HasColumnName("plataforma")
-            .HasColumnType("enum('android','ios','web')")
+            .EsEnum("android", "ios", "web")
             .HasConversion(new ValueConverter<PlataformaDispositivo, string>(
                 p => p == PlataformaDispositivo.Android ? "android"
                    : p == PlataformaDispositivo.Ios ? "ios"
@@ -61,35 +61,35 @@ public class SesionUsuarioConfiguration : IEntityTypeConfiguration<SesionUsuario
 
         builder.Property(s => s.FechaCreacion)
             .HasColumnName("fecha_creacion")
-            .HasColumnType("timestamp")
+            .HasColumnType(TiposSql.FechaHora)
             .IsRequired();
 
         builder.Property(s => s.FechaUltimoUso)
             .HasColumnName("fecha_ultimo_uso")
-            .HasColumnType("timestamp")
+            .HasColumnType(TiposSql.FechaHora)
             .IsRequired();
 
         builder.Property(s => s.FechaRotacion)
             .HasColumnName("fecha_rotacion")
-            .HasColumnType("timestamp");
+            .HasColumnType(TiposSql.FechaHora);
 
         builder.Property(s => s.ExpiraEn)
             .HasColumnName("expira_en")
-            .HasColumnType("timestamp")
+            .HasColumnType(TiposSql.FechaHora)
             .IsRequired();
 
         builder.Property(s => s.ExpiraAbsolutaEn)
             .HasColumnName("expira_absoluta_en")
-            .HasColumnType("timestamp")
+            .HasColumnType(TiposSql.FechaHora)
             .IsRequired();
 
         builder.Property(s => s.FechaRevocacion)
             .HasColumnName("fecha_revocacion")
-            .HasColumnType("timestamp");
+            .HasColumnType(TiposSql.FechaHora);
 
         builder.Property(s => s.MotivoRevocacion)
             .HasColumnName("motivo_revocacion")
-            .HasColumnType(SnakeCaseEnumConverter<MotivoRevocacionSesion>.ColumnType)
+            .EsEnum(SnakeCaseEnumConverter<MotivoRevocacionSesion>.Valores)
             .HasConversion(new SnakeCaseEnumConverter<MotivoRevocacionSesion>());
 
         builder.Property(s => s.RevocadaPorUsuarioId).HasColumnName("revocada_por_usuario_id");

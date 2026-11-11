@@ -12,69 +12,72 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace APIGasoline.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261022120000_MotivoSolicitud")]
-    partial class MotivoSolicitud
+    [Migration("20261111182911_InicialSqlServer")]
+    partial class InicialSqlServer
     {
+        /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .UseCollation("Modern_Spanish_CI_AI")
                 .HasAnnotation("ProductVersion", "10.0.12")
-                .HasAnnotation("Relational:MaxIdentifierLength", 64);
+                .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
-            MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
+            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.AuditoriaEvento", b =>
                 {
-                    b.Property<Guid>("AuditoriaEventoId")
+                    b.Property<byte[]>("AuditoriaEventoId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("auditoria_evento_id");
 
                     b.Property<string>("Accion")
                         .IsRequired()
-                        .HasColumnType("enum('crear','actualizar','eliminar','aprobar','rechazar','cancelar','cambiar_estado','corregir')")
+                        .HasColumnType("varchar(14)")
                         .HasColumnName("accion");
 
-                    b.Property<Guid?>("EmpresaId")
+                    b.Property<byte[]>("EmpresaId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("empresa_id");
 
                     b.Property<string>("Entidad")
                         .IsRequired()
                         .HasMaxLength(60)
-                        .HasColumnType("varchar(60)")
+                        .HasColumnType("nvarchar(60)")
                         .HasColumnName("entidad");
 
-                    b.Property<Guid>("EntidadId")
+                    b.Property<byte[]>("EntidadId")
+                        .IsRequired()
                         .HasColumnType("binary(16)")
                         .HasColumnName("entidad_id");
 
                     b.Property<DateTime?>("FechaHora")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime2(0)")
                         .HasColumnName("fecha_hora")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasDefaultValueSql("SYSDATETIME()");
 
                     b.Property<string>("Motivo")
                         .HasMaxLength(500)
-                        .HasColumnType("varchar(500)")
+                        .HasColumnType("nvarchar(500)")
                         .HasColumnName("motivo");
 
                     b.Property<string>("Origen")
                         .IsRequired()
-                        .HasColumnType("enum('movil','web','sistema')")
+                        .HasColumnType("varchar(7)")
                         .HasColumnName("origen");
 
-                    b.Property<Guid?>("UsuarioId")
+                    b.Property<byte[]>("UsuarioId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("usuario_id");
 
                     b.Property<string>("ValoresAnteriores")
-                        .HasColumnType("json")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("valores_anteriores");
 
                     b.Property<string>("ValoresNuevos")
-                        .HasColumnType("json")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("valores_nuevos");
 
                     b.HasKey("AuditoriaEventoId");
@@ -88,64 +91,76 @@ namespace APIGasoline.Infrastructure.Migrations
                     b.HasIndex("EmpresaId", "Entidad", "EntidadId")
                         .HasDatabaseName("ix_auditoria_evento_empresa_id_entidad_entidad_id");
 
-                    b.ToTable("auditoria_evento", (string)null);
+                    b.ToTable("auditoria_evento", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_auditoria_evento_accion", "[accion] IN ('crear', 'actualizar', 'eliminar', 'aprobar', 'rechazar', 'cancelar', 'cambiar_estado', 'corregir')");
+
+                            t.HasCheckConstraint("ck_auditoria_evento_origen", "[origen] IN ('movil', 'web', 'sistema')");
+
+                            t.HasCheckConstraint("ck_auditoria_evento_valores_anteriores_json", "[valores_anteriores] IS NULL OR ISJSON([valores_anteriores]) = 1");
+
+                            t.HasCheckConstraint("ck_auditoria_evento_valores_nuevos_json", "[valores_nuevos] IS NULL OR ISJSON([valores_nuevos]) = 1");
+                        });
                 });
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.CambioEstatusCarro", b =>
                 {
-                    b.Property<Guid>("CambioEstatusCarroId")
+                    b.Property<byte[]>("CambioEstatusCarroId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("cambio_estatus_carro_id");
 
-                    b.Property<Guid>("CarroId")
+                    b.Property<byte[]>("CarroId")
+                        .IsRequired()
                         .HasColumnType("binary(16)")
                         .HasColumnName("carro_id");
 
-                    b.Property<Guid>("EmpleadoId")
+                    b.Property<byte[]>("EmpleadoId")
+                        .IsRequired()
                         .HasColumnType("binary(16)")
                         .HasColumnName("empleado_id");
 
-                    b.Property<Guid>("EmpresaId")
+                    b.Property<byte[]>("EmpresaId")
+                        .IsRequired()
                         .HasColumnType("binary(16)")
                         .HasColumnName("empresa_id");
 
                     b.Property<string>("EstatusAnterior")
                         .IsRequired()
-                        .HasColumnType("enum('disponible','ocupado','en_mantenimiento')")
+                        .HasColumnType("varchar(16)")
                         .HasColumnName("estatus_anterior");
 
                     b.Property<string>("EstatusNuevo")
                         .IsRequired()
-                        .HasColumnType("enum('disponible','ocupado','en_mantenimiento')")
+                        .HasColumnType("varchar(16)")
                         .HasColumnName("estatus_nuevo");
 
                     b.Property<DateTime?>("FechaCambio")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime2(0)")
                         .HasColumnName("fecha_cambio")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasDefaultValueSql("SYSDATETIME()");
 
                     b.Property<DateTime?>("FechaRecepcion")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime2(0)")
                         .HasColumnName("fecha_recepcion")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasDefaultValueSql("SYSDATETIME()");
 
                     b.Property<string>("FotoEvidencia")
                         .HasMaxLength(255)
-                        .HasColumnType("varchar(255)")
+                        .HasColumnType("nvarchar(255)")
                         .HasColumnName("foto_evidencia");
 
                     b.Property<string>("Motivo")
                         .HasMaxLength(255)
-                        .HasColumnType("varchar(255)")
+                        .HasColumnType("nvarchar(255)")
                         .HasColumnName("motivo");
 
                     b.Property<string>("TipoMotivo")
-                        .HasColumnType("enum('liberacion','falla_mecanica','choque_o_golpe','servicio','emergencia','otro')")
+                        .HasColumnType("varchar(14)")
                         .HasColumnName("tipo_motivo");
 
-                    b.Property<Guid?>("ViajeAfectadoId")
+                    b.Property<byte[]>("ViajeAfectadoId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("viaje_afectado_id");
 
@@ -170,46 +185,54 @@ namespace APIGasoline.Infrastructure.Migrations
                     b.HasIndex("EmpresaId", "ViajeAfectadoId")
                         .HasDatabaseName("ix_cambio_estatus_carro_empresa_id_viaje_afectado_id");
 
-                    b.ToTable("cambio_estatus_carro", (string)null);
+                    b.ToTable("cambio_estatus_carro", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_cambio_estatus_carro_estatus_anterior", "[estatus_anterior] IN ('disponible', 'ocupado', 'en_mantenimiento')");
+
+                            t.HasCheckConstraint("ck_cambio_estatus_carro_estatus_nuevo", "[estatus_nuevo] IN ('disponible', 'ocupado', 'en_mantenimiento')");
+
+                            t.HasCheckConstraint("ck_cambio_estatus_carro_tipo_motivo", "[tipo_motivo] IN ('liberacion', 'falla_mecanica', 'choque_o_golpe', 'servicio', 'emergencia', 'otro')");
+                        });
                 });
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.CargaCombustible", b =>
                 {
-                    b.Property<Guid>("CargaCombustibleId")
+                    b.Property<byte[]>("CargaCombustibleId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("carga_combustible_id");
 
-                    b.Property<Guid?>("CentroCostoId")
+                    b.Property<byte[]>("CentroCostoId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("centro_costo_id");
 
                     b.Property<bool>("Corregido")
-                        .HasColumnType("tinyint(1)")
+                        .HasColumnType("bit")
                         .HasDefaultValue(false)
                         .HasColumnName("corregido");
 
-                    b.Property<Guid>("EmpresaId")
+                    b.Property<byte[]>("EmpresaId")
+                        .IsRequired()
                         .HasColumnType("binary(16)")
                         .HasColumnName("empresa_id");
 
                     b.Property<DateTime>("FechaCarga")
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime2(0)")
                         .HasColumnName("fecha_carga");
 
                     b.Property<DateTime?>("FechaRecepcion")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime2(0)")
                         .HasColumnName("fecha_recepcion")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasDefaultValueSql("SYSDATETIME()");
 
                     b.Property<DateTime?>("FechaSubidaComprobante")
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime2(0)")
                         .HasColumnName("fecha_subida_comprobante");
 
                     b.Property<string>("FotoComprobante")
                         .IsRequired()
                         .HasMaxLength(255)
-                        .HasColumnType("varchar(255)")
+                        .HasColumnType("nvarchar(255)")
                         .HasColumnName("foto_comprobante");
 
                     b.Property<decimal>("Litros")
@@ -232,7 +255,8 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasColumnType("decimal(9,6)")
                         .HasColumnName("ubicacion_lng");
 
-                    b.Property<Guid>("ViajeId")
+                    b.Property<byte[]>("ViajeId")
+                        .IsRequired()
                         .HasColumnType("binary(16)")
                         .HasColumnName("viaje_id");
 
@@ -256,7 +280,7 @@ namespace APIGasoline.Infrastructure.Migrations
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.Carro", b =>
                 {
-                    b.Property<Guid>("CarroId")
+                    b.Property<byte[]>("CarroId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("carro_id");
 
@@ -271,38 +295,39 @@ namespace APIGasoline.Infrastructure.Migrations
 
                     b.Property<string>("Color")
                         .HasMaxLength(50)
-                        .HasColumnType("varchar(50)")
+                        .HasColumnType("nvarchar(50)")
                         .HasColumnName("color");
 
                     b.Property<bool>("DadoDeBaja")
-                        .HasColumnType("tinyint(1)")
+                        .HasColumnType("bit")
                         .HasDefaultValue(false)
                         .HasColumnName("dado_de_baja");
 
-                    b.Property<Guid>("EmpresaId")
+                    b.Property<byte[]>("EmpresaId")
+                        .IsRequired()
                         .HasColumnType("binary(16)")
                         .HasColumnName("empresa_id");
 
                     b.Property<string>("Estado")
                         .IsConcurrencyToken()
                         .IsRequired()
-                        .HasColumnType("enum('disponible','ocupado','en_mantenimiento')")
+                        .HasColumnType("varchar(16)")
                         .HasColumnName("estado")
                         .HasDefaultValueSql("'disponible'");
 
                     b.Property<DateTime?>("FechaAlta")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime2(0)")
                         .HasColumnName("fecha_alta")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasDefaultValueSql("SYSDATETIME()");
 
                     b.Property<DateTime?>("FechaBaja")
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime2(0)")
                         .HasColumnName("fecha_baja");
 
                     b.Property<string>("FotoVehiculo")
                         .HasMaxLength(255)
-                        .HasColumnType("varchar(255)")
+                        .HasColumnType("nvarchar(255)")
                         .HasColumnName("foto_vehiculo");
 
                     b.Property<decimal>("KilometrajeActual")
@@ -314,25 +339,31 @@ namespace APIGasoline.Infrastructure.Migrations
                     b.Property<string>("Marca")
                         .IsRequired()
                         .HasMaxLength(80)
-                        .HasColumnType("varchar(80)")
+                        .HasColumnType("nvarchar(80)")
                         .HasColumnName("marca");
 
                     b.Property<string>("Modelo")
                         .IsRequired()
                         .HasMaxLength(80)
-                        .HasColumnType("varchar(80)")
+                        .HasColumnType("nvarchar(80)")
                         .HasColumnName("modelo");
 
                     b.Property<string>("MotivoBaja")
                         .HasMaxLength(255)
-                        .HasColumnType("varchar(255)")
+                        .HasColumnType("nvarchar(255)")
                         .HasColumnName("motivo_baja");
 
                     b.Property<string>("Placas")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("varchar(20)")
+                        .HasColumnType("nvarchar(20)")
                         .HasColumnName("placas");
+
+                    b.Property<string>("TipoVehiculo")
+                        .IsRequired()
+                        .HasColumnType("varchar(9)")
+                        .HasColumnName("tipo_vehiculo")
+                        .HasDefaultValueSql("'carro'");
 
                     b.HasKey("CarroId");
 
@@ -346,40 +377,46 @@ namespace APIGasoline.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("uq_carro_placas");
 
-                    b.ToTable("carro", (string)null);
+                    b.ToTable("carro", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_carro_estado", "[estado] IN ('disponible', 'ocupado', 'en_mantenimiento')");
+
+                            t.HasCheckConstraint("ck_carro_tipo_vehiculo", "[tipo_vehiculo] IN ('carro', 'moto', 'camioneta', 'camion')");
+                        });
                 });
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.CentroCosto", b =>
                 {
-                    b.Property<Guid>("CentroCostoId")
+                    b.Property<byte[]>("CentroCostoId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("centro_costo_id");
 
                     b.Property<bool>("Activo")
-                        .HasColumnType("tinyint(1)")
+                        .HasColumnType("bit")
                         .HasDefaultValue(true)
                         .HasColumnName("activo");
 
                     b.Property<string>("Clave")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("varchar(100)")
+                        .HasColumnType("nvarchar(100)")
                         .HasColumnName("clave");
 
-                    b.Property<Guid>("EmpresaId")
+                    b.Property<byte[]>("EmpresaId")
+                        .IsRequired()
                         .HasColumnType("binary(16)")
                         .HasColumnName("empresa_id");
 
                     b.Property<DateTime?>("FechaRegistro")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime2(0)")
                         .HasColumnName("fecha_registro")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasDefaultValueSql("SYSDATETIME()");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
                         .HasMaxLength(150)
-                        .HasColumnType("varchar(150)")
+                        .HasColumnType("nvarchar(150)")
                         .HasColumnName("nombre");
 
                     b.HasKey("CentroCostoId");
@@ -399,25 +436,25 @@ namespace APIGasoline.Infrastructure.Migrations
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.Corporativo", b =>
                 {
-                    b.Property<Guid>("CorporativoId")
+                    b.Property<byte[]>("CorporativoId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("corporativo_id");
 
                     b.Property<bool>("Activo")
-                        .HasColumnType("tinyint(1)")
+                        .HasColumnType("bit")
                         .HasDefaultValue(true)
                         .HasColumnName("activo");
 
                     b.Property<DateTime?>("FechaRegistro")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime2(0)")
                         .HasColumnName("fecha_registro")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasDefaultValueSql("SYSDATETIME()");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
                         .HasMaxLength(150)
-                        .HasColumnType("varchar(150)")
+                        .HasColumnType("nvarchar(150)")
                         .HasColumnName("nombre");
 
                     b.HasKey("CorporativoId");
@@ -427,41 +464,43 @@ namespace APIGasoline.Infrastructure.Migrations
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.DispositivoEmpleado", b =>
                 {
-                    b.Property<Guid>("DispositivoEmpleadoId")
+                    b.Property<byte[]>("DispositivoEmpleadoId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("dispositivo_empleado_id");
 
                     b.Property<bool>("Activo")
-                        .HasColumnType("tinyint(1)")
+                        .HasColumnType("bit")
                         .HasDefaultValue(true)
                         .HasColumnName("activo");
 
-                    b.Property<Guid>("EmpleadoId")
+                    b.Property<byte[]>("EmpleadoId")
+                        .IsRequired()
                         .HasColumnType("binary(16)")
                         .HasColumnName("empleado_id");
 
-                    b.Property<Guid>("EmpresaId")
+                    b.Property<byte[]>("EmpresaId")
+                        .IsRequired()
                         .HasColumnType("binary(16)")
                         .HasColumnName("empresa_id");
 
                     b.Property<DateTime>("FechaRegistro")
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime2(0)")
                         .HasColumnName("fecha_registro")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasDefaultValueSql("SYSDATETIME()");
 
                     b.Property<DateTime?>("FechaUltimoUso")
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime2(0)")
                         .HasColumnName("fecha_ultimo_uso");
 
                     b.Property<string>("Plataforma")
                         .IsRequired()
-                        .HasColumnType("enum('android','ios','web')")
+                        .HasColumnType("varchar(7)")
                         .HasColumnName("plataforma");
 
                     b.Property<string>("TokenFcm")
                         .IsRequired()
                         .HasMaxLength(512)
-                        .HasColumnType("varchar(512)")
+                        .HasColumnType("nvarchar(512)")
                         .HasColumnName("token_fcm");
 
                     b.HasKey("DispositivoEmpleadoId");
@@ -483,34 +522,38 @@ namespace APIGasoline.Infrastructure.Migrations
                     b.HasIndex("EmpresaId", "EmpleadoId")
                         .HasDatabaseName("ix_dispositivo_empleado_empresa_id_empleado_id");
 
-                    b.ToTable("dispositivo_empleado", (string)null);
+                    b.ToTable("dispositivo_empleado", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_dispositivo_empleado_plataforma", "[plataforma] IN ('android', 'ios', 'web')");
+                        });
                 });
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.Division", b =>
                 {
-                    b.Property<Guid>("DivisionId")
+                    b.Property<byte[]>("DivisionId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("division_id");
 
                     b.Property<bool>("Activo")
-                        .HasColumnType("tinyint(1)")
+                        .HasColumnType("bit")
                         .HasDefaultValue(true)
                         .HasColumnName("activo");
 
-                    b.Property<Guid>("CorporativoId")
+                    b.Property<byte[]>("CorporativoId")
+                        .IsRequired()
                         .HasColumnType("binary(16)")
                         .HasColumnName("corporativo_id");
 
                     b.Property<DateTime?>("FechaRegistro")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime2(0)")
                         .HasColumnName("fecha_registro")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasDefaultValueSql("SYSDATETIME()");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("varchar(100)")
+                        .HasColumnType("nvarchar(100)")
                         .HasColumnName("nombre");
 
                     b.HasKey("DivisionId");
@@ -526,46 +569,48 @@ namespace APIGasoline.Infrastructure.Migrations
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.Empleado", b =>
                 {
-                    b.Property<Guid>("EmpleadoId")
+                    b.Property<byte[]>("EmpleadoId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("empleado_id");
 
                     b.Property<bool>("Eliminado")
-                        .HasColumnType("tinyint(1)")
+                        .HasColumnType("bit")
                         .HasDefaultValue(false)
                         .HasColumnName("eliminado");
 
-                    b.Property<Guid>("EmpresaId")
+                    b.Property<byte[]>("EmpresaId")
+                        .IsRequired()
                         .HasColumnType("binary(16)")
                         .HasColumnName("empresa_id");
 
                     b.Property<DateTime?>("FechaAlta")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime2(0)")
                         .HasColumnName("fecha_alta")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasDefaultValueSql("SYSDATETIME()");
 
                     b.Property<DateTime?>("FechaCargaLicencia")
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime2(0)")
                         .HasColumnName("fecha_carga_licencia");
 
                     b.Property<string>("FotoLicencia")
                         .HasMaxLength(255)
-                        .HasColumnType("varchar(255)")
+                        .HasColumnType("nvarchar(255)")
                         .HasColumnName("foto_licencia");
 
                     b.Property<string>("FotoPerfil")
                         .HasMaxLength(255)
-                        .HasColumnType("varchar(255)")
+                        .HasColumnType("nvarchar(255)")
                         .HasColumnName("foto_perfil");
 
                     b.Property<string>("NombreCompleto")
                         .IsRequired()
                         .HasMaxLength(150)
-                        .HasColumnType("varchar(150)")
+                        .HasColumnType("nvarchar(150)")
                         .HasColumnName("nombre_completo");
 
-                    b.Property<Guid>("UsuarioId")
+                    b.Property<byte[]>("UsuarioId")
+                        .IsRequired()
                         .HasColumnType("binary(16)")
                         .HasColumnName("usuario_id");
 
@@ -586,38 +631,38 @@ namespace APIGasoline.Infrastructure.Migrations
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.Empresa", b =>
                 {
-                    b.Property<Guid>("EmpresaId")
+                    b.Property<byte[]>("EmpresaId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("empresa_id");
 
                     b.Property<bool>("Activo")
-                        .HasColumnType("tinyint(1)")
+                        .HasColumnType("bit")
                         .HasDefaultValue(true)
                         .HasColumnName("activo");
 
-                    b.Property<Guid?>("CorporativoId")
+                    b.Property<byte[]>("CorporativoId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("corporativo_id");
 
-                    b.Property<Guid?>("DivisionId")
+                    b.Property<byte[]>("DivisionId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("division_id");
 
                     b.Property<bool>("Eliminado")
-                        .HasColumnType("tinyint(1)")
+                        .HasColumnType("bit")
                         .HasDefaultValue(false)
                         .HasColumnName("eliminado");
 
                     b.Property<DateTime?>("FechaRegistro")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime2(0)")
                         .HasColumnName("fecha_registro")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasDefaultValueSql("SYSDATETIME()");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
                         .HasMaxLength(150)
-                        .HasColumnType("varchar(150)")
+                        .HasColumnType("nvarchar(150)")
                         .HasColumnName("nombre");
 
                     b.HasKey("EmpresaId");
@@ -633,48 +678,51 @@ namespace APIGasoline.Infrastructure.Migrations
 
                     b.HasIndex("CorporativoId", "EmpresaId")
                         .IsUnique()
-                        .HasDatabaseName("uq_empresa_corporativo_id_empresa_id");
+                        .HasDatabaseName("uq_empresa_corporativo_id_empresa_id")
+                        .HasFilter("[corporativo_id] IS NOT NULL");
 
                     b.ToTable("empresa", (string)null);
                 });
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.Notificacion", b =>
                 {
-                    b.Property<Guid>("NotificacionId")
+                    b.Property<byte[]>("NotificacionId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("notificacion_id");
 
-                    b.Property<Guid>("EmpleadoDestinatarioId")
+                    b.Property<byte[]>("EmpleadoDestinatarioId")
+                        .IsRequired()
                         .HasColumnType("binary(16)")
                         .HasColumnName("empleado_destinatario_id");
 
-                    b.Property<Guid>("EmpresaId")
+                    b.Property<byte[]>("EmpresaId")
+                        .IsRequired()
                         .HasColumnType("binary(16)")
                         .HasColumnName("empresa_id");
 
                     b.Property<DateTime?>("FechaEnvio")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime2(0)")
                         .HasColumnName("fecha_envio")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasDefaultValueSql("SYSDATETIME()");
 
                     b.Property<bool>("Leida")
-                        .HasColumnType("tinyint(1)")
+                        .HasColumnType("bit")
                         .HasDefaultValue(false)
                         .HasColumnName("leida");
 
                     b.Property<string>("Mensaje")
                         .HasMaxLength(255)
-                        .HasColumnType("varchar(255)")
+                        .HasColumnType("nvarchar(255)")
                         .HasColumnName("mensaje");
 
-                    b.Property<Guid?>("ReferenciaId")
+                    b.Property<byte[]>("ReferenciaId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("referencia_id");
 
                     b.Property<string>("Tipo")
                         .IsRequired()
-                        .HasColumnType("enum('nueva_solicitud','resultado_solicitud','cambio_estatus_forzado','reporte_mantenimiento')")
+                        .HasColumnType("varchar(22)")
                         .HasColumnName("tipo");
 
                     b.HasKey("NotificacionId");
@@ -692,36 +740,41 @@ namespace APIGasoline.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("uq_notificacion_empresa_id_notificacion_id");
 
-                    b.ToTable("notificacion", (string)null);
+                    b.ToTable("notificacion", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_notificacion_tipo", "[tipo] IN ('nueva_solicitud', 'resultado_solicitud', 'cambio_estatus_forzado', 'reporte_mantenimiento')");
+                        });
                 });
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.OutboxMensaje", b =>
                 {
-                    b.Property<Guid>("OutboxMensajeId")
+                    b.Property<byte[]>("OutboxMensajeId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("outbox_mensaje_id");
 
-                    b.Property<Guid>("AgregadoId")
+                    b.Property<byte[]>("AgregadoId")
+                        .IsRequired()
                         .HasColumnType("binary(16)")
                         .HasColumnName("agregado_id");
 
-                    b.Property<Guid>("EmpresaId")
+                    b.Property<byte[]>("EmpresaId")
+                        .IsRequired()
                         .HasColumnType("binary(16)")
                         .HasColumnName("empresa_id");
 
                     b.Property<string>("Estado")
                         .IsRequired()
-                        .HasColumnType("enum('pendiente','procesando','enviado','fallido')")
+                        .HasColumnType("varchar(10)")
                         .HasColumnName("estado")
                         .HasDefaultValueSql("'pendiente'");
 
                     b.Property<DateTime>("FechaCreacion")
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime2(0)")
                         .HasColumnName("fecha_creacion")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasDefaultValueSql("SYSDATETIME()");
 
                     b.Property<DateTime?>("FechaProcesado")
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime2(0)")
                         .HasColumnName("fecha_procesado");
 
                     b.Property<int>("Intentos")
@@ -731,23 +784,23 @@ namespace APIGasoline.Infrastructure.Migrations
 
                     b.Property<string>("Payload")
                         .IsRequired()
-                        .HasColumnType("json")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("payload");
 
                     b.Property<DateTime>("ProximoIntento")
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime2(0)")
                         .HasColumnName("proximo_intento")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasDefaultValueSql("SYSDATETIME()");
 
                     b.Property<string>("Tipo")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("varchar(100)")
+                        .HasColumnType("nvarchar(100)")
                         .HasColumnName("tipo");
 
                     b.Property<string>("UltimoError")
                         .HasMaxLength(500)
-                        .HasColumnType("varchar(500)")
+                        .HasColumnType("nvarchar(500)")
                         .HasColumnName("ultimo_error");
 
                     b.HasKey("OutboxMensajeId");
@@ -765,47 +818,52 @@ namespace APIGasoline.Infrastructure.Migrations
                     b.HasIndex("Estado", "ProximoIntento")
                         .HasDatabaseName("ix_outbox_mensaje_estado_proximo_intento");
 
-                    b.ToTable("outbox_mensaje", (string)null);
+                    b.ToTable("outbox_mensaje", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_outbox_mensaje_estado", "[estado] IN ('pendiente', 'procesando', 'enviado', 'fallido')");
+
+                            t.HasCheckConstraint("ck_outbox_mensaje_payload_json", "[payload] IS NULL OR ISJSON([payload]) = 1");
+                        });
                 });
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.Privilegio", b =>
                 {
-                    b.Property<Guid>("PrivilegioId")
+                    b.Property<byte[]>("PrivilegioId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("privilegio_id");
 
                     b.Property<bool>("Activo")
-                        .HasColumnType("tinyint(1)")
+                        .HasColumnType("bit")
                         .HasDefaultValue(true)
                         .HasColumnName("activo");
 
                     b.Property<string>("Ambito")
                         .IsRequired()
-                        .HasColumnType("enum('plataforma','empresa')")
+                        .HasColumnType("varchar(10)")
                         .HasColumnName("ambito")
                         .HasDefaultValueSql("'empresa'");
 
                     b.Property<string>("Clave")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("varchar(100)")
+                        .HasColumnType("nvarchar(100)")
                         .HasColumnName("clave");
 
                     b.Property<string>("Descripcion")
                         .HasMaxLength(255)
-                        .HasColumnType("varchar(255)")
+                        .HasColumnType("nvarchar(255)")
                         .HasColumnName("descripcion");
 
                     b.Property<string>("Modulo")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("varchar(50)")
+                        .HasColumnType("nvarchar(50)")
                         .HasColumnName("modulo");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("varchar(100)")
+                        .HasColumnType("nvarchar(100)")
                         .HasColumnName("nombre");
 
                     b.HasKey("PrivilegioId");
@@ -817,12 +875,15 @@ namespace APIGasoline.Infrastructure.Migrations
                     b.HasIndex("Modulo")
                         .HasDatabaseName("ix_privilegio_modulo");
 
-                    b.ToTable("privilegio", (string)null);
+                    b.ToTable("privilegio", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_privilegio_ambito", "[ambito] IN ('plataforma', 'empresa')");
+                        });
                 });
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.PuntoRuta", b =>
                 {
-                    b.Property<Guid>("PuntoRutaId")
+                    b.Property<byte[]>("PuntoRutaId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("punto_ruta_id");
 
@@ -831,15 +892,16 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasColumnType("decimal(7,2)")
                         .HasColumnName("altitud");
 
-                    b.Property<Guid>("EmpresaId")
+                    b.Property<byte[]>("EmpresaId")
+                        .IsRequired()
                         .HasColumnType("binary(16)")
                         .HasColumnName("empresa_id");
 
                     b.Property<DateTime?>("FechaRecepcion")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime2(0)")
                         .HasColumnName("fecha_recepcion")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasDefaultValueSql("SYSDATETIME()");
 
                     b.Property<decimal>("Latitud")
                         .HasPrecision(9, 6)
@@ -857,7 +919,7 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasColumnName("precision_metros");
 
                     b.Property<DateTime>("TimestampCaptura")
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime2(0)")
                         .HasColumnName("timestamp_captura");
 
                     b.Property<decimal?>("Velocidad")
@@ -865,7 +927,8 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasColumnType("decimal(6,2)")
                         .HasColumnName("velocidad");
 
-                    b.Property<Guid>("ViajeId")
+                    b.Property<byte[]>("ViajeId")
+                        .IsRequired()
                         .HasColumnType("binary(16)")
                         .HasColumnName("viaje_id");
 
@@ -889,41 +952,43 @@ namespace APIGasoline.Infrastructure.Migrations
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.RevisionAuditoria", b =>
                 {
-                    b.Property<Guid>("RevisionAuditoriaId")
+                    b.Property<byte[]>("RevisionAuditoriaId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("revision_auditoria_id");
 
-                    b.Property<Guid?>("CarroId")
+                    b.Property<byte[]>("CarroId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("carro_id");
 
-                    b.Property<Guid>("EmpleadoRevisorId")
+                    b.Property<byte[]>("EmpleadoRevisorId")
+                        .IsRequired()
                         .HasColumnType("binary(16)")
                         .HasColumnName("empleado_revisor_id");
 
-                    b.Property<Guid>("EmpresaId")
+                    b.Property<byte[]>("EmpresaId")
+                        .IsRequired()
                         .HasColumnType("binary(16)")
                         .HasColumnName("empresa_id");
 
                     b.Property<string>("EstadoRevision")
                         .IsRequired()
-                        .HasColumnType("enum('pendiente_informacion','revisado','con_observaciones')")
+                        .HasColumnType("varchar(21)")
                         .HasColumnName("estado_revision")
                         .HasDefaultValueSql("'pendiente_informacion'");
 
                     b.Property<DateTime?>("FechaCierre")
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime2(0)")
                         .HasColumnName("fecha_cierre");
 
                     b.Property<DateTime?>("FechaRevision")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime2(0)")
                         .HasColumnName("fecha_revision")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasDefaultValueSql("SYSDATETIME()");
 
                     b.Property<string>("Observaciones")
                         .HasMaxLength(1000)
-                        .HasColumnType("varchar(1000)")
+                        .HasColumnType("nvarchar(1000)")
                         .HasColumnName("observaciones");
 
                     b.Property<DateOnly?>("PeriodoDesde")
@@ -934,7 +999,7 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasColumnType("date")
                         .HasColumnName("periodo_hasta");
 
-                    b.Property<Guid?>("ViajeId")
+                    b.Property<byte[]>("ViajeId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("viaje_id");
 
@@ -962,39 +1027,35 @@ namespace APIGasoline.Infrastructure.Migrations
                     b.ToTable("revision_auditoria", null, t =>
                         {
                             t.HasCheckConstraint("ck_revision_auditoria_alcance", "(viaje_id IS NOT NULL) OR (carro_id IS NOT NULL AND periodo_desde IS NOT NULL AND periodo_hasta IS NOT NULL)");
+
+                            t.HasCheckConstraint("ck_revision_auditoria_estado_revision", "[estado_revision] IN ('pendiente_informacion', 'revisado', 'con_observaciones')");
                         });
                 });
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.Rol", b =>
                 {
-                    b.Property<Guid>("RolId")
+                    b.Property<byte[]>("RolId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("rol_id");
 
                     b.Property<bool>("Activo")
-                        .HasColumnType("tinyint(1)")
+                        .HasColumnType("bit")
                         .HasDefaultValue(true)
                         .HasColumnName("activo");
 
                     b.Property<string>("Descripcion")
                         .HasMaxLength(255)
-                        .HasColumnType("varchar(255)")
+                        .HasColumnType("nvarchar(255)")
                         .HasColumnName("descripcion");
 
-                    b.Property<Guid>("EmpresaClave")
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("binary(16)")
-                        .HasColumnName("empresa_clave")
-                        .HasComputedColumnSql("COALESCE(`empresa_id`, 0x00000000000000000000000000000000)", true);
-
-                    b.Property<Guid?>("EmpresaId")
+                    b.Property<byte[]>("EmpresaId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("empresa_id");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("varchar(100)")
+                        .HasColumnType("nvarchar(100)")
                         .HasColumnName("nombre");
 
                     b.HasKey("RolId");
@@ -1002,24 +1063,26 @@ namespace APIGasoline.Infrastructure.Migrations
                     b.HasIndex("EmpresaId")
                         .HasDatabaseName("ix_rol_empresa_id");
 
-                    b.HasIndex("EmpresaClave", "Nombre")
+                    b.HasIndex("EmpresaId", "Nombre")
                         .IsUnique()
-                        .HasDatabaseName("uq_rol_empresa_clave_nombre");
+                        .HasDatabaseName("uq_rol_empresa_id_nombre");
 
                     b.ToTable("rol", (string)null);
                 });
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.RolPrivilegio", b =>
                 {
-                    b.Property<Guid>("RolPrivilegioId")
+                    b.Property<byte[]>("RolPrivilegioId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("rol_privilegio_id");
 
-                    b.Property<Guid>("PrivilegioId")
+                    b.Property<byte[]>("PrivilegioId")
+                        .IsRequired()
                         .HasColumnType("binary(16)")
                         .HasColumnName("privilegio_id");
 
-                    b.Property<Guid>("RolId")
+                    b.Property<byte[]>("RolId")
+                        .IsRequired()
                         .HasColumnType("binary(16)")
                         .HasColumnName("rol_id");
 
@@ -1040,12 +1103,12 @@ namespace APIGasoline.Infrastructure.Migrations
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.RutaProcesada", b =>
                 {
-                    b.Property<Guid>("RutaProcesadaId")
+                    b.Property<byte[]>("RutaProcesadaId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("ruta_procesada_id");
 
                     b.Property<bool>("AlertaKilometraje")
-                        .HasColumnType("tinyint(1)")
+                        .HasColumnType("bit")
                         .HasDefaultValue(false)
                         .HasColumnName("alerta_kilometraje");
 
@@ -1070,14 +1133,15 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasColumnType("decimal(10,2)")
                         .HasColumnName("distancia_odometro_km");
 
-                    b.Property<Guid>("EmpresaId")
+                    b.Property<byte[]>("EmpresaId")
+                        .IsRequired()
                         .HasColumnType("binary(16)")
                         .HasColumnName("empresa_id");
 
                     b.Property<DateTime>("FechaProceso")
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime2(0)")
                         .HasColumnName("fecha_proceso")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasDefaultValueSql("SYSDATETIME()");
 
                     b.Property<decimal>("LitrosCargados")
                         .HasPrecision(8, 2)
@@ -1086,7 +1150,7 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasColumnName("litros_cargados");
 
                     b.Property<string>("Polyline")
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("polyline");
 
                     b.Property<int>("PuntosDescartados")
@@ -1127,10 +1191,11 @@ namespace APIGasoline.Infrastructure.Migrations
                     b.Property<string>("VersionAlgoritmo")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("varchar(20)")
+                        .HasColumnType("nvarchar(20)")
                         .HasColumnName("version_algoritmo");
 
-                    b.Property<Guid>("ViajeId")
+                    b.Property<byte[]>("ViajeId")
+                        .IsRequired()
                         .HasColumnType("binary(16)")
                         .HasColumnName("viaje_id");
 
@@ -1156,61 +1221,168 @@ namespace APIGasoline.Infrastructure.Migrations
                     b.ToTable("ruta_procesada", (string)null);
                 });
 
+            modelBuilder.Entity("APIGasoline.Domain.Entities.SesionUsuario", b =>
+                {
+                    b.Property<byte[]>("SesionUsuarioId")
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("sesion_usuario_id");
+
+                    b.Property<byte[]>("EmpresaId")
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("empresa_id");
+
+                    b.Property<DateTime>("ExpiraAbsolutaEn")
+                        .HasColumnType("datetime2(0)")
+                        .HasColumnName("expira_absoluta_en");
+
+                    b.Property<DateTime>("ExpiraEn")
+                        .HasColumnType("datetime2(0)")
+                        .HasColumnName("expira_en");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("datetime2(0)")
+                        .HasColumnName("fecha_creacion");
+
+                    b.Property<DateTime?>("FechaRevocacion")
+                        .HasColumnType("datetime2(0)")
+                        .HasColumnName("fecha_revocacion");
+
+                    b.Property<DateTime?>("FechaRotacion")
+                        .HasColumnType("datetime2(0)")
+                        .HasColumnName("fecha_rotacion");
+
+                    b.Property<DateTime>("FechaUltimoUso")
+                        .HasColumnType("datetime2(0)")
+                        .HasColumnName("fecha_ultimo_uso");
+
+                    b.Property<string>("Ip")
+                        .HasMaxLength(45)
+                        .HasColumnType("nvarchar(45)")
+                        .HasColumnName("ip");
+
+                    b.Property<string>("MotivoRevocacion")
+                        .HasColumnType("varchar(25)")
+                        .HasColumnName("motivo_revocacion");
+
+                    b.Property<string>("NombreDispositivo")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("nombre_dispositivo");
+
+                    b.Property<string>("Plataforma")
+                        .HasColumnType("varchar(7)")
+                        .HasColumnName("plataforma");
+
+                    b.Property<byte[]>("RevocadaPorUsuarioId")
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("revocada_por_usuario_id");
+
+                    b.Property<string>("TokenHash")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("char(64)")
+                        .HasColumnName("token_hash");
+
+                    b.Property<string>("TokenHashAnterior")
+                        .HasMaxLength(64)
+                        .HasColumnType("char(64)")
+                        .HasColumnName("token_hash_anterior");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("user_agent");
+
+                    b.Property<byte[]>("UsuarioId")
+                        .IsRequired()
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("usuario_id");
+
+                    b.HasKey("SesionUsuarioId");
+
+                    b.HasIndex("ExpiraEn")
+                        .HasDatabaseName("ix_sesion_usuario_expira_en");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique()
+                        .HasDatabaseName("uq_sesion_usuario_token_hash");
+
+                    b.HasIndex("TokenHashAnterior")
+                        .HasDatabaseName("ix_sesion_usuario_token_hash_anterior");
+
+                    b.HasIndex("EmpresaId", "FechaRevocacion")
+                        .HasDatabaseName("ix_sesion_usuario_empresa_id_fecha_revocacion");
+
+                    b.HasIndex("UsuarioId", "FechaRevocacion", "ExpiraEn")
+                        .HasDatabaseName("ix_sesion_usuario_usuario_id_fecha_revocacion_expira_en");
+
+                    b.ToTable("sesion_usuario", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_sesion_usuario_motivo_revocacion", "[motivo_revocacion] IN ('cierre_sesion', 'cerrada_por_usuario', 'cerrada_por_administrador', 'cambio_password', 'usuario_desactivado', 'empleado_dado_de_baja', 'empleado_reasignado', 'empresa_eliminada', 'reuso_detectado', 'acceso_revocado', 'limite_sesiones')");
+
+                            t.HasCheckConstraint("ck_sesion_usuario_plataforma", "[plataforma] IN ('android', 'ios', 'web')");
+                        });
+                });
+
             modelBuilder.Entity("APIGasoline.Domain.Entities.SolicitudReserva", b =>
                 {
-                    b.Property<Guid>("SolicitudReservaId")
+                    b.Property<byte[]>("SolicitudReservaId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("solicitud_reserva_id");
 
-                    b.Property<Guid>("CarroId")
+                    b.Property<byte[]>("CarroId")
+                        .IsRequired()
                         .HasColumnType("binary(16)")
                         .HasColumnName("carro_id");
 
-                    b.Property<Guid?>("EmpleadoConfirmadorId")
+                    b.Property<byte[]>("EmpleadoConfirmadorId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("empleado_confirmador_id");
 
-                    b.Property<Guid>("EmpleadoSolicitanteId")
+                    b.Property<byte[]>("EmpleadoSolicitanteId")
+                        .IsRequired()
                         .HasColumnType("binary(16)")
                         .HasColumnName("empleado_solicitante_id");
 
-                    b.Property<Guid>("EmpresaId")
+                    b.Property<byte[]>("EmpresaId")
+                        .IsRequired()
                         .HasColumnType("binary(16)")
                         .HasColumnName("empresa_id");
 
                     b.Property<string>("Estado")
                         .IsRequired()
-                        .HasColumnType("enum('pendiente','aprobada','rechazada','cancelada','finalizada')")
+                        .HasColumnType("varchar(10)")
                         .HasColumnName("estado")
                         .HasDefaultValueSql("'pendiente'");
 
                     b.Property<DateTime?>("FechaLiberacion")
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime2(0)")
                         .HasColumnName("fecha_liberacion");
 
                     b.Property<DateTime?>("FechaResolucion")
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime2(0)")
                         .HasColumnName("fecha_resolucion");
 
                     b.Property<DateTime?>("FechaSolicitud")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime2(0)")
                         .HasColumnName("fecha_solicitud")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasDefaultValueSql("SYSDATETIME()");
 
                     b.Property<string>("MotivoResolucion")
                         .HasMaxLength(255)
-                        .HasColumnType("varchar(255)")
+                        .HasColumnType("nvarchar(255)")
                         .HasColumnName("motivo_resolucion");
 
                     b.Property<string>("MotivoSolicitud")
                         .HasMaxLength(255)
-                        .HasColumnType("varchar(255)")
+                        .HasColumnType("nvarchar(255)")
                         .HasColumnName("motivo_solicitud");
 
                     b.Property<string>("ObservacionesLiberacion")
                         .HasMaxLength(500)
-                        .HasColumnType("varchar(500)")
+                        .HasColumnType("nvarchar(500)")
                         .HasColumnName("observaciones_liberacion");
 
                     b.HasKey("SolicitudReservaId");
@@ -1233,37 +1405,40 @@ namespace APIGasoline.Infrastructure.Migrations
                     b.HasIndex("EmpresaId", "CarroId", "Estado")
                         .HasDatabaseName("ix_solicitud_reserva_empresa_id_carro_id_estado");
 
-                    b.ToTable("solicitud_reserva", (string)null);
+                    b.ToTable("solicitud_reserva", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_solicitud_reserva_estado", "[estado] IN ('pendiente', 'aprobada', 'rechazada', 'cancelada', 'finalizada')");
+                        });
                 });
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.Usuario", b =>
                 {
-                    b.Property<Guid>("UsuarioId")
+                    b.Property<byte[]>("UsuarioId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("usuario_id");
 
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(150)
-                        .HasColumnType("varchar(150)")
+                        .HasColumnType("nvarchar(150)")
                         .HasColumnName("email");
 
                     b.Property<string>("Estado")
                         .IsRequired()
-                        .HasColumnType("enum('activo','inactivo')")
+                        .HasColumnType("varchar(8)")
                         .HasColumnName("estado")
                         .HasDefaultValueSql("'activo'");
 
                     b.Property<DateTime?>("FechaRegistro")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime2(0)")
                         .HasColumnName("fecha_registro")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasDefaultValueSql("SYSDATETIME()");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasMaxLength(255)
-                        .HasColumnType("varchar(255)")
+                        .HasColumnType("nvarchar(255)")
                         .HasColumnName("password_hash");
 
                     b.HasKey("UsuarioId");
@@ -1272,20 +1447,25 @@ namespace APIGasoline.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("uq_usuario_email");
 
-                    b.ToTable("usuario", (string)null);
+                    b.ToTable("usuario", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_usuario_estado", "[estado] IN ('activo', 'inactivo')");
+                        });
                 });
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.UsuarioRol", b =>
                 {
-                    b.Property<Guid>("UsuarioRolId")
+                    b.Property<byte[]>("UsuarioRolId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("usuario_rol_id");
 
-                    b.Property<Guid>("RolId")
+                    b.Property<byte[]>("RolId")
+                        .IsRequired()
                         .HasColumnType("binary(16)")
                         .HasColumnName("rol_id");
 
-                    b.Property<Guid>("UsuarioId")
+                    b.Property<byte[]>("UsuarioId")
+                        .IsRequired()
                         .HasColumnType("binary(16)")
                         .HasColumnName("usuario_id");
 
@@ -1306,20 +1486,21 @@ namespace APIGasoline.Infrastructure.Migrations
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.Viaje", b =>
                 {
-                    b.Property<Guid>("ViajeId")
+                    b.Property<byte[]>("ViajeId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("viaje_id");
 
-                    b.Property<Guid>("CarroId")
+                    b.Property<byte[]>("CarroId")
+                        .IsRequired()
                         .HasColumnType("binary(16)")
                         .HasColumnName("carro_id");
 
-                    b.Property<Guid?>("CentroCostoId")
+                    b.Property<byte[]>("CentroCostoId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("centro_costo_id");
 
                     b.Property<bool>("Corregido")
-                        .HasColumnType("tinyint(1)")
+                        .HasColumnType("bit")
                         .HasDefaultValue(false)
                         .HasColumnName("corregido");
 
@@ -1328,42 +1509,44 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasColumnType("decimal(10,2)")
                         .HasColumnName("distancia_recorrida");
 
-                    b.Property<Guid>("EmpleadoOperadorId")
+                    b.Property<byte[]>("EmpleadoOperadorId")
+                        .IsRequired()
                         .HasColumnType("binary(16)")
                         .HasColumnName("empleado_operador_id");
 
-                    b.Property<Guid>("EmpresaId")
+                    b.Property<byte[]>("EmpresaId")
+                        .IsRequired()
                         .HasColumnType("binary(16)")
                         .HasColumnName("empresa_id");
 
                     b.Property<string>("Estado")
                         .IsRequired()
-                        .HasColumnType("enum('en_curso','finalizado','interrumpido')")
+                        .HasColumnType("varchar(12)")
                         .HasColumnName("estado")
                         .HasDefaultValueSql("'en_curso'");
 
                     b.Property<DateTime?>("FechaFin")
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime2(0)")
                         .HasColumnName("fecha_fin");
 
                     b.Property<DateTime>("FechaInicio")
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime2(0)")
                         .HasColumnName("fecha_inicio");
 
                     b.Property<DateTime?>("FechaRecepcion")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime2(0)")
                         .HasColumnName("fecha_recepcion")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasDefaultValueSql("SYSDATETIME()");
 
                     b.Property<string>("FotoTableroFinal")
                         .HasMaxLength(255)
-                        .HasColumnType("varchar(255)")
+                        .HasColumnType("nvarchar(255)")
                         .HasColumnName("foto_tablero_final");
 
                     b.Property<string>("FotoTableroInicial")
                         .HasMaxLength(255)
-                        .HasColumnType("varchar(255)")
+                        .HasColumnType("nvarchar(255)")
                         .HasColumnName("foto_tablero_inicial");
 
                     b.Property<decimal?>("KilometrajeFinal")
@@ -1378,10 +1561,10 @@ namespace APIGasoline.Infrastructure.Migrations
 
                     b.Property<string>("MotivoInterrupcion")
                         .HasMaxLength(255)
-                        .HasColumnType("varchar(255)")
+                        .HasColumnType("nvarchar(255)")
                         .HasColumnName("motivo_interrupcion");
 
-                    b.Property<Guid?>("SolicitudReservaId")
+                    b.Property<byte[]>("SolicitudReservaId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("solicitud_reserva_id");
 
@@ -1428,30 +1611,34 @@ namespace APIGasoline.Infrastructure.Migrations
                     b.HasIndex("EmpresaId", "CarroId", "FechaInicio")
                         .HasDatabaseName("ix_viaje_empresa_id_carro_id_fecha_inicio");
 
-                    b.ToTable("viaje", (string)null);
+                    b.ToTable("viaje", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_viaje_estado", "[estado] IN ('en_curso', 'finalizado', 'interrumpido')");
+                        });
                 });
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.ViajePausa", b =>
                 {
-                    b.Property<Guid>("ViajePausaId")
+                    b.Property<byte[]>("ViajePausaId")
                         .HasColumnType("binary(16)")
                         .HasColumnName("viaje_pausa_id");
 
-                    b.Property<Guid>("EmpresaId")
+                    b.Property<byte[]>("EmpresaId")
+                        .IsRequired()
                         .HasColumnType("binary(16)")
                         .HasColumnName("empresa_id");
 
                     b.Property<DateTime?>("FechaFin")
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime2(0)")
                         .HasColumnName("fecha_fin");
 
                     b.Property<DateTime>("FechaInicio")
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime2(0)")
                         .HasColumnName("fecha_inicio");
 
                     b.Property<string>("Motivo")
                         .HasMaxLength(255)
-                        .HasColumnType("varchar(255)")
+                        .HasColumnType("nvarchar(255)")
                         .HasColumnName("motivo");
 
                     b.Property<decimal?>("UbicacionLat")
@@ -1464,7 +1651,8 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasColumnType("decimal(9,6)")
                         .HasColumnName("ubicacion_lng");
 
-                    b.Property<Guid>("ViajeId")
+                    b.Property<byte[]>("ViajeId")
+                        .IsRequired()
                         .HasColumnType("binary(16)")
                         .HasColumnName("viaje_id");
 
@@ -1539,6 +1727,13 @@ namespace APIGasoline.Infrastructure.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_carga_combustible_empresa");
 
+                    b.HasOne("APIGasoline.Domain.Entities.CentroCosto", null)
+                        .WithMany()
+                        .HasForeignKey("EmpresaId", "CentroCostoId")
+                        .HasPrincipalKey("EmpresaId", "CentroCostoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_carga_combustible_centro_costo");
+
                     b.HasOne("APIGasoline.Domain.Entities.Viaje", null)
                         .WithMany()
                         .HasForeignKey("EmpresaId", "ViajeId")
@@ -1546,13 +1741,6 @@ namespace APIGasoline.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_carga_combustible_viaje");
-
-                    b.HasOne("APIGasoline.Domain.Entities.CentroCosto", null)
-                        .WithMany()
-                        .HasForeignKey("EmpresaId", "CentroCostoId")
-                        .HasPrincipalKey("EmpresaId", "CentroCostoId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_carga_combustible_centro_costo");
                 });
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.Carro", b =>
@@ -1756,6 +1944,16 @@ namespace APIGasoline.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_ruta_procesada_viaje");
+                });
+
+            modelBuilder.Entity("APIGasoline.Domain.Entities.SesionUsuario", b =>
+                {
+                    b.HasOne("APIGasoline.Domain.Entities.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_sesion_usuario_usuario");
                 });
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.SolicitudReserva", b =>

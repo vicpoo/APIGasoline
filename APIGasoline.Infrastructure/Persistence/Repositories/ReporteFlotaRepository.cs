@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace APIGasoline.Infrastructure.Persistence.Repositories;
 
-/// <summary>Consultas de solo lectura para los reportes de la flota (las sumas las hace MySQL).</summary>
+/// <summary>Consultas de solo lectura para los reportes de la flota (las sumas las hace la BD).</summary>
 public sealed class ReporteFlotaRepository : IReporteFlotaRepository
 {
     private readonly AppDbContext _context;

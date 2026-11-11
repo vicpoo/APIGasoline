@@ -24,10 +24,10 @@ public class DispositivoEmpleadoConfiguration : IEntityTypeConfiguration<Disposi
             .HasMaxLength(DispositivoEmpleado.TokenMaxLength)
             .IsRequired();
 
-        // enum('android','ios','web') en MySQL
+        // Valores fijos: 'android','ios','web' (varchar + CHECK)
         builder.Property(d => d.Plataforma)
             .HasColumnName("plataforma")
-            .HasColumnType("enum('android','ios','web')")
+            .EsEnum("android", "ios", "web")
             .HasConversion(
                 p => p == PlataformaDispositivo.Android ? "android"
                    : p == PlataformaDispositivo.Ios ? "ios"
@@ -45,14 +45,14 @@ public class DispositivoEmpleadoConfiguration : IEntityTypeConfiguration<Disposi
 
         builder.Property(d => d.FechaRegistro)
             .HasColumnName("fecha_registro")
-            .HasColumnType("timestamp")
-            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .HasColumnType(TiposSql.FechaHora)
+            .HasDefaultValueSql(TiposSql.Ahora)
             .ValueGeneratedNever()
             .IsRequired();
 
         builder.Property(d => d.FechaUltimoUso)
             .HasColumnName("fecha_ultimo_uso")
-            .HasColumnType("timestamp");
+            .HasColumnType(TiposSql.FechaHora);
 
         builder.HasOne<Empresa>()
             .WithMany()

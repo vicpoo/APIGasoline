@@ -106,7 +106,7 @@ public class PuntoRuta
             Velocidad is null ? null : (double)Velocidad.Value);
 
     /// <summary>
-    /// La columna timestamp de MySQL guarda segundos; se trunca para que
+    /// La columna de fecha (datetime2(0)) guarda segundos; se trunca para que
     /// la detección de puntos duplicados compare el mismo valor que está en la BD.
     /// </summary>
     public static DateTime TruncarASegundos(DateTime valor)

@@ -30,13 +30,13 @@ public class RevisionAuditoriaConfiguration : IEntityTypeConfiguration<RevisionA
 
         builder.Property(r => r.FechaRevision)
             .HasColumnName("fecha_revision")
-            .HasColumnType("timestamp")
-            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .HasColumnType(TiposSql.FechaHora)
+            .HasDefaultValueSql(TiposSql.Ahora)
             .ValueGeneratedOnAdd();
 
         builder.Property(r => r.EstadoRevision)
             .HasColumnName("estado_revision")
-            .HasColumnType(SnakeCaseEnumConverter<EstadoRevision>.ColumnType)
+            .EsEnum(SnakeCaseEnumConverter<EstadoRevision>.Valores)
             .HasConversion(new SnakeCaseEnumConverter<EstadoRevision>())
             .HasDefaultValueSql("'pendiente_informacion'")
             .ValueGeneratedNever()
@@ -48,7 +48,7 @@ public class RevisionAuditoriaConfiguration : IEntityTypeConfiguration<RevisionA
 
         builder.Property(r => r.FechaCierre)
             .HasColumnName("fecha_cierre")
-            .HasColumnType("timestamp");
+            .HasColumnType(TiposSql.FechaHora);
 
         // Propiedad calculada en el dominio, no es columna
         builder.Ignore(r => r.EstaCerrada);

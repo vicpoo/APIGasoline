@@ -45,11 +45,11 @@ public class PrivilegioConfiguration : IEntityTypeConfiguration<Privilegio>
             .HasColumnName("descripcion")
             .HasMaxLength(Privilegio.DescripcionMaxLength);
 
-        // enum('plataforma','empresa'). Default en BD = 'empresa', pero EF siempre envía el valor
+        // Valores fijos: 'plataforma','empresa'. Default en BD = 'empresa', pero EF siempre envía el valor
         // (Plataforma es el valor 0 del enum y, si no, EF lo omitiría y la BD guardaría 'empresa').
         builder.Property(p => p.Ambito)
             .HasColumnName("ambito")
-            .HasColumnType(SnakeCaseEnumConverter<AmbitoPrivilegio>.ColumnType)
+            .EsEnum(SnakeCaseEnumConverter<AmbitoPrivilegio>.Valores)
             .HasConversion(new SnakeCaseEnumConverter<AmbitoPrivilegio>())
             .HasDefaultValueSql("'empresa'")
             .ValueGeneratedNever()

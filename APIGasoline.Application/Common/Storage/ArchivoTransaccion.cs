@@ -7,7 +7,7 @@ namespace APIGasoline.Application.Common.Storage;
 /// <summary>
 /// Coordina el almacenamiento de archivos con la transacción del Unit of Work.
 ///
-/// MinIO no participa en la transacción de MySQL, por eso se usa compensación:
+/// MinIO no participa en la transacción de la BD, por eso se usa compensación:
 ///   1. Se sube el archivo.
 ///   2. Se ejecutan los cambios en BD dentro de una transacción (Begin/Commit).
 ///   3. Si algo falla: Rollback y se elimina el archivo recién subido.

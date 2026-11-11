@@ -23,7 +23,7 @@ public class AuditoriaEventoConfiguration : IEntityTypeConfiguration<AuditoriaEv
 
         builder.Property(a => a.Accion)
             .HasColumnName("accion")
-            .HasColumnType(SnakeCaseEnumConverter<AccionAuditoria>.ColumnType)
+            .EsEnum(SnakeCaseEnumConverter<AccionAuditoria>.Valores)
             .HasConversion(new SnakeCaseEnumConverter<AccionAuditoria>())
             .IsRequired();
 
@@ -38,11 +38,11 @@ public class AuditoriaEventoConfiguration : IEntityTypeConfiguration<AuditoriaEv
 
         builder.Property(a => a.ValoresAnteriores)
             .HasColumnName("valores_anteriores")
-            .HasColumnType("json");
+            .EsJson();
 
         builder.Property(a => a.ValoresNuevos)
             .HasColumnName("valores_nuevos")
-            .HasColumnType("json");
+            .EsJson();
 
         builder.Property(a => a.Motivo)
             .HasColumnName("motivo")
@@ -50,15 +50,15 @@ public class AuditoriaEventoConfiguration : IEntityTypeConfiguration<AuditoriaEv
 
         builder.Property(a => a.Origen)
             .HasColumnName("origen")
-            .HasColumnType(SnakeCaseEnumConverter<OrigenAuditoria>.ColumnType)
+            .EsEnum(SnakeCaseEnumConverter<OrigenAuditoria>.Valores)
             .HasConversion(new SnakeCaseEnumConverter<OrigenAuditoria>())
             .IsRequired();
 
         // Hora del servidor
         builder.Property(a => a.FechaHora)
             .HasColumnName("fecha_hora")
-            .HasColumnType("timestamp")
-            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .HasColumnType(TiposSql.FechaHora)
+            .HasDefaultValueSql(TiposSql.Ahora)
             .ValueGeneratedOnAdd();
 
         // Restrict: el historial nunca se borra en cascada

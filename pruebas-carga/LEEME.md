@@ -2,7 +2,7 @@
 
 ## Requisitos
 1. Instalar k6: `winget install k6 --source winget`  (o `choco install k6`)
-2. `docker compose up -d` (MySQL + MinIO)
+2. `docker compose up -d` (SQL Server + MinIO)
 3. Encender la API en **Release** (Debug es mucho más lento y falsea los resultados):
    `dotnet run --project APIGasoline -c Release --launch-profile http`
 

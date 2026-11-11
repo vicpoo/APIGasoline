@@ -32,7 +32,7 @@ API REST en **.NET 10** para la app de control de combustible y vehículos (Gaso
   - Catálogo de privilegios (`Permisos`).
   - Pipeline `AccesoPropioBehavior`.
 - **Infrastructure:**
-  - **Entity Framework Core** con MySQL.
+  - **Entity Framework Core** con SQL Server.
   - **Unit of Work** y sus repositorios.
   - Migraciones.
   - **MinIO** (archivos).
@@ -75,7 +75,7 @@ Handler (Application) ── orquesta: alcance (empresa / propios), validaciones
    ▼
 Dominio ── la entidad aplica sus reglas (lanza DomainException si no se cumplen)
    ▼
-Unit of Work ── repositorios → EF Core → MySQL   (+ MinIO para archivos)
+Unit of Work ── repositorios → EF Core → SQL Server  (+ MinIO para archivos)
    │            SaveChanges: el interceptor escribe auditoria_evento en la MISMA transacción
    ▼
 Notificaciones MediatR (por ejemplo, recalcular la ruta procesada) / Outbox (push)
@@ -447,7 +447,7 @@ Operador                         API                                  Supervisor
 
 | Sección | Para qué |
 |---|---|
-| `ConnectionStrings:DefaultConnection` | MySQL. |
+| `ConnectionStrings:DefaultConnection` | SQL Server (ej. `Server=localhost,1433;Database=apigasoline;User Id=sa;Password=...;TrustServerCertificate=True;`). |
 | `Jwt` | Emisor, audiencia, clave (mínimo 32 caracteres) y expiración del token de acceso (15 min). |
 | `Sesiones` | Refresh token: `RefreshDias` (30), `RefreshMaxDias` (90), `GraciaReusoSegundos` (30), `MaxSesionesPorUsuario` (10) y limpieza (`LimpiezaHabilitada`, `LimpiezaIntervaloHoras`, `LimpiezaRetencionDias`). |
 | `LimiteAuth` | Límite por IP: `LoginPorMinuto` (10), `RefreshPorMinuto` (60). `Habilitado: false` para pruebas de carga. |

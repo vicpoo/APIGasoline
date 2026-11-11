@@ -27,13 +27,13 @@ public class OutboxMensajeConfiguration : IEntityTypeConfiguration<OutboxMensaje
 
         builder.Property(o => o.Payload)
             .HasColumnName("payload")
-            .HasColumnType("json")
+            .EsJson()
             .IsRequired();
 
-        // enum('pendiente','procesando','enviado','fallido') en MySQL
+        // Valores fijos: 'pendiente','procesando','enviado','fallido' (varchar + CHECK)
         builder.Property(o => o.Estado)
             .HasColumnName("estado")
-            .HasColumnType("enum('pendiente','procesando','enviado','fallido')")
+            .EsEnum("pendiente", "procesando", "enviado", "fallido")
             .HasConversion(
                 e => e == EstadoOutbox.Pendiente ? "pendiente"
                    : e == EstadoOutbox.Procesando ? "procesando"
@@ -55,8 +55,8 @@ public class OutboxMensajeConfiguration : IEntityTypeConfiguration<OutboxMensaje
 
         builder.Property(o => o.ProximoIntento)
             .HasColumnName("proximo_intento")
-            .HasColumnType("timestamp")
-            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .HasColumnType(TiposSql.FechaHora)
+            .HasDefaultValueSql(TiposSql.Ahora)
             .ValueGeneratedNever()
             .IsRequired();
 
@@ -66,14 +66,14 @@ public class OutboxMensajeConfiguration : IEntityTypeConfiguration<OutboxMensaje
 
         builder.Property(o => o.FechaCreacion)
             .HasColumnName("fecha_creacion")
-            .HasColumnType("timestamp")
-            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .HasColumnType(TiposSql.FechaHora)
+            .HasDefaultValueSql(TiposSql.Ahora)
             .ValueGeneratedNever()
             .IsRequired();
 
         builder.Property(o => o.FechaProcesado)
             .HasColumnName("fecha_procesado")
-            .HasColumnType("timestamp");
+            .HasColumnType(TiposSql.FechaHora);
 
         builder.HasOne<Empresa>()
             .WithMany()

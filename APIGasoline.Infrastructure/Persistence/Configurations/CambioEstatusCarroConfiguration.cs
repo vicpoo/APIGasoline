@@ -23,20 +23,20 @@ public class CambioEstatusCarroConfiguration : IEntityTypeConfiguration<CambioEs
 
         builder.Property(c => c.EstatusAnterior)
             .HasColumnName("estatus_anterior")
-            .HasColumnType(EstadoCarroConverter.ColumnType)
+            .EsEnum(EstadoCarroConverter.Valores)
             .HasConversion(new EstadoCarroConverter())
             .IsRequired();
 
         builder.Property(c => c.EstatusNuevo)
             .HasColumnName("estatus_nuevo")
-            .HasColumnType(EstadoCarroConverter.ColumnType)
+            .EsEnum(EstadoCarroConverter.Valores)
             .HasConversion(new EstadoCarroConverter())
             .IsRequired();
 
-        // enum('liberacion','falla_mecanica','choque_o_golpe','servicio','emergencia','otro'); null = sin clasificar
+        // Valores fijos: 'liberacion','falla_mecanica','choque_o_golpe','servicio','emergencia','otro'; null = sin clasificar
         builder.Property(c => c.TipoMotivo)
             .HasColumnName("tipo_motivo")
-            .HasColumnType(TipoMotivoCambioConverter.ColumnType)
+            .EsEnum(TipoMotivoCambioConverter.Valores)
             .HasConversion(new TipoMotivoCambioConverter());
 
         builder.Property(c => c.Motivo)
@@ -50,15 +50,15 @@ public class CambioEstatusCarroConfiguration : IEntityTypeConfiguration<CambioEs
         // Si la app manda la fecha (offline) se usa; si viene null, la pone la BD.
         builder.Property(c => c.FechaCambio)
             .HasColumnName("fecha_cambio")
-            .HasColumnType("timestamp")
-            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .HasColumnType(TiposSql.FechaHora)
+            .HasDefaultValueSql(TiposSql.Ahora)
             .ValueGeneratedOnAdd();
 
         // Hora del servidor en que llegó el registro. Reemplaza a "sincronizado" (v4).
         builder.Property(c => c.FechaRecepcion)
             .HasColumnName("fecha_recepcion")
-            .HasColumnType("timestamp")
-            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .HasColumnType(TiposSql.FechaHora)
+            .HasDefaultValueSql(TiposSql.Ahora)
             .ValueGeneratedOnAdd();
 
         // Restrict en todas: es una bitácora, no debe perderse en cascada.

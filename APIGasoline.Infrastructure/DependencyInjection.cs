@@ -13,7 +13,6 @@ using APIGasoline.Infrastructure.Services;
 using APIGasoline.Infrastructure.Storage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using MySqlConnector;
 using APIGasoline.Application.Features.Reportes.Common;
 using APIGasoline.Infrastructure.Reportes;
 
@@ -23,21 +22,17 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString, JwtSettings jwtSettings, SesionesSettings sesionesSettings, MinioSettings minioSettings, OutboxSettings outboxSettings, PushSettings pushSettings)
     {
-        // Los Guid se guardan como binary(16) en orden RFC 4122 (compatible con UUID_TO_BIN / BIN_TO_UUID).
-        // Se fuerza aquí para no depender de que cada cadena de conexión lo traiga.
-        var cadenaConexion = new MySqlConnectionStringBuilder(connectionString)
-        {
-            GuidFormat = MySqlGuidFormat.Binary16
-        }.ConnectionString;
-
         // Auditoría: el interceptor agrega un auditoria_evento por cada cambio en el mismo SaveChanges.
         // Requiere que la API registre IUsuarioActual (usuario del token).
         services.AddScoped<IContextoAuditoria, ContextoAuditoria>();
         services.AddScoped<AuditoriaInterceptor>();
 
+        // SQL Server. Los Guid se guardan como binary(16) en orden RFC 4122 (ver AppDbContext.ConfigureConventions).
+        // Sin EnableRetryOnFailure: la API abre transacciones manuales (IUnitOfWork.BeginTransactionAsync)
+        // y la estrategia de reintentos de EF no las permite.
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
             options
-                .UseMySql(cadenaConexion, new MySqlServerVersion(new Version(8, 0, 36)))
+                .UseSqlServer(connectionString)
                 .AddInterceptors(serviceProvider.GetRequiredService<AuditoriaInterceptor>()));
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();

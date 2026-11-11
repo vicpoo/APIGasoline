@@ -5,7 +5,7 @@ namespace APIGasoline.Infrastructure.Persistence.Converters;
 
 /// <summary>
 /// Guarda un enum de C# como texto en snake_case (CambiarEstado ⇄ 'cambiar_estado'),
-/// para columnas enum(...) de MySQL. Se usa en las tablas de auditoría.
+/// para columnas de texto con valores fijos (varchar + CHECK, ver TiposSql.EsEnum).
 /// </summary>
 public class SnakeCaseEnumConverter<TEnum> : ValueConverter<TEnum, string>
     where TEnum : struct, Enum
@@ -15,9 +15,9 @@ public class SnakeCaseEnumConverter<TEnum> : ValueConverter<TEnum, string>
     {
     }
 
-    /// <summary>Tipo de columna enum('a','b',...) con todos los valores del enum.</summary>
-    public static string ColumnType
-        => "enum(" + string.Join(",", Enum.GetValues<TEnum>().Select(v => $"'{ToSnakeCase(v)}'")) + ")";
+    /// <summary>Todos los valores del enum en snake_case (para TiposSql.EsEnum: varchar + CHECK).</summary>
+    public static string[] Valores
+        => Enum.GetValues<TEnum>().Select(ToSnakeCase).ToArray();
 
     public static string ToSnakeCase(TEnum valor)
     {

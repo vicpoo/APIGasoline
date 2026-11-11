@@ -32,7 +32,7 @@ public class UsuarioConfiguration : IEntityTypeConfiguration<Usuario>
 
         builder.Property(u => u.Estado)
             .HasColumnName("estado")
-            .HasColumnType("enum('activo','inactivo')")
+            .EsEnum("activo", "inactivo")
             .HasConversion(
                 v => v.ToString().ToLowerInvariant(),
                 v => Enum.Parse<EstadoUsuario>(v, true))
@@ -43,8 +43,8 @@ public class UsuarioConfiguration : IEntityTypeConfiguration<Usuario>
         // La BD la llena al insertar; EF la lee de vuelta y nunca la envía.
         builder.Property(u => u.FechaRegistro)
             .HasColumnName("fecha_registro")
-            .HasColumnType("timestamp")
-            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .HasColumnType(TiposSql.FechaHora)
+            .HasDefaultValueSql(TiposSql.Ahora)
             .ValueGeneratedOnAdd();
 
         // Propiedad calculada en el dominio, no es columna

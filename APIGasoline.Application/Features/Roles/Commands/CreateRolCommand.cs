@@ -29,8 +29,8 @@ public class CreateRolCommandHandler : IRequestHandler<CreateRolCommand, RolDto>
         if (rol.EmpresaId is not null && !await _unitOfWork.Empresas.ExistsAsync(rol.EmpresaId.Value, cancellationToken))
             throw new NotFoundException($"No existe una empresa con el id {rol.EmpresaId}.");
 
-        // Único por empresa. MySQL permite varios NULL en un índice único, por eso
-        // la unicidad entre roles globales se valida aquí.
+        // Único por empresa (y entre roles globales). La BD también lo garantiza con
+        // uq_rol_empresa_id_nombre; aquí se valida antes para responder 409 con un mensaje claro.
         if (await _unitOfWork.Roles.NombreExistsAsync(rol.Nombre, rol.EmpresaId, null, cancellationToken))
             throw new ConflictException(rol.EsGlobal
                 ? $"Ya existe un rol global con el nombre '{rol.Nombre}'."

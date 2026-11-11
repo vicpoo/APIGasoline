@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 
 using APIGasoline.Domain.Entities;
+using APIGasoline.Infrastructure.Persistence.Converters;
 using Microsoft.EntityFrameworkCore;
 
 namespace APIGasoline.Infrastructure.Persistence;
@@ -38,9 +39,25 @@ public class AppDbContext : DbContext
     public DbSet<AuditoriaEvento> AuditoriaEventos => Set<AuditoriaEvento>();
     public DbSet<RevisionAuditoria> RevisionesAuditoria => Set<RevisionAuditoria>();
 
+    /// <summary>
+    /// Intercalación de la BD: sin distinguir mayúsculas ni acentos (CI_AI), igual que
+    /// utf8mb4_0900_ai_ci en MySQL. Afecta búsquedas y los índices únicos (email, placas...).
+    /// </summary>
+    public const string Intercalacion = "Modern_Spanish_CI_AI";
+
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        // Todos los Guid (Id y FK) como binary(16) en orden RFC 4122: ver GuidBinarioConverter.
+        configurationBuilder.Properties<Guid>()
+            .HaveConversion<GuidBinarioConverter>()
+            .HaveColumnType(GuidBinarioConverter.ColumnType);
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.UseCollation(Intercalacion);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+        TiposSql.AplicarRestricciones(modelBuilder);
         base.OnModelCreating(modelBuilder);
     }
 }

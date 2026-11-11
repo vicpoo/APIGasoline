@@ -57,10 +57,10 @@ public class CarroConfiguration : IEntityTypeConfiguration<Carro>
             .ValueGeneratedNever()
             .IsRequired();
 
-        // enum('disponible','ocupado','en_mantenimiento') en MySQL
+        // Valores fijos: 'disponible','ocupado','en_mantenimiento' (varchar + CHECK)
         builder.Property(c => c.Estado)
             .HasColumnName("estado")
-            .HasColumnType(EstadoCarroConverter.ColumnType)
+            .EsEnum(EstadoCarroConverter.Valores)
             .HasConversion(new EstadoCarroConverter())
             .HasDefaultValueSql("'disponible'")
             .ValueGeneratedNever()
@@ -69,10 +69,10 @@ public class CarroConfiguration : IEntityTypeConfiguration<Carro>
             .IsConcurrencyToken()
             .IsRequired();
 
-        // enum('carro','moto','camioneta','camion'); los carros que ya existían quedan como 'carro'
+        // Valores fijos: 'carro','moto','camioneta','camion'; los carros que ya existían quedan como 'carro'
         builder.Property(c => c.TipoVehiculo)
             .HasColumnName("tipo_vehiculo")
-            .HasColumnType(TipoVehiculoConverter.ColumnType)
+            .EsEnum(TipoVehiculoConverter.Valores)
             .HasConversion(new TipoVehiculoConverter())
             .HasDefaultValueSql($"'{TipoVehiculoConverter.Default}'")
             .ValueGeneratedNever()
@@ -87,7 +87,7 @@ public class CarroConfiguration : IEntityTypeConfiguration<Carro>
 
         builder.Property(c => c.FechaBaja)
             .HasColumnName("fecha_baja")
-            .HasColumnType("timestamp");
+            .HasColumnType(TiposSql.FechaHora);
 
         builder.Property(c => c.MotivoBaja)
             .HasColumnName("motivo_baja")
@@ -99,8 +99,8 @@ public class CarroConfiguration : IEntityTypeConfiguration<Carro>
         // La BD la llena al insertar; EF la lee de vuelta y nunca la envía.
         builder.Property(c => c.FechaAlta)
             .HasColumnName("fecha_alta")
-            .HasColumnType("timestamp")
-            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .HasColumnType(TiposSql.FechaHora)
+            .HasDefaultValueSql(TiposSql.Ahora)
             .ValueGeneratedOnAdd();
 
         // Restrict: la empresa usa soft delete, nunca se borra físicamente con carros.

@@ -235,7 +235,7 @@ public sealed class AuditoriaInterceptor : SaveChangesInterceptor
 
         foreach (var propiedad in entrada.Properties)
         {
-            // Las columnas generadas por MySQL (ej. rol.empresa_clave) no son datos del usuario
+            // Las columnas calculadas por la BD no son datos del usuario
             if (propiedad.Metadata.GetComputedColumnSql() is not null)
                 continue;
 
@@ -263,7 +263,7 @@ public sealed class AuditoriaInterceptor : SaveChangesInterceptor
         if (ColumnasSensibles.Contains(columna))
             return ValorOculto;
 
-        // Enums: se guarda el mismo texto que en la columna enum(...) de MySQL ("en_mantenimiento")
+        // Enums: se guarda el mismo texto que en la columna de la BD ("en_mantenimiento")
         if (valor is Enum && propiedad.Metadata.FindTypeMapping()?.Converter is { } convertidor)
             return convertidor.ConvertToProvider(valor);
 
