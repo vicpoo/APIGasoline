@@ -5,6 +5,7 @@
   <Project Path="APIGasoline/APIGasoline.csproj" />
   <Project Path="APIGasoline.AppHost/APIGasoline.AppHost.csproj" />
   <Folder Name="/tests/">
+    <Project Path="tests/APIGasoline.Api.IntegrationTests/APIGasoline.Api.IntegrationTests.csproj" />
     <Project Path="tests/APIGasoline.Application.Tests/APIGasoline.Application.Tests.csproj" />
     <Project Path="tests/APIGasoline.Domain.Tests/APIGasoline.Domain.Tests.csproj" />
   </Folder>

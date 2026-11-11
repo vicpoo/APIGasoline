@@ -231,3 +231,6 @@ static RateLimitPartition<string> LimitePorIp(HttpContext http, bool habilitado,
         QueueLimit = 0
     });
 }
+
+// Visible para las pruebas de integración (WebApplicationFactory<Program>).
+public partial class Program;

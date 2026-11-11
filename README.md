@@ -81,13 +81,32 @@ Ejemplo de `APIGasoline/appsettings.Local.json`:
 ## Comandos útiles
 
 ```bash
-dotnet test                                   # pruebas (dominio y aplicación)
+dotnet test                                   # todas las pruebas (las de integración requieren Docker abierto)
+dotnet test tests/APIGasoline.Domain.Tests tests/APIGasoline.Application.Tests   # solo unitarias, sin Docker
+dotnet test tests/APIGasoline.Api.IntegrationTests                              # matriz de fugas entre empresas
 dotnet tool restore                           # instala dotnet-ef (versión fijada en .config/dotnet-tools.json)
 dotnet ef migrations add NombreDelCambio -p APIGasoline.Infrastructure -s APIGasoline
 dotnet ef database update -p APIGasoline.Infrastructure -s APIGasoline
 ```
 
 Para borrar la base de datos de Aspire y empezar de cero: detén el AppHost y en Docker Desktop elimina el contenedor `sql-...` y el volumen `apigasoline-sql`.
+
+---
+
+## Pruebas de fugas entre empresas
+
+`tests/APIGasoline.Api.IntegrationTests` levanta la API completa contra un SQL Server real en Docker (Testcontainers) con dos empresas, **A** y **B**, cada una con operación real (solicitud, viaje con GPS, carga, ruta, revisión, dispositivo...). Después, el administrador de A intenta, endpoint por endpoint:
+
+| Prueba | Qué intenta A | Debe pasar |
+|---|---|---|
+| `FugasLecturaTests` | Ver un registro de B, o listas filtrando por B | 403/404, y ningún id de B en la respuesta |
+| `FugasEscrituraTests` | Editar, borrar o mover registros de B (o pasar los suyos a B) | Rechazo, y el registro de B queda igual |
+| `FugasCreacionTests` | Crear cosas dentro de B o colgadas de registros de B | Rechazo, y no aparece nada nuevo en B |
+| `SoloPlataformaTests` | Acciones de plataforma (empresas, corporativos, privilegios, outbox) | 403 |
+
+Cada caso tiene un **control** (`ControlesDeLaMatrizTests`): el dueño sí puede hacer lo mismo. Si un control falla, el caso está mal armado. `CoberturaEndpointsTests` falla si algún endpoint de la API no está en la matriz (`Matriz/CatalogoFugas.cs`).
+
+Un fallo que empieza con **`FUGA:`** es un hueco de seguridad real.
 
 ---
 
@@ -99,7 +118,7 @@ APIGasoline.Application/     Casos de uso (Commands / Queries con MediatR), DTOs
 APIGasoline.Domain/          Entidades y reglas de negocio
 APIGasoline.Infrastructure/  EF Core (SQL Server), repositorios, migraciones, MinIO, Firebase, reportes
 APIGasoline.AppHost/         Orquestador de desarrollo (Aspire)
-tests/                       Pruebas unitarias
+tests/                       Pruebas unitarias y de integración (matriz de fugas)
 BD/                          Esquema y documentación de la base de datos
 docs/                        Documentación de la API
 postman/                     Colecciones de Postman
