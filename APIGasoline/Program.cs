@@ -23,6 +23,12 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Desarrollo: appsettings.Local.json (en .gitignore) guarda los valores personales de cada quien
+// (llave JWT propia, Firebase, otra BD...). Se inserta justo después de appsettings.{Ambiente}.json
+// para que las variables de entorno (Aspire, Docker) sigan teniendo prioridad sobre él.
+if (builder.Environment.IsDevelopment())
+    ConfiguracionLocal.Agregar(builder.Configuration, builder.Environment);
+
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Falta la cadena de conexión 'DefaultConnection'.");
 
@@ -44,6 +50,16 @@ builder.Services.AddSingleton<IHostPeticionActual, HostPeticionActual>();
 builder.Services.AddScoped<IUsuarioActual, UsuarioActual>();
 var jwtSettings = builder.Configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>()
     ?? throw new InvalidOperationException("Falta la sección 'Jwt' en la configuración.");
+
+// Desarrollo sin llave configurada (repo recién clonado): se genera una al azar en cada arranque.
+// Los access tokens anteriores dejan de servir al reiniciar, pero los refresh tokens siguen
+// funcionando (no son JWT). En cualquier otro ambiente la llave es obligatoria (Validar() falla).
+var jwtKeyGenerada = false;
+if (builder.Environment.IsDevelopment() && string.IsNullOrWhiteSpace(jwtSettings.Key))
+{
+    jwtSettings.Key = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(48));
+    jwtKeyGenerada = true;
+}
 
 var sesionesSettings = builder.Configuration.GetSection(SesionesSettings.SectionName).Get<SesionesSettings>()
     ?? new SesionesSettings();
@@ -161,6 +177,28 @@ if (seguridadSettings.SembrarAlIniciar)
     {
         app.Logger.LogError(ex, "No se pudo sembrar la seguridad (¿la BD está arriba y con las migraciones aplicadas?).");
     }
+}
+
+// Empresas demo A y B (solo Development; ver SembrarDatosDemoCommand)
+if (app.Environment.IsDevelopment() && seguridadSettings.SembrarAlIniciar && seguridadSettings.SembrarDemo)
+{
+    try
+    {
+        using var scope = app.Services.CreateScope();
+        var sender = scope.ServiceProvider.GetRequiredService<MediatR.ISender>();
+        await sender.Send(new SembrarDatosDemoCommand());
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "No se pudieron sembrar los datos demo.");
+    }
+}
+
+if (jwtKeyGenerada)
+{
+    app.Logger.LogWarning(
+        "Jwt:Key vacía: se generó una llave temporal para desarrollo. Los access tokens se invalidan al reiniciar. " +
+        "Para fijarla, ponla en APIGasoline/appsettings.Local.json.");
 }
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();

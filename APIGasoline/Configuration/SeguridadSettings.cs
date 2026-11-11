@@ -19,4 +19,10 @@ public class SeguridadSettings
     public string? AdminEmail { get; set; }
 
     public string? AdminPassword { get; set; }
+
+    /// <summary>
+    /// Solo en Development: crea las empresas demo A y B con sus usuarios, roles, carros y centros
+    /// de costo (SembrarDatosDemoCommand). Se ignora en cualquier otro ambiente.
+    /// </summary>
+    public bool SembrarDemo { get; set; }
 }

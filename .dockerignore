@@ -5,6 +5,8 @@
 .gitignore
 **/*.user
 **/appsettings.Development.json
+**/appsettings.Local.json
+APIGasoline.AppHost/
 .env
 .env.*
 secrets/

@@ -1,0 +1,27 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.6.5">
+
+  <!--
+    Orquestador de DESARROLLO (Aspire). Un solo comando levanta todo:
+      dotnet run (con la opcion project apuntando a APIGasoline.AppHost, ver README.md)
+    SQL Server y MinIO corren en Docker (requiere Docker Desktop abierto) y la API como proyecto.
+    No se usa en producción (allá sigue docker-compose.prod.yml).
+  -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- Aspire guarda aquí la contraseña de sa que genera la primera vez (dotnet user-secrets). -->
+    <UserSecretsId>apigasoline-apphost</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.SqlServer" Version="13.6.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\APIGasoline\APIGasoline.csproj" />
+  </ItemGroup>
+
+</Project>

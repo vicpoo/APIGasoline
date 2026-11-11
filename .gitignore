@@ -7,8 +7,9 @@
 bin/
 obj/
 
-# Configuración local con contraseñas
-appsettings.Development.json
+# Configuración personal de cada desarrollador (contraseñas, llaves, rutas propias).
+# appsettings.Development.json SÍ se sube: solo trae valores de desarrollo sin secretos.
+appsettings.Local.json
 
 # Variables de entorno de Docker (secretos)
 .env
