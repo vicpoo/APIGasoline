@@ -115,9 +115,11 @@ Table usuario {
   password_hash varchar(255) [not null, note: 'Contraseña cifrada con PBKDF2. Nunca en texto plano.']
   estado usuario_estado [not null, default: 'activo', note: 'Un usuario inactivo no puede iniciar sesión (403).']
   fecha_registro timestamp [default: `now()`, note: 'Fecha de alta.']
+  empresa_id binary(16) [note: 'Empresa dueña de la cuenta (fase 3). NULL = plataforma o aún sin asignar.']
 
   indexes {
     email [name: 'uq_usuario_email', unique]
+    empresa_id [name: 'ix_usuario_empresa_id']
   }
 
   Note: 'Credenciales para iniciar sesión (correo + contraseña cifrada con PBKDF2).'
@@ -664,6 +666,7 @@ Ref fk_solicitud_reserva_carro: solicitud_reserva.(empresa_id, carro_id) > carro
 Ref fk_solicitud_reserva_empleado_confirmador: solicitud_reserva.(empresa_id, empleado_confirmador_id) > empleado.(empresa_id, empleado_id) [delete: restrict]
 Ref fk_solicitud_reserva_empleado_solicitante: solicitud_reserva.(empresa_id, empleado_solicitante_id) > empleado.(empresa_id, empleado_id) [delete: restrict]
 Ref fk_solicitud_reserva_empresa: solicitud_reserva.empresa_id > empresa.empresa_id [delete: restrict]
+Ref fk_usuario_empresa: usuario.empresa_id > empresa.empresa_id [delete: restrict]
 Ref fk_usuario_rol_rol: usuario_rol.rol_id > rol.rol_id [delete: cascade]
 Ref fk_usuario_rol_usuario: usuario_rol.usuario_id > usuario.usuario_id [delete: cascade]
 Ref fk_viaje_carro: viaje.(empresa_id, carro_id) > carro.(empresa_id, carro_id) [delete: restrict]

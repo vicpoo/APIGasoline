@@ -6,6 +6,9 @@ public interface IDispositivoEmpleadoRepository
 {
     Task<DispositivoEmpleado?> GetByIdAsync(Guid dispositivoEmpleadoId, CancellationToken cancellationToken = default);
     Task<DispositivoEmpleado?> GetByTokenAsync(string tokenFcm, CancellationToken cancellationToken = default);
+
+    /// <summary>true si el token ya está registrado en cualquier empresa (es único en toda la BD).</summary>
+    Task<bool> TokenRegistradoAsync(string tokenFcm, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<DispositivoEmpleado>> GetByEmpleadoAsync(Guid empleadoId, CancellationToken cancellationToken = default);
 
     /// <summary>Con seguimiento de cambios: el envío puede desactivar los que tengan token inválido.</summary>

@@ -34,6 +34,10 @@ public sealed class CerrarSesionUsuarioCommandHandler : ICommandHandler<CerrarSe
 
     public async Task Handle(CerrarSesionUsuarioCommand request, CancellationToken cancellationToken)
     {
+        // El usuario de otra empresa "no existe" (filtro por empresa). Las sesiones no tienen filtro propio.
+        if (request.UsuarioId != _usuarioActual.UsuarioId && !await _unitOfWork.Usuarios.ExistsAsync(request.UsuarioId, cancellationToken))
+            throw new NotFoundException($"No existe un usuario con el id {request.UsuarioId}.");
+
         var sesion = await _unitOfWork.Sesiones.GetByIdAsync(request.SesionId, cancellationToken);
 
         // Si la sesión es de otro usuario se responde igual que si no existiera

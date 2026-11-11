@@ -211,6 +211,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseRateLimiter();
 app.UseAuthentication();
+app.UseMiddleware<ContextoEmpresaMiddleware>(); // aislamiento entre empresas (antes de autorizar)
 app.UseAuthorization();
 app.MapControllers();
 

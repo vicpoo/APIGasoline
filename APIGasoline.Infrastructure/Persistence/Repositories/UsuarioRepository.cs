@@ -28,8 +28,9 @@ public class UsuarioRepository : IUsuarioRepository
     public Task<bool> ExistsAsync(Guid usuarioId, CancellationToken cancellationToken = default)
         => _context.Usuarios.AnyAsync(u => u.UsuarioId == usuarioId, cancellationToken);
 
+    // Sin el filtro por empresa: el correo es único en toda la BD (uq_usuario_email). Solo devuelve sí/no.
     public Task<bool> EmailExistsAsync(string email, Guid? excludeUsuarioId = null, CancellationToken cancellationToken = default)
-        => _context.Usuarios.AnyAsync(
+        => _context.Usuarios.IgnoreQueryFilters([FiltrosConsulta.Empresa]).AnyAsync(
             u => u.Email == email && (excludeUsuarioId == null || u.UsuarioId != excludeUsuarioId),
             cancellationToken);
 

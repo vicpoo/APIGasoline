@@ -14,8 +14,14 @@ internal static class EmpleadoValidator
         if (!await unitOfWork.Empresas.ExistsAsync(empresaId, cancellationToken))
             throw new NotFoundException($"No existe una empresa con el id {empresaId}.");
 
-        if (!await unitOfWork.Usuarios.ExistsAsync(usuarioId, cancellationToken))
-            throw new NotFoundException($"No existe un usuario con el id {usuarioId}.");
+        var usuario = await unitOfWork.Usuarios.GetByIdAsync(usuarioId, cancellationToken)
+            ?? throw new NotFoundException($"No existe un usuario con el id {usuarioId}.");
+
+        // La cuenta queda en la empresa de su empleado; una cuenta de otra empresa no se puede usar
+        if (usuario.EmpresaId is not null && usuario.EmpresaId != empresaId)
+            throw new ConflictException($"El usuario {usuarioId} pertenece a otra empresa.");
+
+        usuario.AsignarEmpresa(empresaId);
 
         if (await unitOfWork.Empleados.UsuarioAsignadoAsync(usuarioId, excludeEmpleadoId, cancellationToken))
             throw new ConflictException($"El usuario {usuarioId} ya está asignado a otro empleado (activo o eliminado).");

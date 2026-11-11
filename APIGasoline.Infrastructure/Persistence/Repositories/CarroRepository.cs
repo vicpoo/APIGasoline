@@ -48,8 +48,9 @@ public class CarroRepository : ICarroRepository
     public Task<bool> ExistsAsync(Guid carroId, CancellationToken cancellationToken = default)
         => _context.Carros.AnyAsync(c => c.CarroId == carroId, cancellationToken);
 
+    // Sin el filtro por empresa: las placas son únicas en toda la BD (índice único). Solo devuelve sí/no.
     public Task<bool> PlacasExistsAsync(string placas, Guid? excludeCarroId = null, CancellationToken cancellationToken = default)
-        => _context.Carros.AnyAsync(
+        => _context.Carros.IgnoreQueryFilters([FiltrosConsulta.Empresa]).AnyAsync(
             c => c.Placas == placas && (excludeCarroId == null || c.CarroId != excludeCarroId),
             cancellationToken);
 

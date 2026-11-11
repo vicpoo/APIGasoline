@@ -1,4 +1,5 @@
 ﻿using APIGasoline.Application.Common.Interfaces;
+using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Common.Security;
 using APIGasoline.Application.Features.Sesiones.DTOs;
 using APIGasoline.Domain.Interfaces;
@@ -31,6 +32,10 @@ public sealed class GetSesionesUsuarioQueryHandler : IQueryHandler<GetSesionesUs
 
     public async Task<IReadOnlyList<SesionUsuarioDto>> Handle(GetSesionesUsuarioQuery request, CancellationToken cancellationToken)
     {
+        // El usuario de otra empresa "no existe" (filtro por empresa). Las sesiones no tienen filtro propio.
+        if (request.UsuarioId != _usuarioActual.UsuarioId && !await _unitOfWork.Usuarios.ExistsAsync(request.UsuarioId, cancellationToken))
+            throw new NotFoundException($"No existe un usuario con el id {request.UsuarioId}.");
+
         var sesiones = await _unitOfWork.Sesiones.GetActivasByUsuarioAsync(request.UsuarioId, _dateTime.Now, cancellationToken);
         var sesionActual = _usuarioActual.SesionId;
 

@@ -68,6 +68,7 @@ internal class UnidadFalsa : DispatchProxy
                 return Repositorio<IUsuarioRepository>(nombre => nombre switch
                 {
                     "GetByIdAsync" => a => Task.FromResult(Usuarios.GetValueOrDefault((Guid)a[0]!)),
+                    "ExistsAsync" => a => Task.FromResult(Usuarios.ContainsKey((Guid)a[0]!)),
                     _ => null
                 });
             case "get_Empleados":

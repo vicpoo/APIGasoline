@@ -108,7 +108,15 @@ Para borrar la base de datos de Aspire y empezar de cero: detén el AppHost y en
 
 Cada caso tiene un **control** (`ControlesDeLaMatrizTests`): el dueño sí puede hacer lo mismo. Si un control falla, el caso está mal armado. `CoberturaEndpointsTests` falla si algún endpoint de la API no está en la matriz (`Matriz/CatalogoFugas.cs`).
 
-Un fallo que empieza con **`FUGA:`** es un hueco de seguridad real.
+Un fallo que empieza con **`FUGA:`** es un hueco de seguridad real. La matriz debe estar siempre en verde.
+
+### Cómo se aíslan las empresas
+
+- **Lecturas:** cada consulta de EF Core lleva el filtro global `Empresa` (`AppDbContext.AplicarFiltroPorEmpresa`). Para un usuario de una empresa, lo de otra "no existe": 404 en el detalle y fuera de las listas.
+- **Escrituras:** `AislamientoEmpresaInterceptor` revisa todo lo que va a guardar cada `SaveChanges` y responde **403** si se crea, modifica o borra algo de otra empresa (también roles globales y cambios de `empresaId`).
+- **De qué empresa es la petición:** `IContextoEmpresa`, que `ContextoEmpresaMiddleware` inicializa justo después de autenticar con la empresa del token. Con `plataforma.multiempresa`, o sin usuario (login, workers, siembra), no hay filtro. Si hay usuario y no se inicializó, falla cerrado.
+- **Usuarios:** `usuario.empresa_id` dice de qué empresa es la cuenta. Un administrador de empresa crea usuarios solo en la suya; la plataforma puede mandar `empresaId` (o ninguno: se asigna al crearle su empleado).
+- `AislamientoEmpresaTests` (pruebas de arquitectura) falla si una tabla nueva queda sin filtro o sin regla en el guardián, o si alguien usa `IgnoreQueryFilters()` sin nombre.
 
 ---
 
@@ -134,6 +142,7 @@ public sealed class GetCarroByIdQueryHandler : IQueryHandler<GetCarroByIdQuery, 
 | Es `sealed record` inmutable, se llama `XxxCommand`/`XxxQuery` y vive en `Commands`/`Queries` | `CommandsYQueriesTests` |
 | Tiene exactamente un handler `sealed`, llamado igual + `Handler`, que implementa `ICommandHandler`/`IQueryHandler` | `CommandsYQueriesTests` |
 | Una Query no guarda, no abre transacciones, no publica eventos, no sube ni borra archivos y no crea Commands (se revisa el IL compilado) | `QueriesSoloLeenTests` |
+| Cada tabla tiene el filtro por empresa (o está en la lista de exentas) y el guardián sabe aislarla; nadie quita todos los filtros sin revisión | `AislamientoEmpresaTests` |
 | Los controladores solo reciben `ISender` | `ControladoresTests` |
 | Domain ← Application ← Infrastructure ← API (nadie depende hacia afuera) | `CapasTests` |
 

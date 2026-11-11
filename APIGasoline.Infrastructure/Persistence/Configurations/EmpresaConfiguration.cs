@@ -47,8 +47,9 @@ public class EmpresaConfiguration : IEntityTypeConfiguration<Empresa>
             .HasDefaultValueSql(TiposSql.Ahora)
             .ValueGeneratedOnAdd();
 
-        // Filtro global: todas las consultas ignoran las empresas eliminadas.
-        builder.HasQueryFilter(e => !e.Eliminado);
+        // Filtro global con nombre: todas las consultas ignoran las empresas eliminadas.
+        // (El filtro por empresa se agrega en AppDbContext.)
+        builder.HasQueryFilter(FiltrosConsulta.Eliminado, e => !e.Eliminado);
 
         // Restrict: no se puede borrar un corporativo o una división que tenga empresas.
         builder.HasOne<Corporativo>()

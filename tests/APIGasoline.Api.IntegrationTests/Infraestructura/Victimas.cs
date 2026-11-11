@@ -44,12 +44,12 @@ public static class Victimas
             return rol.RolId;
         });
 
-    /// <summary>Usuario sin empleado (sin empresa todavía).</summary>
-    public static Task<Guid> UsuarioLibreAsync(this Escenario e)
+    /// <summary>Usuario de la empresa todavía sin empleado.</summary>
+    public static Task<Guid> UsuarioLibreAsync(this Escenario e, DatosEmpresa d)
         => e.EnBdAsync(async (c, servicios) =>
         {
             var hash = servicios.GetRequiredService<IPasswordHasher>().Hash(PasswordVictima);
-            var usuario = Usuario.Crear($"{Unico("libre.")}@pruebas.local".ToLowerInvariant(), hash);
+            var usuario = Usuario.Crear($"{Unico("libre.")}.{d.Letra.ToLowerInvariant()}@pruebas.local".ToLowerInvariant(), hash, empresaId: d.EmpresaId);
             c.Usuarios.Add(usuario);
             await c.SaveChangesAsync();
             return usuario.UsuarioId;
@@ -60,7 +60,7 @@ public static class Victimas
         => e.EnBdAsync(async (c, servicios) =>
         {
             var hash = servicios.GetRequiredService<IPasswordHasher>().Hash(PasswordVictima);
-            var usuario = Usuario.Crear($"{Unico("victima.")}.{d.Letra.ToLowerInvariant()}@pruebas.local".ToLowerInvariant(), hash);
+            var usuario = Usuario.Crear($"{Unico("victima.")}.{d.Letra.ToLowerInvariant()}@pruebas.local".ToLowerInvariant(), hash, empresaId: d.EmpresaId);
             c.Usuarios.Add(usuario);
 
             var empleado = Empleado.Crear(d.EmpresaId, usuario.UsuarioId, "Empleado víctima",

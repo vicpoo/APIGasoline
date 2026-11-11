@@ -1,4 +1,5 @@
 ﻿using APIGasoline.Application.Common.Interfaces;
+using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Common.Security;
 using APIGasoline.Domain.Interfaces;
 using APIGasoline.Application.Common.Messaging;
@@ -28,6 +29,10 @@ public sealed class MarcarTodasNotificacionesLeidasCommandHandler : ICommandHand
 
     public async Task<int> Handle(MarcarTodasNotificacionesLeidasCommand request, CancellationToken cancellationToken)
     {
+        // Un empleado de otra empresa "no existe" (filtro por empresa): 404 en vez de marcar 0
+        if (!await _unitOfWork.Empleados.ExistsAsync(request.EmpleadoDestinatarioId, cancellationToken))
+            throw new NotFoundException($"No existe un empleado con el id {request.EmpleadoDestinatarioId}.");
+
         var noLeidas = await _unitOfWork.Notificaciones.GetNoLeidasAsync(request.EmpleadoDestinatarioId, cancellationToken);
 
         foreach (var notificacion in noLeidas)

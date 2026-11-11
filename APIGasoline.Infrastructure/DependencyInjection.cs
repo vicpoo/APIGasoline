@@ -27,13 +27,19 @@ public static class DependencyInjection
         services.AddScoped<IContextoAuditoria, ContextoAuditoria>();
         services.AddScoped<AuditoriaInterceptor>();
 
+        // Aislamiento entre empresas: el filtro global de AppDbContext limita las lecturas y este
+        // guardián las escrituras (va ANTES que la auditoría: si rechaza, no se registra nada).
+        services.AddScoped<AislamientoEmpresaInterceptor>();
+
         // SQL Server. Los Guid se guardan como binary(16) en orden RFC 4122 (ver AppDbContext.ConfigureConventions).
         // Sin EnableRetryOnFailure: la API abre transacciones manuales (IUnitOfWork.BeginTransactionAsync)
         // y la estrategia de reintentos de EF no las permite.
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
             options
                 .UseSqlServer(connectionString)
-                .AddInterceptors(serviceProvider.GetRequiredService<AuditoriaInterceptor>()));
+                .AddInterceptors(
+                    serviceProvider.GetRequiredService<AislamientoEmpresaInterceptor>(),
+                    serviceProvider.GetRequiredService<AuditoriaInterceptor>()));
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IMigradorBaseDatos, MigradorBaseDatos>();

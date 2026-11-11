@@ -1221,3 +1221,71 @@ END;
 COMMIT;
 GO
 
+BEGIN TRANSACTION;
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261111211442_AgregarEmpresaAUsuario'
+)
+BEGIN
+    ALTER TABLE [usuario] ADD [empresa_id] binary(16) NULL;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261111211442_AgregarEmpresaAUsuario'
+)
+BEGIN
+    CREATE INDEX [ix_usuario_empresa_id] ON [usuario] ([empresa_id]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261111211442_AgregarEmpresaAUsuario'
+)
+BEGIN
+    ALTER TABLE [usuario] ADD CONSTRAINT [fk_usuario_empresa] FOREIGN KEY ([empresa_id]) REFERENCES [empresa] ([empresa_id]) ON DELETE NO ACTION;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261111211442_AgregarEmpresaAUsuario'
+)
+BEGIN
+    EXEC(N'
+    UPDATE u SET u.empresa_id = e.empresa_id
+    FROM usuario AS u
+    JOIN empleado AS e ON e.usuario_id = u.usuario_id;
+    ');
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261111211442_AgregarEmpresaAUsuario'
+)
+BEGIN
+    EXEC(N'
+    UPDATE u SET u.empresa_id = r.empresa_id
+    FROM usuario AS u
+    CROSS APPLY (
+        SELECT MIN(rol.empresa_id) AS empresa_id
+        FROM usuario_rol AS ur
+        JOIN rol ON rol.rol_id = ur.rol_id
+        WHERE ur.usuario_id = u.usuario_id AND rol.empresa_id IS NOT NULL
+        HAVING COUNT(DISTINCT rol.empresa_id) = 1
+    ) AS r
+    WHERE u.empresa_id IS NULL;
+    ');
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261111211442_AgregarEmpresaAUsuario'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20261111211442_AgregarEmpresaAUsuario', N'10.0.12');
+END;
+
+COMMIT;
+GO
+

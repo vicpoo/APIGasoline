@@ -47,6 +47,19 @@ public class UsuarioConfiguration : IEntityTypeConfiguration<Usuario>
             .HasDefaultValueSql(TiposSql.Ahora)
             .ValueGeneratedOnAdd();
 
+        // Empresa dueña de la cuenta (null = plataforma o sin asignar). Ver AppDbContext: filtro por empresa.
+        builder.Property(u => u.EmpresaId)
+            .HasColumnName("empresa_id");
+
+        builder.HasOne<Empresa>()
+            .WithMany()
+            .HasForeignKey(u => u.EmpresaId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .HasConstraintName("fk_usuario_empresa");
+
+        builder.HasIndex(u => u.EmpresaId)
+            .HasDatabaseName("ix_usuario_empresa_id");
+
         // Propiedad calculada en el dominio, no es columna
         builder.Ignore(u => u.EstaActivo);
     }

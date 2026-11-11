@@ -1420,6 +1420,10 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasColumnType("nvarchar(150)")
                         .HasColumnName("email");
 
+                    b.Property<byte[]>("EmpresaId")
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("empresa_id");
+
                     b.Property<string>("Estado")
                         .IsRequired()
                         .HasColumnType("varchar(8)")
@@ -1443,6 +1447,9 @@ namespace APIGasoline.Infrastructure.Migrations
                     b.HasIndex("Email")
                         .IsUnique()
                         .HasDatabaseName("uq_usuario_email");
+
+                    b.HasIndex("EmpresaId")
+                        .HasDatabaseName("ix_usuario_empresa_id");
 
                     b.ToTable("usuario", null, t =>
                         {
@@ -1984,6 +1991,15 @@ namespace APIGasoline.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_solicitud_reserva_empleado_solicitante");
+                });
+
+            modelBuilder.Entity("APIGasoline.Domain.Entities.Usuario", b =>
+                {
+                    b.HasOne("APIGasoline.Domain.Entities.Empresa", null)
+                        .WithMany()
+                        .HasForeignKey("EmpresaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_usuario_empresa");
                 });
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.UsuarioRol", b =>

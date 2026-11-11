@@ -77,6 +77,7 @@ public class SesionesHandlersTests
     [Fact]
     public async Task CerrarUna_PorAdministrador_MotivoCerradaPorAdministrador()
     {
+        UsuarioVisible(Id(1));
         var (sesion, _) = Sesion(Id(1));
         var handler = new CerrarSesionUsuarioCommandHandler(_unitOfWork, new UsuarioActualFalso(Id(9), null), _reloj);
 
@@ -117,6 +118,7 @@ public class SesionesHandlersTests
     [Fact]
     public async Task CerrarTodas_PorAdministrador_CierraTodas()
     {
+        UsuarioVisible(Id(1));
         var (s1, _) = Sesion(Id(1));
         var (s2, _) = Sesion(Id(1));
         var (deOtro, _) = Sesion(Id(2));
@@ -142,6 +144,43 @@ public class SesionesHandlersTests
         Assert.Equal(MotivoRevocacionSesion.EmpresaEliminada, deEmpresa.MotivoRevocacion);
         Assert.False(deOtra.EstaRevocada);
     }
+
+    // El usuario de otra empresa no se ve (filtro por empresa): sus sesiones "no existen"
+    [Fact]
+    public async Task GetSesiones_DeUnUsuarioQueNoSeVe_Lanza404()
+    {
+        Sesion(Id(1));
+        var handler = new GetSesionesUsuarioQueryHandler(_unitOfWork, new UsuarioActualFalso(Id(9), null), _reloj);
+
+        await Assert.ThrowsAsync<NotFoundException>(() => handler.Handle(new GetSesionesUsuarioQuery(Id(1)), CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task CerrarUna_DeUnUsuarioQueNoSeVe_Lanza404YNoLaCierra()
+    {
+        var (sesion, _) = Sesion(Id(1));
+        var handler = new CerrarSesionUsuarioCommandHandler(_unitOfWork, new UsuarioActualFalso(Id(9), null), _reloj);
+
+        await Assert.ThrowsAsync<NotFoundException>(() =>
+            handler.Handle(new CerrarSesionUsuarioCommand(Id(1), sesion.SesionUsuarioId), CancellationToken.None));
+
+        Assert.False(sesion.EstaRevocada);
+    }
+
+    [Fact]
+    public async Task CerrarTodas_DeUnUsuarioQueNoSeVe_Lanza404YNoCierraNada()
+    {
+        var (sesion, _) = Sesion(Id(1));
+        var handler = new CerrarSesionesUsuarioCommandHandler(_unitOfWork, new UsuarioActualFalso(Id(9), null), _reloj);
+
+        await Assert.ThrowsAsync<NotFoundException>(() =>
+            handler.Handle(new CerrarSesionesUsuarioCommand(Id(1), ConservarActual: false), CancellationToken.None));
+
+        Assert.False(sesion.EstaRevocada);
+    }
+
+    private void UsuarioVisible(Guid usuarioId)
+        => _uow.Usuarios[usuarioId] = Usuario.Crear($"u{usuarioId:N}@pruebas.local", "hash");
 
     private (SesionUsuario Sesion, string Token) Sesion(Guid usuarioId, Guid? empresaId = null)
     {

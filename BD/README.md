@@ -32,7 +32,7 @@ Esta carpeta se armó **a partir del código de la API**, no de documentación p
 | `README.md` | Esta documentación. |
 | `esquema-sqlserver.sql` | **Esquema actual (SQL Server)**, generado con `dotnet ef migrations script` desde `InicialSqlServer`. |
 | `esquema-mysql.sql` | (Referencia, versión MySQL) DDL consolidado (24 tablas) tal como queda la BD después de todas las migraciones. Verificado: al cargarlo en una BD vacía se obtiene exactamente el mismo esquema. |
-| `BaseDatos.dbml` | Diagrama para [dbdiagram.io](https://dbdiagram.io), generado del mismo esquema (24 tablas, 46 relaciones, 14 enums). Validado con el parser oficial `@dbml/core`. |
+| `BaseDatos.dbml` | Diagrama para [dbdiagram.io](https://dbdiagram.io), generado del mismo esquema (24 tablas, 47 relaciones, 14 enums). Validado con el parser oficial `@dbml/core`. |
 
 > La forma oficial de crear la BD sigue siendo con las migraciones (`BaseDatos:MigrarAlIniciar = true` o `dotnet ef database update`). `esquema-mysql.sql` es una foto para leer, revisar o cargar el modelo a mano; no crea `__EFMigrationsHistory`, así que si lo usas la API intentará migrar de nuevo.
 
@@ -43,9 +43,9 @@ Esta carpeta se armó **a partir del código de la API**, no de documentación p
 | Concepto | Cantidad |
 |---|---|
 | Tablas | 24 (+ `__EFMigrationsHistory` de EF) |
-| Columnas | 232 |
-| Llaves foráneas | 46 (21 compuestas `(empresa_id, x_id)`) |
-| Índices (sin contar PK) | 88 |
+| Columnas | 233 |
+| Llaves foráneas | 47 (21 compuestas `(empresa_id, x_id)`) |
+| Índices (sin contar PK) | 89 |
 | Restricciones CHECK | 1 (`ck_revision_auditoria_alcance`) |
 | Columnas generadas | 1 (`rol.empresa_clave`) |
 | Columnas `enum` | 17, de 14 tipos distintos (todos coinciden con los enums del dominio) |
@@ -110,14 +110,34 @@ empresa/{empresa_id}/{entidad}/{id}/{carpeta}/{tipo}-{uuid}.{ext}
 | `revision_auditoria` | viaje, carro, empleado revisor |
 | `empresa` | división `(corporativo_id, division_id)` del mismo corporativo |
 
-### 3.2. Lo que la base de datos **no** garantiza (depende de la API)
+### 3.2. Lo que la base de datos **no** garantiza (lo hace la API)
 
-- **Leer datos de otra empresa.** La BD no filtra lecturas: si un endpoint no aplica `WHERE empresa_id = <empresa del token>`, devuelve registros de todas las empresas.
+- **Leer datos de otra empresa.** La BD no filtra lecturas. Desde la fase 3 lo hace la API en un solo lugar: cada consulta de EF Core lleva el filtro global `Empresa` (`AppDbContext.AplicarFiltroPorEmpresa`) y cada `SaveChanges` pasa por un guardián (`AislamientoEmpresaInterceptor`) que rechaza con 403 crear, modificar o borrar algo de otra empresa. Ver sección 3.3.
 - **Seguridad:** `usuario_rol` y `rol_privilegio` no llevan `empresa_id`. Que a un usuario de la empresa A no se le asigne un rol de la B, y que un rol de empresa no reciba privilegios de ámbito `plataforma`, se valida solo en la API.
 - **`sesion_usuario.empresa_id`** y **`sesion_usuario.revocada_por_usuario_id`** no tienen FK.
 - **Referencias lógicas sin FK:** `notificacion.referencia_id`, `outbox_mensaje.agregado_id`, `auditoria_evento.entidad_id`.
-- **`usuario`, `privilegio`, `corporativo` y `division`** no tienen `empresa_id` (son de plataforma). Un usuario pertenece a una empresa a través de `empleado`.
+- **`privilegio`, `corporativo` y `division`** no tienen `empresa_id` (son de plataforma).
+- **`usuario.empresa_id`** (fase 3) dice de qué empresa es la cuenta; NULL = administrador de la plataforma o cuenta aún sin asignar. Al crearle su empleado se le asigna la empresa del empleado, y una cuenta nunca pasa de una empresa a otra. La migración `AgregarEmpresaAUsuario` la llenó con la empresa del empleado (o, sin empleado, la de sus roles de empresa).
 - **`carro.placas` y `usuario.email`** son únicos en todo el sistema, no por empresa.
+
+### 3.3. Aislamiento en la API (fase 3)
+
+| Tabla | Qué ve un usuario de la empresa X (sin `plataforma.multiempresa`) |
+|---|---|
+| Con `empresa_id` (carro, centro_costo, empleado, solicitud_reserva, viaje, viaje_pausa, punto_ruta, ruta_procesada, carga_combustible, cambio_estatus_carro, notificacion, dispositivo_empleado, revision_auditoria) | Solo `empresa_id = X` |
+| `empresa` | Solo X |
+| `usuario` | Solo `empresa_id = X` |
+| `rol` | Los de X y los globales (los globales solo se leen) |
+| `usuario_rol` | Los de usuarios de X |
+| `rol_privilegio` | Los de roles que puede ver |
+| `privilegio`, `corporativo`, `division` | Todo (catálogos); solo la plataforma los modifica |
+| `auditoria_evento`, `outbox_mensaje`, `sesion_usuario` | Sin filtro: sus endpoints validan la empresa o el usuario dueño |
+
+- Un registro de otra empresa "no existe": su detalle responde 404 y las listas no lo traen.
+- Escribir con el `empresa_id` de otra empresa, colgar algo de un registro ajeno, asignar o modificar un rol global, o cambiar el `empresa_id` de un registro responde **403**. Para la plataforma, cambiar `empresa_id` cuando es parte de una llave compuesta responde **409** (antes era un 500).
+- Sin usuario (login, refresh, workers, siembra) y con `plataforma.multiempresa` no hay filtro.
+- Las validaciones de unicidad global (placas, correo, token del celular) ignoran solo el filtro `Empresa` y devuelven sí/no.
+- Las pruebas `tests/APIGasoline.Api.IntegrationTests` (matriz de fugas) y `tests/APIGasoline.Architecture.Tests` (`AislamientoEmpresaTests`) lo vigilan.
 
 ---
 
@@ -187,8 +207,11 @@ Credenciales para iniciar sesión (correo + contraseña cifrada con PBKDF2).
 | `password_hash` | varchar(255) | NN |  | Contraseña cifrada con PBKDF2. Nunca en texto plano. |
 | `estado` | enum('activo','inactivo') | NN | activo | Un usuario inactivo no puede iniciar sesión (403). |
 | `fecha_registro` | timestamp |  | now() | Fecha de alta. |
+| `empresa_id` | binary(16) | FK → empresa |  | Empresa dueña de la cuenta (fase 3). NULL = plataforma o aún sin asignar; se asigna al crearle su empleado. |
 
-**Índices:** `uq_usuario_email` (email) **único**
+**Índices:** `uq_usuario_email` (email) **único**; `ix_usuario_empresa_id` (empresa_id)
+
+**Llaves foráneas:** (empresa_id) → `empresa`(empresa_id) ON DELETE RESTRICT
 
 #### `rol`
 

@@ -25,9 +25,10 @@ public class EmpleadoRepository : IEmpleadoRepository
         if (ids.Count == 0)
             return [];
 
-        // IgnoreQueryFilters: el historial debe mostrar también a empleados ya eliminados
+        // Sin el filtro de eliminados: el historial debe mostrar también a empleados ya eliminados
+        // (el filtro por empresa se queda)
         return await _context.Empleados
-            .IgnoreQueryFilters()
+            .IgnoreQueryFilters([FiltrosConsulta.Eliminado])
             .AsNoTracking()
             .Where(e => ids.Contains(e.EmpleadoId))
             .ToListAsync(cancellationToken);
@@ -51,6 +52,7 @@ public class EmpleadoRepository : IEmpleadoRepository
     public Task<bool> ExistsAsync(Guid empleadoId, CancellationToken cancellationToken = default)
         => _context.Empleados.AnyAsync(e => e.EmpleadoId == empleadoId, cancellationToken);
 
+    // Sin filtros: el índice único (uq_empleado_usuario_id) es de toda la BD. Solo devuelve sí/no.
     public Task<bool> UsuarioAsignadoAsync(Guid usuarioId, Guid? excludeEmpleadoId = null, CancellationToken cancellationToken = default)
         => _context.Empleados
             .IgnoreQueryFilters()

@@ -89,6 +89,62 @@ public class UsuarioTests
         Assert.Throws<DomainException>(() => usuario.CambiarEstado((EstadoUsuario)99));
     }
 
+    // ---- Empresa de la cuenta (aislamiento entre empresas)
+
+    private static readonly Guid EmpresaA = Guid.Parse("01920000-0000-7000-8000-00000000000a");
+    private static readonly Guid EmpresaB = Guid.Parse("01920000-0000-7000-8000-00000000000b");
+
+    [Fact]
+    public void Crear_SinEmpresa_QuedaSinAsignar()
+        => Assert.Null(ConstruirUsuario().EmpresaId);
+
+    [Fact]
+    public void Crear_ConEmpresa_QuedaEnEsaEmpresa()
+    {
+        var usuario = Usuario.Crear("vic@ejemplo.com", Hash, empresaId: EmpresaA);
+
+        Assert.Equal(EmpresaA, usuario.EmpresaId);
+        Assert.True(usuario.PerteneceA(EmpresaA));
+        Assert.False(usuario.PerteneceA(EmpresaB));
+    }
+
+    [Fact]
+    public void Crear_ConEmpresaVacia_LanzaDomainException()
+        => Assert.Throws<DomainException>(() => Usuario.Crear("vic@ejemplo.com", Hash, empresaId: Guid.Empty));
+
+    [Fact]
+    public void AsignarEmpresa_SinEmpresa_LaAsigna()
+    {
+        var usuario = ConstruirUsuario();
+
+        usuario.AsignarEmpresa(EmpresaA);
+
+        Assert.Equal(EmpresaA, usuario.EmpresaId);
+    }
+
+    [Fact]
+    public void AsignarEmpresa_LaMisma_NoCambiaNada()
+    {
+        var usuario = Usuario.Crear("vic@ejemplo.com", Hash, empresaId: EmpresaA);
+
+        usuario.AsignarEmpresa(EmpresaA);
+
+        Assert.Equal(EmpresaA, usuario.EmpresaId);
+    }
+
+    [Fact]
+    public void AsignarEmpresa_OtraEmpresa_LanzaDomainException()
+    {
+        var usuario = Usuario.Crear("vic@ejemplo.com", Hash, empresaId: EmpresaA);
+
+        Assert.Throws<DomainException>(() => usuario.AsignarEmpresa(EmpresaB));
+        Assert.Equal(EmpresaA, usuario.EmpresaId);
+    }
+
+    [Fact]
+    public void AsignarEmpresa_Vacia_LanzaDomainException()
+        => Assert.Throws<DomainException>(() => ConstruirUsuario().AsignarEmpresa(Guid.Empty));
+
     private static Usuario ConstruirUsuario(
         string email = "vic@ejemplo.com",
         string hash = Hash,

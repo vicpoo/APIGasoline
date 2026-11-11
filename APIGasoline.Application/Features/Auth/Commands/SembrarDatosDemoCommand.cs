@@ -143,7 +143,7 @@ public sealed class SembrarDatosDemoCommandHandler : ICommandHandler<SembrarDato
         string passwordHash,
         CancellationToken cancellationToken)
     {
-        var usuario = Usuario.Crear(email, passwordHash);
+        var usuario = Usuario.Crear(email, passwordHash, empresaId: empresa.EmpresaId);
         await _unitOfWork.Usuarios.AddAsync(usuario, cancellationToken);
         await _unitOfWork.UsuarioRoles.AddAsync(UsuarioRol.Crear(usuario.UsuarioId, rol.RolId), cancellationToken);
 

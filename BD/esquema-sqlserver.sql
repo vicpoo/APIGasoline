@@ -1,9 +1,10 @@
 -- ============================================================
 --  APIGasoline — Esquema de la base de datos (SQL Server)
---  Generado con `dotnet ef migrations script` a partir de la migración
---  20261111182911_InicialSqlServer (APIGasoline.Infrastructure/Migrations).
+--  Generado con `dotnet ef migrations script` a partir de las migraciones
+--  20261111182911_InicialSqlServer y 20261111211442_AgregarEmpresaAUsuario
+--  (APIGasoline.Infrastructure/Migrations).
 --
---  24 tablas · 46 llaves foráneas · 21 CHECK
+--  24 tablas · 47 llaves foráneas · 21 CHECK
 --  IDs en binary(16) (UUID v7 en orden RFC 4122) · fechas en datetime2(0)
 --  Intercalación de la BD: Modern_Spanish_CI_AI (la pone EF al crear la BD).
 --
@@ -588,6 +589,38 @@ CREATE INDEX [ix_viaje_pausa_viaje_id_fecha_inicio] ON [viaje_pausa] ([viaje_id]
 
 INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
 VALUES (N'20261111182911_InicialSqlServer', N'10.0.12');
+
+COMMIT;
+GO
+
+BEGIN TRANSACTION;
+ALTER TABLE [usuario] ADD [empresa_id] binary(16) NULL;
+
+CREATE INDEX [ix_usuario_empresa_id] ON [usuario] ([empresa_id]);
+
+ALTER TABLE [usuario] ADD CONSTRAINT [fk_usuario_empresa] FOREIGN KEY ([empresa_id]) REFERENCES [empresa] ([empresa_id]) ON DELETE NO ACTION;
+
+EXEC(N'
+UPDATE u SET u.empresa_id = e.empresa_id
+FROM usuario AS u
+JOIN empleado AS e ON e.usuario_id = u.usuario_id;
+');
+
+EXEC(N'
+UPDATE u SET u.empresa_id = r.empresa_id
+FROM usuario AS u
+CROSS APPLY (
+    SELECT MIN(rol.empresa_id) AS empresa_id
+    FROM usuario_rol AS ur
+    JOIN rol ON rol.rol_id = ur.rol_id
+    WHERE ur.usuario_id = u.usuario_id AND rol.empresa_id IS NOT NULL
+    HAVING COUNT(DISTINCT rol.empresa_id) = 1
+) AS r
+WHERE u.empresa_id IS NULL;
+');
+
+INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+VALUES (N'20261111211442_AgregarEmpresaAUsuario', N'10.0.12');
 
 COMMIT;
 GO

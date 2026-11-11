@@ -45,7 +45,7 @@ public class UsuariosController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<UsuarioDto>> Create(CreateUsuarioRequest request, CancellationToken cancellationToken)
     {
-        var command = new CreateUsuarioCommand(request.Email, request.Password, request.Estado);
+        var command = new CreateUsuarioCommand(request.Email, request.Password, request.Estado, request.EmpresaId);
         var usuario = await _sender.Send(command, cancellationToken);
 
         return CreatedAtAction(nameof(GetById), new { usuarioId = usuario.UsuarioId }, usuario);
@@ -109,4 +109,4 @@ public class UsuariosController : ControllerBase
         await _sender.Send(new DeleteUsuarioCommand(usuarioId), cancellationToken);
         return NoContent();
     }
-}
+}

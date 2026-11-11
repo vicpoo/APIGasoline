@@ -16,4 +16,11 @@ public class CreateUsuarioRequest
     public string Password { get; set; } = string.Empty;
 
     public EstadoUsuario Estado { get; set; } = EstadoUsuario.Activo;
+
+    /// <summary>
+    /// Empresa de la cuenta. Un administrador de empresa puede omitirla (se usa la suya) y no puede
+    /// poner otra. La plataforma puede omitirla para crear una cuenta sin empresa (se le asigna al
+    /// crearle su empleado).
+    /// </summary>
+    public Guid? EmpresaId { get; set; }
 }

@@ -246,7 +246,7 @@ public static class CatalogoFugas
         new("Eliminar usuario de B (sin empleado, con rol de B)", Delete, "api/usuarios/{usuarioId:guid}",
             async (e, d) =>
             {
-                var usuarioId = await e.UsuarioLibreAsync();
+                var usuarioId = await e.UsuarioLibreAsync(d);
                 await e.EnBdAsync(async x =>
                 {
                     x.UsuarioRoles.Add(APIGasoline.Domain.Entities.UsuarioRol.Crear(usuarioId, d.RolOperadorId));
@@ -371,8 +371,11 @@ public static class CatalogoFugas
         new("Crear rol en B", Post, "api/roles", _ => "/api/roles",
             c => JC(new { empresaId = c.Objetivo.EmpresaId, nombre = Unico("Rol "), activo = true }),
             (e, d) => e.ContarAsync("rol", d.EmpresaId)),
+        new("Crear usuario en B", Post, "api/usuarios", _ => "/api/usuarios",
+            c => JC(new { empresaId = c.Objetivo.EmpresaId, email = $"{Unico("nuevo.")}@pruebas.local".ToLowerInvariant(), password = PasswordVictima, estado = "activo" }),
+            (e, d) => e.ContarAsync("usuario", d.EmpresaId)),
         new("Crear empleado en B", Post, "api/empleados", _ => "/api/empleados",
-            async c => Escenario.ComoJson(new { empresaId = c.Objetivo.EmpresaId, usuarioId = await c.E.UsuarioLibreAsync(), nombreCompleto = "Empleado nuevo" }),
+            async c => Escenario.ComoJson(new { empresaId = c.Objetivo.EmpresaId, usuarioId = await c.E.UsuarioLibreAsync(c.Objetivo), nombreCompleto = "Empleado nuevo" }),
             (e, d) => e.ContarAsync("empleado", d.EmpresaId)),
         new("Solicitar carro de B a nombre de un operador de B", Post, "api/solicitudes-reserva", _ => "/api/solicitudes-reserva",
             async c => Escenario.ComoJson(new
@@ -513,6 +516,5 @@ public static class CatalogoFugas
         ["GET api/corporativos/{corporativoId:guid}"] = "DECISIÓN PENDIENTE: ¿una empresa puede ver su corporativo? (Riesgos del plan).",
         ["GET api/divisiones"] = "DECISIÓN PENDIENTE: ¿una empresa puede ver su división? (Riesgos del plan).",
         ["GET api/divisiones/{divisionId:guid}"] = "DECISIÓN PENDIENTE: ¿una empresa puede ver su división? (Riesgos del plan).",
-        ["POST api/usuarios"] = "Un usuario no tiene empresa hasta que se le crea su empleado (eso sí se prueba).",
     };
 }

@@ -19,6 +19,10 @@ public class DispositivoEmpleadoRepository : IDispositivoEmpleadoRepository
     public Task<DispositivoEmpleado?> GetByTokenAsync(string tokenFcm, CancellationToken cancellationToken = default)
         => _context.Dispositivos.FirstOrDefaultAsync(d => d.TokenFcm == tokenFcm, cancellationToken);
 
+    // Sin el filtro por empresa: el token es único en toda la BD (índice único). Solo devuelve sí/no.
+    public Task<bool> TokenRegistradoAsync(string tokenFcm, CancellationToken cancellationToken = default)
+        => _context.Dispositivos.IgnoreQueryFilters([FiltrosConsulta.Empresa]).AnyAsync(d => d.TokenFcm == tokenFcm, cancellationToken);
+
     public async Task<IReadOnlyList<DispositivoEmpleado>> GetByEmpleadoAsync(Guid empleadoId, CancellationToken cancellationToken = default)
         => await _context.Dispositivos
             .AsNoTracking()

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Common.Outbox;
 using APIGasoline.Application.Common.Security;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,9 +23,12 @@ public static class DependencyInjection
         });
         services.AddAutoMapper(assembly);
 
+        // Aislamiento entre empresas: de qué empresa son los datos de la petición (filtro de EF y guardián)
+        services.AddScoped<IContextoEmpresa, ContextoEmpresa>();
+
         services.AddScoped<NotificadorPush>();
         services.AddScoped<ProcesadorOutbox>();
 
         return services;
     }
-}
+}

@@ -1,4 +1,5 @@
 ﻿using APIGasoline.Application.Common.Interfaces;
+using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Common.Security;
 using APIGasoline.Application.Common.Sesiones;
 using APIGasoline.Domain.Enums;
@@ -34,6 +35,10 @@ public sealed class CerrarSesionesUsuarioCommandHandler : ICommandHandler<Cerrar
 
     public async Task<int> Handle(CerrarSesionesUsuarioCommand request, CancellationToken cancellationToken)
     {
+        // El usuario de otra empresa "no existe" (filtro por empresa). Las sesiones no tienen filtro propio.
+        if (request.UsuarioId != _usuarioActual.UsuarioId && !await _unitOfWork.Usuarios.ExistsAsync(request.UsuarioId, cancellationToken))
+            throw new NotFoundException($"No existe un usuario con el id {request.UsuarioId}.");
+
         var esPropio = request.UsuarioId == _usuarioActual.UsuarioId;
 
         var motivo = esPropio

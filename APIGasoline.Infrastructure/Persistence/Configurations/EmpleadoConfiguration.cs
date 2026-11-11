@@ -58,8 +58,9 @@ public class EmpleadoConfiguration : IEntityTypeConfiguration<Empleado>
             .HasDefaultValueSql(TiposSql.Ahora)
             .ValueGeneratedOnAdd();
 
-        // Filtro global: todas las consultas ignoran los empleados eliminados.
-        builder.HasQueryFilter(e => !e.Eliminado);
+        // Filtro global con nombre: todas las consultas ignoran los empleados eliminados.
+        // (El filtro por empresa se agrega en AppDbContext.)
+        builder.HasQueryFilter(FiltrosConsulta.Eliminado, e => !e.Eliminado);
 
         builder.HasOne<Empresa>()
             .WithMany()
