@@ -1,7 +1,7 @@
 // PRUEBA DE ESTRÉS: sube por escalones hasta encontrar el punto de quiebre.
 // Pregunta que responde: ¿cuántos usuarios simultáneos aguanta antes de degradarse o fallar?
 // Mira en el reporte en qué escalón el p95 pasa de 500 ms o los errores pasan de 1 %.
-// k6 run pruebas-carga/3-estres.js
+// k6 run -e K6_EMAIL=... -e K6_PASSWORD=... pruebas-carga/3-estres.js
 import { setup as setupComun, sesionDeUsuario, umbrales } from './comun.js';
 
 export const options = {

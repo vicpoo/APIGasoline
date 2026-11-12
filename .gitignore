@@ -17,3 +17,9 @@ appsettings.Local.json
 # Credenciales de Firebase (service account): nunca al repositorio
 *firebase-adminsdk*.json
 secrets/
+
+# Resultados de pruebas y cobertura (coverlet)
+TestResults/
+
+# Script de migraciones generado (se crea en CI o al desplegar: dotnet ef migrations script --idempotent)
+/migraciones.sql

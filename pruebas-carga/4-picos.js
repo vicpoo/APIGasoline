@@ -1,6 +1,6 @@
 // PRUEBA DE PICOS: de 10 a 300 usuarios de golpe (ej. todos los operadores registran cargas al mismo tiempo).
 // Pregunta que responde: ¿sobrevive a un pico repentino y se recupera después?
-// k6 run pruebas-carga/4-picos.js
+// k6 run -e K6_EMAIL=... -e K6_PASSWORD=... pruebas-carga/4-picos.js
 import { setup as setupComun, sesionDeUsuario, umbrales } from './comun.js';
 
 export const options = {

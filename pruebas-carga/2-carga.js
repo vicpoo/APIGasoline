@@ -1,6 +1,6 @@
 // PRUEBA DE CARGA: uso normal esperado. Sube a 50 usuarios, se mantiene 5 min y baja.
 // Pregunta que responde: ¿la API cumple los tiempos con la carga del día a día?
-// k6 run pruebas-carga/2-carga.js
+// k6 run -e K6_EMAIL=... -e K6_PASSWORD=... pruebas-carga/2-carga.js
 import { setup as setupComun, sesionDeUsuario, umbrales } from './comun.js';
 
 export const options = {
