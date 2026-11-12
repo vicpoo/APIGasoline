@@ -188,6 +188,8 @@ pruebas-carga/               Pruebas de carga (k6); credenciales por variables d
 
 Ver `docker-compose.prod.yml` y `.env.production.example` (API + SQL Server Express + MinIO). SQL Server necesita un servidor x64 con al menos 2 GB de RAM.
 
+**Actualizar el servidor de AWS a una versión nueva:** paso a paso (respaldo, `.env`, verificación y cómo volver atrás) en `docs/Despliegue-AWS.md`. Los cambios de cada versión están en `CHANGELOG.md`; para saber qué versión corre: `GET /salud`.
+
 **La API no usa `sa`.** El contenedor `db-init` (script `BD/produccion/crear-logins.sql`) crea la base y dos logins, y es idempotente (en cada arranque solo les pone la contraseña del `.env`):
 
 | Login | Permisos | Para qué |

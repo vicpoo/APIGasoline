@@ -4,6 +4,8 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Versión de la API (semver). Se muestra en GET /salud. -->
+    <Version>2.0.0</Version>
   </PropertyGroup>
 
   <ItemGroup>

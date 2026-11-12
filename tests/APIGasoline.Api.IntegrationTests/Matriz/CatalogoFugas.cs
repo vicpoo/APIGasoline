@@ -564,6 +564,7 @@ public static class CatalogoFugas
 
     public static IReadOnlyDictionary<string, string> Excluidos { get; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
     {
+        ["GET salud"] = "Público: solo dice que la API está arriba y su versión; no lee datos.",
         ["POST api/auth/login"] = "Anónimo: todavía no hay empresa.",
         ["POST api/auth/refresh"] = "Anónimo: la sesión sale del refresh token, no de un id.",
         ["POST api/auth/logout"] = "Anónimo: cierra la sesión del refresh token que se manda.",

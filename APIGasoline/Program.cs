@@ -219,6 +219,16 @@ app.UseMiddleware<ContextoEmpresaMiddleware>(); // aislamiento entre empresas (a
 app.UseAuthorization();
 app.MapControllers();
 
+// Público: para saber que la API está arriba y qué versión corre (despliegue, monitoreo).
+// No toca la base de datos ni dice nada del entorno.
+var versionApi = typeof(Program).Assembly
+    .GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), false)
+    .OfType<System.Reflection.AssemblyInformationalVersionAttribute>().FirstOrDefault()?.InformationalVersion.Split('+')[0]
+    ?? "desconocida";
+app.MapGet("/salud", () => Results.Ok(new { estado = "ok", version = versionApi }))
+    .AllowAnonymous()
+    .ExcludeFromDescription();
+
 app.Run();
 
 // Partición por IP del cliente. Sin límite si LimiteAuth:Habilitado = false (pruebas de carga).
