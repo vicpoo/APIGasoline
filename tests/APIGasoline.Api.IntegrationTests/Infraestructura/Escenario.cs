@@ -26,6 +26,13 @@ public enum Actor
     /// <summary>Administrador de la Empresa Demo B (la "víctima" de la matriz de fugas).</summary>
     AdminB,
     OperadorB,
+    /// <summary>Otro operador de la Empresa A (el "atacante" de la matriz de lo propio).</summary>
+    OperadorA2,
+    /// <summary>
+    /// Empleado de la Empresa A que administra roles (rol.ver, rol.gestionar, rol.asignar) pero solo
+    /// tiene carro.ver de lo demás: el "atacante" de las pruebas de techo de privilegios.
+    /// </summary>
+    GestorRolesA,
 }
 
 /// <summary>Respuesta HTTP ya leída.</summary>
@@ -67,6 +74,11 @@ public sealed class DatosEmpresa
     public Guid SesionOperadorId { get; set; }
     public Guid UsuarioRolId { get; set; }
     public Guid RolPrivilegioId { get; set; }
+
+    // Usuarios extra de la Empresa A (los arma ArmarUsuariosExtraAsync)
+    public Guid Operador2EmpleadoId { get; set; }
+    public Guid GestorUsuarioId { get; set; }
+    public Guid RolGestorId { get; set; }
 }
 
 [CollectionDefinition(Nombre)]
@@ -135,7 +147,59 @@ public sealed class Escenario : IAsyncLifetime
 
         await ArmarOperacionAsync(A, Actor.AdminA, Actor.OperadorA);
         await ArmarOperacionAsync(B, Actor.AdminB, Actor.OperadorB);
+
+        await ArmarUsuariosExtraAsync(A);
     }
+
+    /// <summary>Contraseña de los usuarios extra (operador 2 y gestor de roles).</summary>
+    public const string PasswordExtra = "Extra#Pruebas2026";
+
+    /// <summary>
+    /// Un segundo operador y un gestor de roles en la Empresa A, cada uno con su sesión.
+    /// Se crean al final para no cambiar los datos que leen los demás casos.
+    /// </summary>
+    private async Task ArmarUsuariosExtraAsync(DatosEmpresa d)
+    {
+        (_, d.Operador2EmpleadoId) = await CrearEmpleadoConRolAsync(d, "operador2.a@pruebas.local", "Operador Dos A", d.RolOperadorId);
+
+        d.RolGestorId = await EnBdAsync(async contexto =>
+        {
+            var rol = APIGasoline.Domain.Entities.Rol.Crear("Gestor de roles", "Administra roles (pruebas de techo de privilegios).", activo: true, empresaId: d.EmpresaId);
+            contexto.Roles.Add(rol);
+
+            var claves = new[] { "rol.ver", "rol.gestionar", "rol.asignar", "carro.ver" };
+            foreach (var privilegio in await contexto.Privilegios.Where(p => claves.Contains(p.Clave)).ToListAsync())
+                contexto.RolPrivilegios.Add(APIGasoline.Domain.Entities.RolPrivilegio.Crear(rol.RolId, privilegio.PrivilegioId));
+
+            await contexto.SaveChangesAsync();
+            return rol.RolId;
+        });
+
+        (d.GestorUsuarioId, _) = await CrearEmpleadoConRolAsync(d, "gestor.a@pruebas.local", "Gestor de roles A", d.RolGestorId);
+
+        _clientes[Actor.OperadorA2] = Factory.CreateClient();
+        await IniciarSesionAsync(Actor.OperadorA2, "operador2.a@pruebas.local", PasswordExtra);
+
+        _clientes[Actor.GestorRolesA] = Factory.CreateClient();
+        await IniciarSesionAsync(Actor.GestorRolesA, "gestor.a@pruebas.local", PasswordExtra);
+    }
+
+    private Task<(Guid UsuarioId, Guid EmpleadoId)> CrearEmpleadoConRolAsync(DatosEmpresa d, string email, string nombre, Guid rolId)
+        => EnBdAsync(async (contexto, servicios) =>
+        {
+            var hash = servicios.GetRequiredService<APIGasoline.Application.Common.Interfaces.IPasswordHasher>().Hash(PasswordExtra);
+            var usuario = APIGasoline.Domain.Entities.Usuario.Crear(email, hash, empresaId: d.EmpresaId);
+            contexto.Usuarios.Add(usuario);
+
+            var empleado = APIGasoline.Domain.Entities.Empleado.Crear(d.EmpresaId, usuario.UsuarioId, nombre);
+            empleado.CambiarFotoLicencia($"empresa/{d.EmpresaId}/empleado/licencia-{Guid.NewGuid():N}.jpg", DateTime.Now);
+            contexto.Empleados.Add(empleado);
+
+            contexto.UsuarioRoles.Add(APIGasoline.Domain.Entities.UsuarioRol.Crear(usuario.UsuarioId, rolId));
+
+            await contexto.SaveChangesAsync();
+            return (usuario.UsuarioId, empleado.EmpleadoId);
+        });
 
     public async Task DisposeAsync()
     {

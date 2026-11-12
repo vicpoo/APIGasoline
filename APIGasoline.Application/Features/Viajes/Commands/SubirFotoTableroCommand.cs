@@ -22,12 +22,14 @@ public sealed class SubirFotoTableroCommandHandler : ICommandHandler<SubirFotoTa
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly IFileStorageService _storage;
+    private readonly IUsuarioActual _usuarioActual;
 
-    public SubirFotoTableroCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IFileStorageService storage)
+    public SubirFotoTableroCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IFileStorageService storage, IUsuarioActual usuarioActual)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _storage = storage;
+        _usuarioActual = usuarioActual;
     }
 
     public async Task<ViajeDto> Handle(SubirFotoTableroCommand request, CancellationToken cancellationToken)
@@ -39,6 +41,9 @@ public sealed class SubirFotoTableroCommandHandler : ICommandHandler<SubirFotoTa
 
         var viaje = await _unitOfWork.Viajes.GetByIdAsync(request.ViajeId, cancellationToken)
             ?? throw new NotFoundException($"No existe un viaje con el id {request.ViajeId}.");
+
+        // La foto del odómetro es evidencia del kilometraje: solo el operador del viaje (o un supervisor)
+        await AccesoViaje.ValidarOperadorAsync(_usuarioActual, viaje, cancellationToken);
 
         var esInicial = request.Momento == MomentoTablero.Inicial;
         var llave = LlavesArchivo.FotoTablero(viaje.EmpresaId, viaje.ViajeId, esInicial ? "inicial" : "final", extension, Guid.NewGuid());

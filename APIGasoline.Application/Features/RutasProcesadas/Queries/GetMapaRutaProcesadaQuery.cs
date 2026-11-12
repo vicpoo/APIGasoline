@@ -1,4 +1,6 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
+using APIGasoline.Application.Common.Interfaces;
+using APIGasoline.Application.Features.Viajes.Common;
 using APIGasoline.Application.Features.RutasProcesadas.Common;
 using APIGasoline.Application.Features.RutasProcesadas.DTOs;
 using APIGasoline.Domain.Interfaces;
@@ -11,16 +13,20 @@ public sealed record GetMapaRutaProcesadaQuery(Guid ViajeId) : IQuery<MapaRutaDt
 public sealed class GetMapaRutaProcesadaQueryHandler : IQueryHandler<GetMapaRutaProcesadaQuery, MapaRutaDto>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IUsuarioActual _usuarioActual;
 
-    public GetMapaRutaProcesadaQueryHandler(IUnitOfWork unitOfWork)
+    public GetMapaRutaProcesadaQueryHandler(IUnitOfWork unitOfWork, IUsuarioActual usuarioActual)
     {
         _unitOfWork = unitOfWork;
+        _usuarioActual = usuarioActual;
     }
 
     public async Task<MapaRutaDto> Handle(GetMapaRutaProcesadaQuery request, CancellationToken cancellationToken)
     {
-        if (await _unitOfWork.Viajes.GetByIdAsync(request.ViajeId, cancellationToken) is null)
-            throw new NotFoundException($"No existe un viaje con el id {request.ViajeId}.");
+        var viaje = await _unitOfWork.Viajes.GetByIdAsync(request.ViajeId, cancellationToken)
+            ?? throw new NotFoundException($"No existe un viaje con el id {request.ViajeId}.");
+
+        await AccesoViaje.ValidarLecturaDetalleAsync(_usuarioActual, viaje, cancellationToken);
 
         var ruta = await _unitOfWork.RutasProcesadas.GetByViajeAsync(request.ViajeId, cancellationToken)
             ?? throw new NotFoundException($"El viaje {request.ViajeId} aún no tiene ruta procesada.");

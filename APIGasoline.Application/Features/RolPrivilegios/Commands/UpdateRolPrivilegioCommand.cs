@@ -1,4 +1,6 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
+using APIGasoline.Application.Common.Security;
+using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Features.RolPrivilegios.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
@@ -13,16 +15,24 @@ public sealed class UpdateRolPrivilegioCommandHandler : ICommandHandler<UpdateRo
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
 
-    public UpdateRolPrivilegioCommandHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    private readonly IUsuarioActual _usuarioActual;
+
+    public UpdateRolPrivilegioCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IUsuarioActual usuarioActual)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _usuarioActual = usuarioActual;
     }
 
     public async Task<RolPrivilegioDto> Handle(UpdateRolPrivilegioCommand request, CancellationToken cancellationToken)
     {
         var rolPrivilegio = await _unitOfWork.RolPrivilegios.GetByIdAsync(request.RolPrivilegioId, cancellationToken)
             ?? throw new NotFoundException($"No existe una asignación rol-privilegio con el id {request.RolPrivilegioId}.");
+
+        // Techo de privilegios: el que se quita también tiene que ser tuyo
+        var anterior = await _unitOfWork.Privilegios.GetByIdAsync(rolPrivilegio.PrivilegioId, cancellationToken);
+        if (anterior is not null)
+            await TechoPrivilegios.ExigirPrivilegioAsync(_usuarioActual, anterior.Clave, cancellationToken);
 
         // El dominio valida los datos
         rolPrivilegio.Reasignar(request.RolId, request.PrivilegioId);
@@ -37,6 +47,9 @@ public sealed class UpdateRolPrivilegioCommandHandler : ICommandHandler<UpdateRo
         if (!privilegio.AsignableA(rol))
             throw new BadRequestException(
                 $"El privilegio '{privilegio.Clave}' es de plataforma y solo se puede asignar a roles globales; el rol '{rol.Nombre}' es de una empresa.");
+
+        // ...y el que se da
+        await TechoPrivilegios.ExigirPrivilegioAsync(_usuarioActual, privilegio.Clave, cancellationToken);
 
         if (await _unitOfWork.RolPrivilegios.AsignacionExistsAsync(rolPrivilegio.RolId, rolPrivilegio.PrivilegioId, rolPrivilegio.RolPrivilegioId, cancellationToken))
             throw new ConflictException($"El rol {rolPrivilegio.RolId} ya tiene asignado el privilegio {rolPrivilegio.PrivilegioId}.");

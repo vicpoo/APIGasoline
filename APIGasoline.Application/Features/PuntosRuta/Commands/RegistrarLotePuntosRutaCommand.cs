@@ -32,12 +32,14 @@ public sealed class RegistrarLotePuntosRutaCommandHandler : ICommandHandler<Regi
     private readonly IUnitOfWork _unitOfWork;
     private readonly IDateTimeProvider _dateTime;
     private readonly IPublisher _publisher;
+    private readonly IUsuarioActual _usuarioActual;
 
-    public RegistrarLotePuntosRutaCommandHandler(IUnitOfWork unitOfWork, IDateTimeProvider dateTime, IPublisher publisher)
+    public RegistrarLotePuntosRutaCommandHandler(IUnitOfWork unitOfWork, IDateTimeProvider dateTime, IPublisher publisher, IUsuarioActual usuarioActual)
     {
         _unitOfWork = unitOfWork;
         _dateTime = dateTime;
         _publisher = publisher;
+        _usuarioActual = usuarioActual;
     }
 
     public async Task<LotePuntosRutaResultadoDto> Handle(RegistrarLotePuntosRutaCommand request, CancellationToken cancellationToken)
@@ -50,6 +52,9 @@ public sealed class RegistrarLotePuntosRutaCommandHandler : ICommandHandler<Regi
 
         var viaje = await _unitOfWork.Viajes.GetByIdAsync(request.ViajeId, cancellationToken)
             ?? throw new NotFoundException($"No existe un viaje con el id {request.ViajeId}.");
+
+        // Solo el operador del viaje manda su GPS (o un supervisor con viaje.corregir_cerrado)
+        await AccesoViaje.ValidarOperadorAsync(_usuarioActual, viaje, cancellationToken);
 
         var ahora = _dateTime.Now;
         var puntos = new List<PuntoRuta>();

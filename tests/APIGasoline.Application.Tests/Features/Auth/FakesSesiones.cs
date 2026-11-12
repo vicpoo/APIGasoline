@@ -47,6 +47,10 @@ internal class UnidadFalsa : DispatchProxy
 {
     public SesionesEnMemoria Sesiones { get; private set; } = new();
     public Dictionary<Guid, Usuario> Usuarios { get; } = [];
+
+    /// <summary>Privilegios activos de cada rol (para el techo de privilegios).</summary>
+    public Dictionary<Guid, string[]> ClavesPorRol { get; } = [];
+
     public int Guardados { get; private set; }
 
     /// <summary>Si se asigna, el siguiente SaveChanges lanza esta excepción (una sola vez).</summary>
@@ -87,7 +91,8 @@ internal class UnidadFalsa : DispatchProxy
             case "get_Privilegios":
                 return Repositorio<IPrivilegioRepository>(nombre => nombre switch
                 {
-                    "GetClavesActivasByRolesAsync" => _ => Task.FromResult<IReadOnlyList<string>>([]),
+                    "GetClavesActivasByRolesAsync" => a => Task.FromResult<IReadOnlyList<string>>(
+                        ((IReadOnlyList<Guid>)a[0]!).SelectMany(id => ClavesPorRol.GetValueOrDefault(id) ?? []).Distinct().ToList()),
                     _ => null
                 });
             case "SaveChangesAsync":

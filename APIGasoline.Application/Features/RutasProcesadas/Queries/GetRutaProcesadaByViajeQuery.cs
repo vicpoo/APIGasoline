@@ -1,4 +1,6 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
+using APIGasoline.Application.Common.Interfaces;
+using APIGasoline.Application.Features.Viajes.Common;
 using APIGasoline.Application.Features.RutasProcesadas.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
@@ -16,17 +18,21 @@ public sealed class GetRutaProcesadaByViajeQueryHandler : IQueryHandler<GetRutaP
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly IUsuarioActual _usuarioActual;
 
-    public GetRutaProcesadaByViajeQueryHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    public GetRutaProcesadaByViajeQueryHandler(IUnitOfWork unitOfWork, IMapper mapper, IUsuarioActual usuarioActual)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _usuarioActual = usuarioActual;
     }
 
     public async Task<RutaProcesadaDto> Handle(GetRutaProcesadaByViajeQuery request, CancellationToken cancellationToken)
     {
         var viaje = await _unitOfWork.Viajes.GetByIdAsync(request.ViajeId, cancellationToken)
             ?? throw new NotFoundException($"No existe un viaje con el id {request.ViajeId}.");
+
+        await AccesoViaje.ValidarLecturaDetalleAsync(_usuarioActual, viaje, cancellationToken);
 
         var ruta = await _unitOfWork.RutasProcesadas.GetByViajeAsync(viaje.ViajeId, cancellationToken)
             ?? throw new NotFoundException(viaje.EstaEnCurso

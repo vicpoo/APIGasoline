@@ -1,4 +1,6 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
+using APIGasoline.Application.Common.Security;
+using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Features.UsuarioRoles.DTOs;
 using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Interfaces;
@@ -14,10 +16,13 @@ public sealed class CreateUsuarioRolCommandHandler : ICommandHandler<CreateUsuar
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
 
-    public CreateUsuarioRolCommandHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    private readonly IUsuarioActual _usuarioActual;
+
+    public CreateUsuarioRolCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IUsuarioActual usuarioActual)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _usuarioActual = usuarioActual;
     }
 
     public async Task<UsuarioRolDto> Handle(CreateUsuarioRolCommand request, CancellationToken cancellationToken)
@@ -40,6 +45,9 @@ public sealed class CreateUsuarioRolCommandHandler : ICommandHandler<CreateUsuar
                 throw new BadRequestException(
                     $"El rol '{rol.Nombre}' es exclusivo de la empresa {rol.EmpresaId} y el usuario no pertenece a ella.");
         }
+
+        // Techo de privilegios: no asignas un rol con privilegios que tú no tienes
+        await TechoPrivilegios.ExigirRolAsync(_unitOfWork, _usuarioActual, rol.RolId, cancellationToken);
 
         if (await _unitOfWork.UsuarioRoles.AsignacionExistsAsync(usuarioRol.UsuarioId, usuarioRol.RolId, null, cancellationToken))
             throw new ConflictException($"El usuario {usuarioRol.UsuarioId} ya tiene asignado el rol {usuarioRol.RolId}.");

@@ -1,4 +1,6 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
+using APIGasoline.Application.Common.Security;
+using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Features.UsuarioRoles.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
@@ -13,16 +15,22 @@ public sealed class UpdateUsuarioRolCommandHandler : ICommandHandler<UpdateUsuar
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
 
-    public UpdateUsuarioRolCommandHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    private readonly IUsuarioActual _usuarioActual;
+
+    public UpdateUsuarioRolCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IUsuarioActual usuarioActual)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _usuarioActual = usuarioActual;
     }
 
     public async Task<UsuarioRolDto> Handle(UpdateUsuarioRolCommand request, CancellationToken cancellationToken)
     {
         var usuarioRol = await _unitOfWork.UsuarioRoles.GetByIdAsync(request.UsuarioRolId, cancellationToken)
             ?? throw new NotFoundException($"No existe una asignación usuario-rol con el id {request.UsuarioRolId}.");
+
+        // Techo de privilegios: el rol que se quita...
+        await TechoPrivilegios.ExigirRolAsync(_unitOfWork, _usuarioActual, usuarioRol.RolId, cancellationToken);
 
         // El dominio valida los datos
         usuarioRol.Reasignar(request.UsuarioId, request.RolId);
@@ -42,6 +50,9 @@ public sealed class UpdateUsuarioRolCommandHandler : ICommandHandler<UpdateUsuar
                 throw new BadRequestException(
                     $"El rol '{rol.Nombre}' es exclusivo de la empresa {rol.EmpresaId} y el usuario no pertenece a ella.");
         }
+
+        // ...y el que se da
+        await TechoPrivilegios.ExigirRolAsync(_unitOfWork, _usuarioActual, rol.RolId, cancellationToken);
 
         if (await _unitOfWork.UsuarioRoles.AsignacionExistsAsync(usuarioRol.UsuarioId, usuarioRol.RolId, usuarioRol.UsuarioRolId, cancellationToken))
             throw new ConflictException($"El usuario {usuarioRol.UsuarioId} ya tiene asignado el rol {usuarioRol.RolId}.");

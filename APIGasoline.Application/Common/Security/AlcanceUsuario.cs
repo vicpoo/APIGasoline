@@ -69,6 +69,29 @@ public static class AlcanceUsuario
     }
 
     /// <summary>
+    /// Como <see cref="ValidarPropioOPrivilegioAsync"/>, pero basta con UNO de varios privilegios
+    /// (por ejemplo: el operador del viaje, o quien supervisa, o quien audita).
+    /// </summary>
+    public static async Task ValidarPropioOAlgunPrivilegioAsync(
+        this IUsuarioActual usuario,
+        bool esPropio,
+        IReadOnlyCollection<string> privilegios,
+        string mensaje,
+        CancellationToken cancellationToken = default)
+    {
+        if (!usuario.EstaAutenticado)
+            throw new UnauthorizedException("Debes iniciar sesión.");
+
+        if (esPropio)
+            return;
+
+        var mios = await usuario.GetPrivilegiosAsync(cancellationToken);
+
+        if (!privilegios.Any(mios.Contains))
+            throw new ForbiddenException($"{mensaje} (o necesitas uno de estos privilegios: {string.Join(", ", privilegios)}).");
+    }
+
+    /// <summary>
     /// Para endpoints "lo mío o, con privilegio, lo de cualquiera" (perfil, foto de licencia,
     /// contraseña, notificaciones...). Pasa si el registro es suyo o si tiene el privilegio.
     /// </summary>

@@ -85,13 +85,13 @@ public static class Victimas
         });
     }
 
-    public static async Task<Guid> RolPrivilegioAsync(this Escenario e, DatosEmpresa d)
+    public static async Task<Guid> RolPrivilegioAsync(this Escenario e, DatosEmpresa d, string clave = "carro.ver")
     {
         var rolId = await e.RolAsync(d);
 
         return await e.EnBdAsync(async c =>
         {
-            var privilegio = await c.Privilegios.FirstAsync(p => p.Clave == "carro.ver");
+            var privilegio = await c.Privilegios.FirstAsync(p => p.Clave == clave);
             var rp = RolPrivilegio.Crear(rolId, privilegio.PrivilegioId);
             c.RolPrivilegios.Add(rp);
             await c.SaveChangesAsync();
@@ -230,6 +230,30 @@ public static class Victimas
             c.Dispositivos.Add(dispositivo);
             await c.SaveChangesAsync();
             return (dispositivo.DispositivoEmpleadoId, empleadoId);
+        });
+    }
+
+    /// <summary>Celular registrado a un empleado ya existente (por ejemplo, el operador de la empresa).</summary>
+    public static Task<Guid> DispositivoDeAsync(this Escenario e, DatosEmpresa d, Guid empleadoId)
+        => e.EnBdAsync(async c =>
+        {
+            var dispositivo = DispositivoEmpleado.Registrar(d.EmpresaId, empleadoId, Unico("token-propio-"), PlataformaDispositivo.Android, DateTime.Now);
+            c.Dispositivos.Add(dispositivo);
+            await c.SaveChangesAsync();
+            return dispositivo.DispositivoEmpleadoId;
+        });
+
+    /// <summary>Usuario nuevo de la empresa con un rol ya asignado; devuelve la asignación.</summary>
+    public static async Task<Guid> UsuarioConRolAsync(this Escenario e, DatosEmpresa d, Guid rolId)
+    {
+        var (usuarioId, _) = await e.EmpleadoAsync(d);
+
+        return await e.EnBdAsync(async c =>
+        {
+            var asignacion = UsuarioRol.Crear(usuarioId, rolId);
+            c.UsuarioRoles.Add(asignacion);
+            await c.SaveChangesAsync();
+            return asignacion.UsuarioRolId;
         });
     }
 

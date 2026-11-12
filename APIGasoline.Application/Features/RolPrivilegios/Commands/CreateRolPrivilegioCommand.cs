@@ -1,4 +1,6 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
+using APIGasoline.Application.Common.Security;
+using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Features.RolPrivilegios.DTOs;
 using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Interfaces;
@@ -14,10 +16,13 @@ public sealed class CreateRolPrivilegioCommandHandler : ICommandHandler<CreateRo
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
 
-    public CreateRolPrivilegioCommandHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    private readonly IUsuarioActual _usuarioActual;
+
+    public CreateRolPrivilegioCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IUsuarioActual usuarioActual)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _usuarioActual = usuarioActual;
     }
 
     public async Task<RolPrivilegioDto> Handle(CreateRolPrivilegioCommand request, CancellationToken cancellationToken)
@@ -35,6 +40,9 @@ public sealed class CreateRolPrivilegioCommandHandler : ICommandHandler<CreateRo
         if (!privilegio.AsignableA(rol))
             throw new BadRequestException(
                 $"El privilegio '{privilegio.Clave}' es de plataforma y solo se puede asignar a roles globales; el rol '{rol.Nombre}' es de una empresa.");
+
+        // Techo de privilegios: solo das lo que tienes
+        await TechoPrivilegios.ExigirPrivilegioAsync(_usuarioActual, privilegio.Clave, cancellationToken);
 
         if (await _unitOfWork.RolPrivilegios.AsignacionExistsAsync(rolPrivilegio.RolId, rolPrivilegio.PrivilegioId, null, cancellationToken))
             throw new ConflictException($"El rol {rolPrivilegio.RolId} ya tiene asignado el privilegio {rolPrivilegio.PrivilegioId}.");

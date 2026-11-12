@@ -110,6 +110,22 @@ Cada caso tiene un **control** (`ControlesDeLaMatrizTests`): el dueño sí puede
 
 Un fallo que empieza con **`FUGA:`** es un hueco de seguridad real. La matriz debe estar siempre en verde.
 
+### Dentro de la misma empresa: lo propio y el techo de privilegios
+
+`LoPropioYTechoTests` (catálogo en `Matriz/CatalogoLoPropio.cs`) prueba lo que un empleado no debe hacer con lo de **otro empleado de su misma empresa**, y que nadie da más privilegios de los que tiene:
+
+| Qué | Lo puede hacer | Con privilegio, también |
+|---|---|---|
+| Ver un viaje, sus puntos GPS, GPX, ruta procesada, mapa o una carga | El operador del viaje | `viaje.ver_todos`, `auditoria.ver` (y para la carga, `carga.editar` / `carga.eliminar`) |
+| Mandar puntos GPS, subir la foto del tablero, pausar, reanudar, finalizar | El operador del viaje | `viaje.corregir_cerrado` |
+| Ver, marcar leída o borrar una notificación | El destinatario | `notificacion.enviar` |
+| Desactivar un celular | Su dueño | `empleado.gestionar` |
+| Cancelar una solicitud | Quien la pidió | `solicitud.aprobar` |
+| Dar o quitar un privilegio a un rol | Solo si tú tienes ese privilegio | |
+| Asignar, quitar, editar o borrar un rol | Solo si tú tienes **todos** sus privilegios | |
+
+El atacante es un segundo operador de la Empresa A (o un gestor de roles con pocos privilegios); los controles comprueban que el dueño y el administrador sí pueden. Un fallo **`FUGA DENTRO DE LA EMPRESA:`** o **`ESCALADA:`** es un hueco real.
+
 ### Cómo se aíslan las empresas
 
 - **Lecturas:** cada consulta de EF Core lleva el filtro global `Empresa` (`AppDbContext.AplicarFiltroPorEmpresa`). Para un usuario de una empresa, lo de otra "no existe": 404 en el detalle y fuera de las listas.

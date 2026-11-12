@@ -69,7 +69,7 @@ public sealed class FugasEscrituraTests(Escenario e)
     /// <summary>Campos que cambian solos con el reloj (no por el ataque): se ignoran al comparar.</summary>
     private static readonly HashSet<string> CamposQueCambianConElTiempo = new(StringComparer.OrdinalIgnoreCase) { "segundosEnPausa" };
 
-    private static string Normalizar(Respuesta r)
+    internal static string Normalizar(Respuesta r)
     {
         try
         {
