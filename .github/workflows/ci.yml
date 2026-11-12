@@ -1,0 +1,153 @@
+# ============================================================
+#  CI de APIGasoline (Fase 11)
+#  Corre en cada pull request y push a develop y main:
+#    1. Compila en Release y corre las pruebas de dominio, aplicación y arquitectura.
+#    2. Revisa que el modelo de EF no tenga cambios sin migración y genera migraciones.sql.
+#    3. Avisa si hay paquetes NuGet con vulnerabilidades conocidas.
+#    4. Corre las pruebas de integración (matriz de fugas, Row-Level Security...) contra un
+#       SQL Server real en Docker (Testcontainers; el runner de GitHub trae Docker).
+#  Para que un PR no se pueda mergear sin CI en verde, ver .github/PROTECCION-DE-RAMAS.md.
+# ============================================================
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+  workflow_dispatch:
+
+# Un push nuevo al mismo PR o rama cancela la corrida anterior
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
+  TZ: America/Mexico_City
+
+jobs:
+  compilacion:
+    name: Compilación y pruebas unitarias
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Instalar .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Caché de paquetes NuGet
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.NUGET_PACKAGES }}
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', '.config/dotnet-tools.json') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Restaurar paquetes y herramientas
+        run: |
+          dotnet restore APIGasoline.slnx
+          dotnet tool restore
+
+      - name: Compilar (Release)
+        run: dotnet build APIGasoline.slnx --configuration Release --no-restore
+
+      - name: Pruebas de dominio
+        run: dotnet test tests/APIGasoline.Domain.Tests --configuration Release --no-build --logger trx --results-directory resultados
+
+      - name: Pruebas de aplicación
+        run: dotnet test tests/APIGasoline.Application.Tests --configuration Release --no-build --logger trx --results-directory resultados
+
+      - name: Pruebas de arquitectura
+        run: dotnet test tests/APIGasoline.Architecture.Tests --configuration Release --no-build --logger trx --results-directory resultados
+
+      - name: El modelo de EF no tiene cambios sin migración
+        env:
+          ASPNETCORE_ENVIRONMENT: Development   # solo para leer el modelo; no se conecta a ninguna BD
+        run: >
+          dotnet ef migrations has-pending-model-changes
+          --project APIGasoline.Infrastructure --startup-project APIGasoline
+          --configuration Release --no-build
+
+      - name: Generar migraciones.sql (script idempotente)
+        env:
+          ASPNETCORE_ENVIRONMENT: Development   # solo para leer el modelo; no se conecta a ninguna BD
+        run: >
+          dotnet ef migrations script --idempotent
+          --project APIGasoline.Infrastructure --startup-project APIGasoline
+          --configuration Release --no-build
+          --output migraciones.sql
+
+      - name: Paquetes con vulnerabilidades conocidas
+        run: |
+          dotnet list APIGasoline.slnx package --vulnerable --include-transitive | tee vulnerables.txt
+          if grep -q "has the following vulnerable packages" vulnerables.txt; then
+            echo "::warning title=Paquetes vulnerables::Hay paquetes NuGet con vulnerabilidades conocidas. Revisa el paso 'Paquetes con vulnerabilidades conocidas'."
+          fi
+
+      - name: Subir migraciones.sql
+        uses: actions/upload-artifact@v4
+        with:
+          name: migraciones-sql
+          path: migraciones.sql
+          retention-days: 30
+
+      - name: Subir resultados de pruebas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resultados-unitarias
+          path: resultados/*.trx
+          retention-days: 14
+
+  integracion:
+    name: Pruebas de integración
+    runs-on: ubuntu-latest
+    needs: compilacion
+    timeout-minutes: 40
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Instalar .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Caché de paquetes NuGet
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.NUGET_PACKAGES }}
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', '.config/dotnet-tools.json') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      # Bajar la imagen antes: así su tiempo no cuenta dentro de la primera prueba
+      - name: Descargar la imagen de SQL Server
+        run: docker pull mcr.microsoft.com/mssql/server:2022-latest
+
+      - name: Pruebas de integración (SQL Server en Docker)
+        run: >
+          dotnet test tests/APIGasoline.Api.IntegrationTests
+          --configuration Release
+          --logger trx --logger "console;verbosity=normal"
+          --results-directory resultados
+
+      - name: Subir resultados de pruebas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resultados-integracion
+          path: resultados/*.trx
+          retention-days: 14
