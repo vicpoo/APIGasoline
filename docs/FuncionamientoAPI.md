@@ -1,6 +1,8 @@
 # Funcionamiento de la API — APIGasoline
 
-API REST en **.NET 10** para la app de control de combustible y vehículos (GasolineProject).
+API REST en **.NET 10** con **SQL Server 2022** para la app de control de combustible y vehículos (GasolineProject).
+
+> Documento al día con las fases 1 a 9 del plan (SQL Server, aislamiento por empresa, Row-Level Security, lo propio y techo de privilegios, estructura organizacional, empresa inactiva, paginación y reportes acotados).
 
 - **URL base en desarrollo:** `http://localhost:5234`
 - **Formato:** JSON. Los envíos con archivos (fotos, comprobantes, licencia) son `multipart/form-data`.
@@ -46,11 +48,15 @@ API REST en **.NET 10** para la app de control de combustible y vehículos (Gaso
 
 **Patrones:**
 
-- **Unit of Work:** todo el acceso a datos pasa por `IUnitOfWork` y sus 24 repositorios. El Unit of Work también controla las transacciones (`BeginTransactionAsync`, `CommitTransactionAsync`, `RollbackTransactionAsync`).
+- **Unit of Work:** todo el acceso a datos pasa por `IUnitOfWork` y sus 27 repositorios. El Unit of Work también controla las transacciones (`BeginTransactionAsync`, `CommitTransactionAsync`, `RollbackTransactionAsync`).
 - **CQRS:** los Commands cambian datos y las Queries solo leen.
 - **Autorización basada en permisos:** se decide por las claves de privilegio del usuario, nunca por el nombre de su rol.
 - **Outbox:** las notificaciones push se guardan en la misma transacción que el cambio de negocio, y un worker las envía después.
-- **Multiempresa (multi-tenant):** casi todas las tablas llevan `empresa_id`, y las llaves foráneas compuestas `(empresa_id, id)` impiden mezclar datos de dos empresas.
+- **Multiempresa (multi-tenant):** casi todas las tablas llevan `empresa_id`, y las llaves foráneas compuestas `(empresa_id, id)` impiden mezclar datos de dos empresas. Lo de otra empresa se aísla en tres capas:
+  1. **Filtro global de EF Core** (`Empresa`): cada consulta trae solo lo de la empresa del token; lo ajeno "no existe" (404).
+  2. **Guardián de escrituras** (`AislamientoEmpresaInterceptor`): `SaveChanges` rechaza con 403 crear, modificar o borrar algo de otra empresa.
+  3. **Row-Level Security de SQL Server** (`rls.aislamiento_empresa`): aunque una consulta se saltara el filtro, SQL Server no devuelve ni deja escribir filas de otra empresa. Ver `BD/README.md` (sección 3.4).
+- **Estructura organizacional:** la empresa es la raíz. Cada empresa tiene sus corporativos y divisiones (ligados N:M) y sus centros de costo pueden colgar de un corporativo y una división ligados.
 
 ---
 
@@ -329,6 +335,16 @@ Todos estos módulos siguen el CRUD estándar: `GET` (lista), `GET /{id}`, `POST
 | POST | `/api/auditoria/revisiones` | `auditoria.revisar` | Abre una revisión. |
 | PUT | `/api/auditoria/revisiones/{id}/resultado` | `auditoria.revisar` | Registra el resultado y la cierra. |
 
+### 4.12 Reportes de flota
+
+| Método | Ruta | Privilegio | Qué hace |
+|---|---|---|---|
+| GET | `/api/reportes/flota` | `auditoria.ver` | Por carro: km recorridos, cargas, litros y dinero del periodo, con totales y detalle de cargas (JSON para la vista previa). |
+| GET | `/api/reportes/flota/pdf` | `auditoria.ver` | El mismo reporte en PDF. |
+| GET | `/api/reportes/flota/excel` | `auditoria.ver` | El mismo reporte en Excel (.xlsx). |
+
+Filtros: `?empresaId=` (solo con `plataforma.multiempresa`), `?carroId=`, `?desde=`, `?hasta=`. Sin fechas es el último mes; el periodo máximo es de 366 días (`400` si se pasa). El PDF admite hasta 5,000 cargas en el detalle y el Excel 50,000.
+
 ---
 
 ## 5. Flujos de negocio
@@ -430,7 +446,10 @@ Operador                         API                                  Supervisor
 |---|---|---|
 | Siembra de seguridad | Al arrancar la API | Crea el catálogo de privilegios, el rol Administrador y el usuario admin (sin duplicar). |
 | `MinioBucketInitializer` | Al arrancar la API | Crea el bucket de archivos si no existe. |
+| Migraciones | Al arrancar, con `BaseDatos:MigrarAlIniciar` | Aplica las migraciones pendientes. Con `ConnectionStrings:Migraciones` usa ese login (producción) y no el de la API. |
+| Datos demo | Al arrancar, solo en Development con `Seguridad:SembrarDemo` | Crea las empresas demo A y B con sus usuarios, organización, centro de costo y carros. |
 | `OutboxWorker` | Cada 5 s (configurable) | Envía los push pendientes. |
+| `LimpiezaSesionesWorker` | Cada 6 h (configurable) | Borra las sesiones expiradas o cerradas hace más de 30 días. |
 | `RutaViajeModificadaNotification` | Al finalizar, interrumpir o sincronizar un viaje; al llegar puntos o cargas a un viaje cerrado; al corregir | Recalcula la ruta procesada (km por GPS, diferencia contra el odómetro, km/L). |
 | Interceptor de auditoría | En cada `SaveChanges` | Escribe `auditoria_evento` por cada cambio, en la misma transacción. |
 
@@ -454,26 +473,35 @@ Operador                         API                                  Supervisor
 
 | Sección | Para qué |
 |---|---|
-| `ConnectionStrings:DefaultConnection` | SQL Server (ej. `Server=localhost,1433;Database=apigasoline;User Id=sa;Password=...;TrustServerCertificate=True;`). |
+| `ConnectionStrings:DefaultConnection` | SQL Server (ej. `Server=localhost,1433;Database=apigasoline;User Id=sa;Password=...;TrustServerCertificate=True;`). En producción es el login `apigasoline_app`, que solo lee y escribe datos. |
+| `ConnectionStrings:Migraciones` | Opcional: login con el que se aplican las migraciones (en producción `apigasoline_migrador`, dueño solo de su base). Sin él se usa `DefaultConnection`. |
+| `BaseDatos` | `MigrarAlIniciar`: aplica las migraciones pendientes al arrancar. |
 | `Jwt` | Emisor, audiencia, clave (mínimo 32 caracteres) y expiración del token de acceso (15 min). |
 | `Sesiones` | Refresh token: `RefreshDias` (30), `RefreshMaxDias` (90), `GraciaReusoSegundos` (30), `MaxSesionesPorUsuario` (10) y limpieza (`LimpiezaHabilitada`, `LimpiezaIntervaloHoras`, `LimpiezaRetencionDias`). |
 | `LimiteAuth` | Límite por IP: `LoginPorMinuto` (10), `RefreshPorMinuto` (60). `Habilitado: false` para pruebas de carga. |
 | `Minio` | Endpoint, credenciales y bucket de archivos. |
 | `Outbox` | Intervalo, tamaño de lote y bloqueo del worker. |
 | `Push` | Proveedor `NoOp` (simulado) o `Firebase`, con su archivo de credenciales. |
-| `Seguridad` | `SembrarAlIniciar`, `AdminEmail` y `AdminPassword` del administrador inicial. |
+| `Seguridad` | `SembrarAlIniciar`, `AdminEmail` y `AdminPassword` del administrador inicial; `SembrarDemo` (solo Development) crea las empresas demo. |
 
 ---
 
 ## 9. Pruebas
 
-- **Pruebas unitarias:** `dotnet test`. Cubren las reglas de dominio y de Application.
+| Proyecto | Qué prueba | Cómo correrlo |
+|---|---|---|
+| `tests/APIGasoline.Domain.Tests` | Reglas de las entidades. | `dotnet test tests/APIGasoline.Domain.Tests` |
+| `tests/APIGasoline.Application.Tests` | Reglas de Application (cálculos, sesiones, alcance, paginación, periodos, perfiles de AutoMapper). | `dotnet test tests/APIGasoline.Application.Tests` |
+| `tests/APIGasoline.Architecture.Tests` | Capas, Commands/Queries sealed y que ninguna tabla quede fuera del aislamiento por empresa. | `dotnet test tests/APIGasoline.Architecture.Tests` |
+| `tests/APIGasoline.Api.IntegrationTests` | La API completa contra un SQL Server real en Docker (Testcontainers): matriz de fugas entre empresas, lo propio y techo de privilegios, Row-Level Security, empresa inactiva, concurrencia y paginación. Requiere Docker Desktop. | `dotnet test tests/APIGasoline.Api.IntegrationTests` |
+
 - **Postman:**
-  - Carpeta `postman/collections/APIGAsoline`: pruebas por módulo. Empieza con `00_sesion`, que inicia sesión como admin.
-  - Colección "GasolineApp - Datos de prueba": crea los datos y usuarios para probar la app.
-    - Usuarios: `admin.app`, `operador.app` y `supervisor.app` @prueba.com, contraseña `Gasolina2026`.
+  - `postman/APIGasoline.postman_collection.json`: pruebas por módulo.
+  - `postman/GasolineApp-DatosDePrueba.postman_collection.json`: crea los datos y usuarios para probar la app.
+- **Pruebas de carga (k6):** `pruebas-carga/` (ver su `LEEME.md`; las credenciales se pasan por variables de entorno).
 
-**Documentos relacionados** (en la carpeta `docs/` de la API):
+**Documentos relacionados:**
 
-- `CatalogoPrivilegios.md`: los privilegios de la app y sus reglas.
-- `BaseDatos.dbml`: el diagrama de la base de datos, versión 7.
+- `docs/CatalogoPrivilegios.md`: los 42 privilegios de la app y sus reglas.
+- `BD/README.md`: la base de datos (tablas, aislamiento, Row-Level Security, historial de migraciones).
+- `BD/BaseDatos.dbml`: el diagrama de la base de datos (se pega en dbdiagram.io).

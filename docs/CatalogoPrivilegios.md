@@ -1,5 +1,7 @@
 # Catálogo de privilegios — App de control de combustible (GasolineProject)
 
+> Al día con las fases 1 a 9: **42 privilegios** en el catálogo de la API (sección 7). Las secciones 2 a 6 describen los que usa la app móvil.
+
 ## 1. Modelo de autorización
 
 La API (APIGasoline) y la app móvil (GasolineProject) usan **autorización basada en permisos** (*permission-based authorization*):
@@ -42,6 +44,7 @@ La API (APIGasoline) y la app móvil (GasolineProject) usan **autorización basa
   - Con `solicitud.ver_todas`, se ven las de toda su empresa.
 - **`solicitud.crear`:** el usuario debe tener su licencia de conducir registrada. Cada usuario solicita solo para sí mismo.
 - **`solicitud.aprobar`:**
+  - La aprobación (y el rechazo) quedan a nombre del empleado del token; un `empleadoConfirmadorId` en el cuerpo se ignora.
   - El vehículo queda asignado al solicitante.
   - Las demás solicitudes pendientes de ese vehículo se rechazan.
   - El solicitante recibe una notificación.
@@ -85,9 +88,8 @@ Para hacerlas sobre la información de otro empleado se necesita un privilegio d
 
 | Concepto | Cantidad |
 |---|---|
-| Privilegios de la app | 17 |
-| Privilegios que ya existen en la API | 10 |
-| Privilegios nuevos por agregar | 7: `carro.ver_detalle`, `solicitud.ver_propias`, `solicitud.ver_todas`, `solicitud.rechazar`, `viaje.ver_detalle`, `carga.editar`, `carga.eliminar` |
+| Privilegios de la app móvil (sección 2) | 17 |
+| Privilegios en el catálogo de la API (sección 7) | 42 (4 de ámbito plataforma y 38 de ámbito empresa) |
 | Funciones sin privilegio (autoservicio) | 5 |
 
 Las claves son las mismas en la API (`APIGasoline.Application/Common/Security/Permisos.cs`) y en la app (`core/rbac/Privileges.kt`). Si se agrega una clave en un lado, se agrega también en el otro.
@@ -113,7 +115,70 @@ Los reportes son parte del módulo de auditoría y trazabilidad: **usan el mismo
 | Descargar el reporte en PDF | `auditoria.ver` | `GET /api/reportes/flota/pdf?carroId=&desde=&hasta=` |
 | Descargar el reporte en Excel (.xlsx) | `auditoria.ver` | `GET /api/reportes/flota/excel?carroId=&desde=&hasta=` |
 
-- Sin `carroId`: toda la flota. Sin `desde` / `hasta`: todo el historial.
+- Sin `carroId`: toda la flota. Sin `desde` / `hasta`: el último mes. El periodo máximo es de 366 días; el PDF admite hasta 5,000 cargas en el detalle y el Excel 50,000.
 - Por carro: viajes, km recorridos (odómetro: km final − km inicial de los viajes cerrados), km GPS, cargas, litros, gasto, rendimiento (km/L) y costo por km. Más los totales de la flota.
 - Las cargas se cuentan por la fecha de la carga; los viajes, por su fecha de inicio.
 - Un carro dado de baja solo aparece si tuvo movimiento en el periodo.
+
+## 7. Catálogo completo de la API (42)
+
+Es el que crea la siembra al arrancar (`Permisos.Catalogo`). El **ámbito** dice a qué roles se puede asignar:
+
+- **plataforma:** solo a roles globales (los de la plataforma, `rol.empresa_id` NULL).
+- **empresa:** a cualquier rol, global o de una empresa.
+
+Reglas que aplican a todos:
+
+- **Techo de privilegios:** nadie da, quita ni asigna más de lo que tiene (un rol solo se asigna si tienes todos sus privilegios).
+- **Lo propio:** sin el privilegio de "ver todos" o "gestionar", cada quien solo ve y toca lo suyo.
+- **Empresa:** sin `plataforma.multiempresa`, todo se limita a la empresa del token.
+
+| # | Clave | Nombre | Ámbito |
+|---|---|---|---|
+| 1 | `plataforma.multiempresa` | Operar en todas las empresas | plataforma |
+| 2 | `corporativo.gestionar` | Administrar corporativos y divisiones | empresa |
+| 3 | `empresa.gestionar` | Crear y eliminar empresas | plataforma |
+| 4 | `privilegio.gestionar` | Administrar el catálogo de privilegios | plataforma |
+| 5 | `outbox.gestionar` | Administrar el outbox de notificaciones | plataforma |
+| 6 | `corporativo.ver` | Ver corporativos y divisiones | empresa |
+| 7 | `empresa.ver` | Ver empresas | empresa |
+| 8 | `empresa.editar` | Editar la empresa | empresa |
+| 9 | `centro_costo.ver` | Ver centros de costo | empresa |
+| 10 | `centro_costo.gestionar` | Administrar centros de costo | empresa |
+| 11 | `usuario.ver` | Ver usuarios | empresa |
+| 12 | `usuario.gestionar` | Administrar usuarios | empresa |
+| 13 | `empleado.ver` | Ver empleados | empresa |
+| 14 | `empleado.gestionar` | Administrar empleados | empresa |
+| 15 | `rol.ver` | Ver roles | empresa |
+| 16 | `rol.gestionar` | Administrar roles | empresa |
+| 17 | `rol.asignar` | Asignar roles | empresa |
+| 18 | `privilegio.ver` | Ver privilegios | empresa |
+| 19 | `carro.ver` | Ver vehículos | empresa |
+| 20 | `carro.ver_detalle` | Ver detalles de un vehículo | empresa |
+| 21 | `carro.crear` | Agregar vehículos | empresa |
+| 22 | `carro.editar` | Editar vehículos | empresa |
+| 23 | `carro.eliminar` | Eliminar vehículos | empresa |
+| 24 | `carro.cambiar_estatus` | Cambiar estatus de vehículos | empresa |
+| 25 | `asignacion.gestionar` | Administrar asignaciones de vehículos | empresa |
+| 26 | `solicitud.crear` | Solicitar un vehículo | empresa |
+| 27 | `solicitud.ver_propias` | Ver mis solicitudes | empresa |
+| 28 | `solicitud.ver_todas` | Ver las solicitudes de la empresa | empresa |
+| 29 | `solicitud.aprobar` | Aprobar solicitudes | empresa |
+| 30 | `solicitud.rechazar` | Rechazar solicitudes | empresa |
+| 31 | `viaje.ver_propios` | Ver mis viajes | empresa |
+| 32 | `viaje.ver_todos` | Ver los viajes de la empresa | empresa |
+| 33 | `viaje.ver_detalle` | Ver detalles de un viaje | empresa |
+| 34 | `viaje.registrar` | Registrar viajes (pestaña Registrar) | empresa |
+| 35 | `viaje.corregir_cerrado` | Corregir viajes cerrados | empresa |
+| 36 | `viaje.eliminar` | Eliminar viajes | empresa |
+| 37 | `carga.registrar` | Registrar recargas de gasolina | empresa |
+| 38 | `carga.editar` | Editar recargas de gasolina | empresa |
+| 39 | `carga.eliminar` | Eliminar recargas de gasolina | empresa |
+| 40 | `auditoria.ver` | Ver auditoría | empresa |
+| 41 | `auditoria.revisar` | Revisar auditoría | empresa |
+| 42 | `notificacion.enviar` | Enviar notificaciones | empresa |
+
+Notas:
+
+- `corporativo.gestionar` pasó a ámbito **empresa** en la fase 8: cada empresa administra sus corporativos, divisiones y sus ligas.
+- `empresa.editar` cambia los datos de la propia empresa; activarla o desactivarla solo lo hace quien tiene `empresa.gestionar` (la plataforma).

@@ -1,10 +1,10 @@
 # Base de datos — APIGasoline
 
-**Versión del modelo:** 10 · **Generado desde la API:** 11 de noviembre de 2026
+**Versión del modelo:** 13 · **Actualizado:** 12 de noviembre de 2026 (fases 1 a 9)
 **Motor actual:** SQL Server 2022 · **ORM:** Entity Framework Core 10 (Microsoft.EntityFrameworkCore.SqlServer)
-**Última migración:** `20261111182911_InicialSqlServer`
+**Última migración:** `20261112174728_IndicesUnicosConcurrencia`
 
-> **Cambio de motor (fase 1):** la API pasó de MySQL 8 a SQL Server. El modelo (tablas, columnas, llaves, índices y reglas) es el mismo que se documenta abajo; solo cambian los tipos físicos. `esquema-sqlserver.sql` es el esquema actual; `esquema-mysql.sql` y el DBML quedan como referencia de la versión en MySQL. La tabla de equivalencias está en la sección 12.
+> **Cambio de motor (fase 1):** la API pasó de MySQL 8 a SQL Server. El modelo (tablas, columnas, llaves, índices y reglas) es el mismo que se documenta abajo; solo cambian los tipos físicos. `esquema-sqlserver.sql` es el esquema actual. La tabla de equivalencias está en la sección 12 (el DDL de MySQL se retiró del repositorio en la fase 10; sigue en el historial de git).
 >
 > | MySQL | SQL Server |
 > |---|---|
@@ -18,9 +18,9 @@
 > | `utf8mb4_0900_ai_ci` | `Modern_Spanish_CI_AI` |
 > | `FOR UPDATE SKIP LOCKED` (outbox) | `WITH (UPDLOCK, READPAST, ROWLOCK)` |
 
-Esta carpeta se armó **a partir del código de la API**, no de documentación previa:
+Esta carpeta se armó originalmente **a partir del código de la API** (cuando el motor era MySQL), no de documentación previa:
 
-1. Se aplicaron las 9 migraciones de `APIGasoline.Infrastructure/Migrations` (el script `migraciones.sql` que generó EF) sobre un MySQL 8.0 vacío.
+1. Se aplicaron las 9 migraciones de entonces (el script idempotente que genera EF) sobre un MySQL 8.0 vacío.
 2. Se leyó el resultado de `information_schema` (columnas, índices, llaves foráneas, CHECKs).
 3. Se comparó contra las configuraciones de EF (`Persistence/Configurations/*.cs`) y los enums del dominio (`APIGasoline.Domain/Enums`) para confirmar que el código y las migraciones coinciden.
 4. Después se contrastó con la documentación v9 que ya existía (ver la sección 9).
@@ -30,11 +30,11 @@ Esta carpeta se armó **a partir del código de la API**, no de documentación p
 | Archivo | Qué es |
 |---|---|
 | `README.md` | Esta documentación. |
-| `esquema-sqlserver.sql` | **Esquema actual (SQL Server)**, generado con `dotnet ef migrations script` desde `InicialSqlServer`. |
-| `esquema-mysql.sql` | (Referencia, versión MySQL) DDL consolidado (24 tablas) tal como queda la BD después de todas las migraciones. Verificado: al cargarlo en una BD vacía se obtiene exactamente el mismo esquema. |
-| `BaseDatos.dbml` | Diagrama para [dbdiagram.io](https://dbdiagram.io), generado del mismo esquema (24 tablas, 47 relaciones, 14 enums). Validado con el parser oficial `@dbml/core`. |
+| `esquema-sqlserver.sql` | **Esquema actual (SQL Server)**: todas las migraciones en orden, generadas con `dotnet ef migrations script`. |
+| `BaseDatos.dbml` | Diagrama para [dbdiagram.io](https://dbdiagram.io) (25 tablas). Es el único DBML del repositorio (el de `docs/` se retiró). Los tipos están escritos como en la versión MySQL; los equivalentes en SQL Server están arriba. |
+| `produccion/crear-logins.sql` | Lo ejecuta el contenedor `db-init` en producción: crea la base y los logins `apigasoline_app` y `apigasoline_migrador` (la API no usa `sa`). |
 
-> La forma oficial de crear la BD sigue siendo con las migraciones (`BaseDatos:MigrarAlIniciar = true` o `dotnet ef database update`). `esquema-mysql.sql` es una foto para leer, revisar o cargar el modelo a mano; no crea `__EFMigrationsHistory`, así que si lo usas la API intentará migrar de nuevo.
+> La forma oficial de crear la BD es con las migraciones (`BaseDatos:MigrarAlIniciar = true` o `dotnet ef database update`). `esquema-sqlserver.sql` es para leer y revisar el modelo.
 
 ---
 
@@ -54,7 +54,7 @@ Esta carpeta se armó **a partir del código de la API**, no de documentación p
 
 ```text
 App móvil (KMP, offline-first) ─┐
-                                ├──> API APIGasoline (.NET 10) ──> MySQL (esta BD)
+                                ├──> API APIGasoline (.NET 10) ──> SQL Server (esta BD)
 Web / Postman ──────────────────┘          │
                                            ├──> MinIO (fotos; en BD solo la llave)
                                            └──> Firebase Cloud Messaging (push vía outbox_mensaje)
@@ -73,13 +73,13 @@ SELECT * FROM usuario WHERE usuario_id = UUID_TO_BIN('0192f3a4-...');
 
 **Nombres.** Tablas en singular y `snake_case`; llaves `entidad_id`; índices `ix_<tabla>_<columnas>`, únicos `uq_<tabla>_<columnas>`, foráneas `fk_<tabla>_<destino>`.
 
-**Enums.** Se guardan como `enum(...)` de MySQL en `snake_case` (`en_mantenimiento`) mediante convertidores (`SnakeCaseEnumConverter` y otros). En JSON la API los expone en `camelCase`.
+**Enums.** Se guardan como `varchar(n)` + `CHECK` en `snake_case` (`en_mantenimiento`) mediante convertidores (`SnakeCaseEnumConverter` y otros). En JSON la API los expone en `camelCase`.
 
-**Booleanos.** `tinyint(1)`.
+**Booleanos.** `bit`.
 
-**Fechas.** `timestamp`. Las capturadas en el celular (`fecha_inicio`, `fecha_carga`, `timestamp_captura`, `fecha_cambio`) conviven con `fecha_recepcion` (hora del servidor, default `now()`); la diferencia indica cuánto tiempo estuvo el dato sin sincronizar.
+**Fechas.** `datetime2(0)`. Las capturadas en el celular (`fecha_inicio`, `fecha_carga`, `timestamp_captura`, `fecha_cambio`) conviven con `fecha_recepcion` (hora del servidor, default `SYSDATETIME()`); la diferencia indica cuánto tiempo estuvo el dato sin sincronizar.
 
-**Juego de caracteres.** `utf8mb4`. La primera migración hace `ALTER DATABASE CHARACTER SET utf8mb4` sin `COLLATE`, por lo que las tablas quedan con la intercalación por defecto de MySQL 8: `utf8mb4_0900_ai_ci` (no distingue mayúsculas ni acentos), aunque el contenedor arranque con `--collation-server=utf8mb4_unicode_ci`.
+**Intercalación.** `Modern_Spanish_CI_AI` (no distingue mayúsculas ni acentos). La pone EF al crear la base (`UseCollation`); en producción la crea `db-init` con la misma intercalación.
 
 **Borrado lógico.** `empresa.eliminado` y `empleado.eliminado` (con filtro global `HasQueryFilter` en EF). Los carros usan `dado_de_baja` + `fecha_baja` + `motivo_baja`.
 
@@ -97,7 +97,7 @@ empresa/{empresa_id}/{entidad}/{id}/{carpeta}/{tipo}-{uuid}.{ext}
 
 ### 3.1. Lo que garantiza la base de datos
 
-- **25 llaves foráneas compuestas** `(empresa_id, x_id) → tabla(empresa_id, x_id)`. Cada tabla referenciada tiene su índice único `uq_<tabla>_empresa_id_<tabla>_id`. Con eso **MySQL rechaza** relaciones que cruzan empresas, por ejemplo un viaje de la empresa A con un carro de la B:
+- **25 llaves foráneas compuestas** `(empresa_id, x_id) → tabla(empresa_id, x_id)`. Cada tabla referenciada tiene su índice único `uq_<tabla>_empresa_id_<tabla>_id`. Con eso **la base de datos rechaza** relaciones que cruzan empresas, por ejemplo un viaje de la empresa A con un carro de la B:
 
 | Tabla | Referencias compuestas (misma empresa) |
 |---|---|
@@ -175,7 +175,7 @@ usuario 1 ──< sesion_usuario
 ```
 
 - Privilegios efectivos de un usuario = privilegios **activos** de sus roles **activos** que sean globales (`rol.empresa_id IS NULL`) o de su empresa. No van en el JWT: la API los consulta con caché corta.
-- `rol.empresa_clave` (columna generada) existe porque en MySQL un índice único permite varios `NULL`; así `uq_rol_empresa_clave_nombre` impide dos roles globales con el mismo nombre.
+- Dos roles globales no pueden llamarse igual: en SQL Server el índice único `uq_rol_empresa_id_nombre` trata los `NULL` como iguales (en MySQL hacía falta la columna generada `rol.empresa_clave`, que se eliminó en la fase 1).
 - **Sesiones (v10):** cada inicio de sesión crea una fila en `sesion_usuario`. Solo se guarda el SHA-256 del refresh token. En cada renovación el token rota y el hash anterior se conserva para detectar reuso (si alguien usa un token ya reemplazado, se revoca la sesión). La expiración es deslizante (`expira_en`) con tope absoluto (`expira_absoluta_en`). Límite de sesiones por usuario y limpieza periódica configurables en `Sesiones` (appsettings). Endpoints: `POST /api/auth/login | refresh | logout`, `GET /api/auth/sesiones`, `DELETE /api/auth/sesiones/{id}`, `POST /api/auth/sesiones/cerrar-otras`.
 - **Siembra:** al arrancar (`Seguridad:SembrarAlIniciar`), `SembrarSeguridadCommand` crea los 42 privilegios del catálogo que falten, el rol global **Administrador** y, si se configuró, el usuario admin. No hay `HasData` en las migraciones: con una BD recién migrada las tablas de seguridad están vacías hasta que arranca la API.
 
@@ -809,6 +809,9 @@ Todo lo demás de la v9 (columnas, tipos, enums, FKs compuestas, CHECK de `revis
 | 8 | `20261022120000_MotivoSolicitud` | `solicitud_reserva.motivo_solicitud`. |
 | 9 | `20261030120000_TipoVehiculo` | `carro.tipo_vehiculo`. |
 | 10 | `20261106120000_SesionesUsuario` | **`sesion_usuario`**: refresh tokens con rotación, detección de reuso, expiración deslizante y absoluta, revocación por motivo. |
+| SQL Server | `20261111182911_InicialSqlServer` (fase 1) | El modelo de la v10 recreado para SQL Server (tipos de la sección 12; se elimina `rol.empresa_clave`). Las migraciones de MySQL se retiraron. |
+| SQL Server | `20261111211442_AgregarEmpresaAUsuario` (fase 3) | `usuario.empresa_id`: de qué empresa es cada cuenta. |
+| SQL Server | `20261111222631_SeguridadPorFilas` (fase 6) | Row-Level Security: esquema `rls`, funciones de predicado y política `rls.aislamiento_empresa`. |
 | 11 | `EstructuraOrganizacional` (fase 8) | La empresa es la raíz: `corporativo.empresa_id` y `division.empresa_id`; **`corporativo_division`** (N:M); `centro_costo.corporativo_id`/`division_id` opcionales; `empresa` pierde `corporativo_id`/`division_id`; las tres tablas entran a la política de RLS; `corporativo.gestionar` pasa a ámbito empresa. Datos existentes: cada corporativo queda en la primera empresa que lo usaba (los que no usaba ninguna se borran con sus divisiones) y la relación división → corporativo se vuelve liga. |
 | 12 | `EmpresaDesactivada` (fase 9A) | Nuevo motivo de cierre de sesión `empresa_desactivada`: al desactivar una empresa se cierran sus sesiones y ya no puede iniciar sesión ni renovar el token. |
 | **13** | `IndicesUnicosConcurrencia` (fase 9B) | Índices únicos (F010): un viaje en curso por carro y una pausa abierta por viaje (filtrados) y `(viaje_id, timestamp_captura)` en `punto_ruta`. Antes de crearlos se limpian duplicados: puntos repetidos se borran, pausas abiertas de más se cierran y viajes en curso de más quedan interrumpidos. |
@@ -817,27 +820,23 @@ Todo lo demás de la v9 (columnas, tipos, enums, FKs compuestas, CHECK de `revis
 
 ## 11. Cómo regenerar esta carpeta
 
-Cuando se agregue una migración:
+Cuando se agregue una migración (desde la raíz del repo):
 
 ```bash
-# 1. Script de todas las migraciones (desde la raíz del repo)
+# 1. Esquema completo (todas las migraciones en orden). Después se le vuelve a poner el encabezado.
+dotnet ef migrations script -p APIGasoline.Infrastructure -s APIGasoline -o BD/esquema-sqlserver.sql
+
+# 2. Script idempotente para aplicar a mano en un servidor (NO se sube: está en .gitignore)
 dotnet ef migrations script --idempotent -p APIGasoline.Infrastructure -s APIGasoline -o migraciones.sql
-
-# 2. Aplicarlo a una BD vacía (ej. el contenedor de docker-compose)
-mysql -h 127.0.0.1 -P 3307 -uroot -p -e "CREATE DATABASE apigasoline_doc"
-mysql -h 127.0.0.1 -P 3307 -uroot -p apigasoline_doc < migraciones.sql
-
-# 3. Exportar el esquema consolidado
-mysqldump -h 127.0.0.1 -P 3307 -uroot -p --no-data --skip-comments apigasoline_doc > BD/esquema-mysql.sql
 ```
 
-Para el DBML: `npx @dbml/cli sql2dbml --mysql BD/esquema-mysql.sql -o BD/BaseDatos.dbml` (sin las notas en español; esas se agregan a mano).
+Después se actualizan a mano este README (tablas, índices, historial de la sección 10) y `BaseDatos.dbml`.
 
 ---
 
-## 12. Puntos que importan para la migración a SQL Server
+## 12. Puntos que importaron para la migración a SQL Server (fase 1, ya hecha)
 
-Partes del esquema que son propias de MySQL y hay que traducir:
+Referencia histórica: partes del esquema que eran propias de MySQL y cómo se tradujeron:
 
 | MySQL | Dónde | En SQL Server |
 |---|---|---|

@@ -1,7 +1,7 @@
 # Cambios v5 — RBAC (roles y privilegios) listo para el front
 
 Este documento resume lo que cambió en la API y en la base de datos al pasar del modelo v4 al v5.
-El modelo completo está en `docs/BaseDatos.dbml` (los cambios están marcados con 🔐 v5).
+El modelo completo está en `BD/BaseDatos.dbml` (los cambios están marcados con 🔐 v5).
 
 La idea: el front (Kotlin Multiplatform, offline-first) decide qué botones mostrar con las
 **claves de privilegios** del usuario (`carro.crear`, `viaje.ver_todos`...), nunca con el nombre del rol.

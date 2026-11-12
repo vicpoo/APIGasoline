@@ -179,9 +179,9 @@ APIGasoline.Infrastructure/  EF Core (SQL Server), repositorios, migraciones, Mi
 APIGasoline.AppHost/         Orquestador de desarrollo (Aspire)
 tests/                       Pruebas unitarias, de arquitectura y de integración (matriz de fugas)
 BD/                          Esquema y documentación de la base de datos
-docs/                        Documentación de la API
+docs/                        Documentación de la API (FuncionamientoAPI.md, CatalogoPrivilegios.md)
 postman/                     Colecciones de Postman
-pruebas-carga/               Pruebas de carga (k6)
+pruebas-carga/               Pruebas de carga (k6); credenciales por variables de entorno (ver su LEEME.md)
 ```
 
 ## Producción

@@ -1,7 +1,7 @@
 # Cambios v4 — Auditoría y trazabilidad
 
 Este documento resume lo que cambió en la API y en la base de datos al pasar del modelo v3 al v4.
-El modelo completo está en `docs/BaseDatos.dbml`.
+El modelo completo está en `BD/BaseDatos.dbml`.
 
 El núcleo de la app sigue siendo **viajes (ruta tipo Strava) y cargas de combustible**.
 La auditoría es un **módulo secundario**: no duplica viajes ni cargas, solo registra los eventos
