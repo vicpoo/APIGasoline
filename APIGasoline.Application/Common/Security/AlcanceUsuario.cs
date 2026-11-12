@@ -47,6 +47,19 @@ public static class AlcanceUsuario
     }
 
     /// <summary>
+    /// Empleado que HACE la acción (aprobar, rechazar, cambiar un estatus...): siempre el del token,
+    /// nunca uno que mande el cliente (F008). Sin empleado vinculado no puede hacerla.
+    /// </summary>
+    public static Guid EmpleadoActor(this IUsuarioActual usuario, string accion)
+    {
+        if (!usuario.EstaAutenticado)
+            throw new UnauthorizedException("Debes iniciar sesión.");
+
+        return usuario.EmpleadoId
+            ?? throw new ForbiddenException($"Para {accion} tu usuario debe estar vinculado a un empleado.");
+    }
+
+    /// <summary>
     /// Empleado por el que se filtra una lista. Con <paramref name="privilegioVerTodos"/> devuelve el
     /// solicitado (null = todos); si no, fuerza el empleado del token (y rechaza si pidió otro).
     /// </summary>

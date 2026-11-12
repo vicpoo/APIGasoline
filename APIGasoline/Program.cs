@@ -32,6 +32,10 @@ if (builder.Environment.IsDevelopment())
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Falta la cadena de conexión 'DefaultConnection'.");
 
+// Opcional (F013): con qué login se aplican las migraciones. En producción la API opera con un login
+// de solo datos (DefaultConnection) y migra con otro que puede cambiar el esquema de SU base.
+var connectionStringMigraciones = builder.Configuration.GetConnectionString("Migraciones");
+
 builder.Services
     .AddControllers()
     .AddJsonOptions(options =>
@@ -83,7 +87,7 @@ var seguridadSettings = builder.Configuration.GetSection(SeguridadSettings.Secti
 var baseDatosSettings = builder.Configuration.GetSection(BaseDatosSettings.SectionName).Get<BaseDatosSettings>()
     ?? new BaseDatosSettings();
 
-builder.Services.AddInfrastructure(connectionString, jwtSettings, sesionesSettings, minioSettings, outboxSettings, pushSettings);
+builder.Services.AddInfrastructure(connectionString, jwtSettings, sesionesSettings, minioSettings, outboxSettings, pushSettings, connectionStringMigraciones);
 
 // Autenticación con JWT (el token lo emite POST /api/auth/login)
 builder.Services

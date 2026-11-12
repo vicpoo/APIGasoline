@@ -4,8 +4,12 @@ namespace APIGasoline.Contracts.SolicitudesReserva;
 
 public class RechazarSolicitudReservaRequest
 {
-    [GuidNoVacio]
-    public Guid EmpleadoConfirmadorId { get; set; }
+    /// <summary>
+    /// OBSOLETO (F008): se ignora. El confirmador es siempre el empleado del token.
+    /// Se acepta para no romper las apps que todavía lo mandan.
+    /// </summary>
+    [Obsolete("Se ignora: el confirmador es el empleado del token.")]
+    public Guid? EmpleadoConfirmadorId { get; set; }
 
     [Required]
     [StringLength(255)]

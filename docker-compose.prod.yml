@@ -1,6 +1,8 @@
 ﻿# ============================================================
 #  APIGasoline - PRODUCCIÓN (EC2)
 #  Servicios: API + SQL Server 2022 (Express) + MinIO
+#  La API NO usa sa (F013): opera con apigasoline_app (solo datos) y migra con
+#  apigasoline_migrador (db_owner solo de su base). Los crea db-init.
 #  OJO: SQL Server necesita x64 (no corre en instancias ARM/Graviton) y al menos 2 GB de RAM.
 #
 #  Uso en el servidor:
@@ -23,13 +25,16 @@ services:
     container_name: apigasoline-api
     restart: unless-stopped
     depends_on:
-      db:
-        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
       minio:
         condition: service_healthy
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      ConnectionStrings__DefaultConnection: "Server=db,1433;Database=${MSSQL_DATABASE:-apigasoline};User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;"
+      # Opera con un login que solo lee y escribe datos...
+      ConnectionStrings__DefaultConnection: "Server=db,1433;Database=${MSSQL_DATABASE:-apigasoline};User Id=apigasoline_app;Password=${MSSQL_APP_PASSWORD};TrustServerCertificate=True;"
+      # ...y aplica las migraciones al arrancar con otro que puede cambiar el esquema de su base
+      ConnectionStrings__Migraciones: "Server=db,1433;Database=${MSSQL_DATABASE:-apigasoline};User Id=apigasoline_migrador;Password=${MSSQL_MIGRADOR_PASSWORD};TrustServerCertificate=True;"
       Jwt__Key: ${JWT_KEY}
       Minio__Endpoint: minio:9000
       # "auto" = las URLs de las fotos se firman con el host que usó el cliente (IP pública de EC2) + puerto 9000
@@ -51,7 +56,7 @@ services:
       - "${API_PORT:-80}:8080"
 
   # ---------- Base de datos (sin puerto público) ----------
-  # La BD la crea la API al arrancar (BaseDatos__MigrarAlIniciar = true).
+  # db-init crea la base y los logins; la API crea las tablas al arrancar (BaseDatos__MigrarAlIniciar = true).
   db:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: apigasoline-db
@@ -74,6 +79,29 @@ services:
       timeout: 5s
       retries: 10
       start_period: 30s
+
+  # ---------- Crea la base y los logins de la API (se ejecuta en cada arranque y termina) ----------
+  # Idempotente: si ya existen, solo actualiza las contraseñas con las del .env.
+  db-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: apigasoline-db-init
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
+      MSSQL_DATABASE: ${MSSQL_DATABASE:-apigasoline}
+      MSSQL_APP_PASSWORD: ${MSSQL_APP_PASSWORD}
+      MSSQL_MIGRADOR_PASSWORD: ${MSSQL_MIGRADOR_PASSWORD}
+    volumes:
+      - ./BD/produccion:/scripts:ro
+    entrypoint: >
+      /bin/bash -c "
+      /opt/mssql-tools18/bin/sqlcmd -C -S db -U sa -P \"$$MSSQL_SA_PASSWORD\" -b
+      -v MSSQL_DATABASE=\"$$MSSQL_DATABASE\" MSSQL_APP_PASSWORD=\"$$MSSQL_APP_PASSWORD\" MSSQL_MIGRADOR_PASSWORD=\"$$MSSQL_MIGRADOR_PASSWORD\"
+      -i /scripts/crear-logins.sql
+      "
+    restart: "no"
 
   # ---------- Almacenamiento de objetos (imágenes) ----------
   minio:

@@ -1919,3 +1919,32 @@ END;
 COMMIT;
 GO
 
+BEGIN TRANSACTION;
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261112172840_EmpresaDesactivada'
+)
+BEGIN
+    ALTER TABLE [sesion_usuario] DROP CONSTRAINT [ck_sesion_usuario_motivo_revocacion];
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261112172840_EmpresaDesactivada'
+)
+BEGIN
+    EXEC(N'ALTER TABLE [sesion_usuario] ADD CONSTRAINT [ck_sesion_usuario_motivo_revocacion] CHECK ([motivo_revocacion] IN (''cierre_sesion'', ''cerrada_por_usuario'', ''cerrada_por_administrador'', ''cambio_password'', ''usuario_desactivado'', ''empleado_dado_de_baja'', ''empleado_reasignado'', ''empresa_eliminada'', ''reuso_detectado'', ''acceso_revocado'', ''limite_sesiones'', ''empresa_desactivada''))');
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261112172840_EmpresaDesactivada'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20261112172840_EmpresaDesactivada', N'10.0.12');
+END;
+
+COMMIT;
+GO
+

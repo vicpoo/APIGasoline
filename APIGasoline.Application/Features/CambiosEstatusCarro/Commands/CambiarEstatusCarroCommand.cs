@@ -19,10 +19,10 @@ namespace APIGasoline.Application.Features.CambiosEstatusCarro.Commands;
 /// Si el operador que tiene el carro lo manda a mantenimiento (HU-EST-02), se avisa a los confirmadores.
 /// <see cref="TipoMotivo"/> clasifica el cambio: falla_mecanica y choque_o_golpe forman el registro de percances.
 /// La foto de evidencia se sube aparte (SubirFotoEvidenciaCommand).
+/// Quien hace el cambio es el empleado del token (F008).
 /// </summary>
 public sealed record CambiarEstatusCarroCommand(
     Guid CarroId,
-    Guid EmpleadoId,
     EstadoCarro EstatusNuevo,
     string? Motivo,
     Guid? ViajeAfectadoId,
@@ -36,9 +36,11 @@ public sealed class CambiarEstatusCarroCommandHandler : ICommandHandler<CambiarE
     private readonly IFileStorageService _storage;
     private readonly IDateTimeProvider _dateTime;
     private readonly NotificadorPush _notificador;
+    private readonly IUsuarioActual _usuarioActual;
 
-    public CambiarEstatusCarroCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IFileStorageService storage, IDateTimeProvider dateTime, NotificadorPush notificador)
+    public CambiarEstatusCarroCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IFileStorageService storage, IDateTimeProvider dateTime, NotificadorPush notificador, IUsuarioActual usuarioActual)
     {
+        _usuarioActual = usuarioActual;
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _storage = storage;
@@ -55,8 +57,9 @@ public sealed class CambiarEstatusCarroCommandHandler : ICommandHandler<CambiarE
         var carro = await _unitOfWork.Carros.GetByIdAsync(request.CarroId, cancellationToken)
             ?? throw new NotFoundException($"No existe un carro con el id {request.CarroId}.");
 
-        var empleado = await _unitOfWork.Empleados.GetByIdAsync(request.EmpleadoId, cancellationToken)
-            ?? throw new NotFoundException($"No existe un empleado con el id {request.EmpleadoId}.");
+        var empleadoId = _usuarioActual.EmpleadoActor("cambiar el estatus de un carro");
+        var empleado = await _unitOfWork.Empleados.GetByIdAsync(empleadoId, cancellationToken)
+            ?? throw new NotFoundException($"No existe un empleado con el id {empleadoId}.");
 
         if (empleado.EmpresaId != carro.EmpresaId)
             throw new BadRequestException($"El empleado {empleado.EmpleadoId} no pertenece a la empresa del carro.");

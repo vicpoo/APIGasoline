@@ -187,3 +187,19 @@ pruebas-carga/               Pruebas de carga (k6)
 ## Producción
 
 Ver `docker-compose.prod.yml` y `.env.production.example` (API + SQL Server Express + MinIO). SQL Server necesita un servidor x64 con al menos 2 GB de RAM.
+
+**La API no usa `sa`.** El contenedor `db-init` (script `BD/produccion/crear-logins.sql`) crea la base y dos logins, y es idempotente (en cada arranque solo les pone la contraseña del `.env`):
+
+| Login | Permisos | Para qué |
+|---|---|---|
+| `apigasoline_app` | `db_datareader` + `db_datawriter` de la base | Con el que opera la API (`ConnectionStrings__DefaultConnection`). No puede cambiar el esquema ni quitar Row-Level Security. |
+| `apigasoline_migrador` | `db_owner` solo de la base | Solo para aplicar las migraciones al arrancar (`ConnectionStrings__Migraciones`). |
+
+En un servidor que ya estaba corriendo, agrega al `.env` `MSSQL_APP_PASSWORD` y `MSSQL_MIGRADOR_PASSWORD` y vuelve a levantar:
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml logs db-init   # debe terminar con "Logins listos"
+```
+
+**Empresa inactiva:** una empresa con `activo = false` no puede iniciar sesión ni renovar el token, y al desactivarla se cierran sus sesiones (el token de acceso que ya tenían dura como máximo 15 minutos). Solo la plataforma (`empresa.gestionar`) la activa o desactiva.

@@ -1363,7 +1363,7 @@ namespace APIGasoline.Infrastructure.Migrations
 
                     b.ToTable("sesion_usuario", null, t =>
                         {
-                            t.HasCheckConstraint("ck_sesion_usuario_motivo_revocacion", "[motivo_revocacion] IN ('cierre_sesion', 'cerrada_por_usuario', 'cerrada_por_administrador', 'cambio_password', 'usuario_desactivado', 'empleado_dado_de_baja', 'empleado_reasignado', 'empresa_eliminada', 'reuso_detectado', 'acceso_revocado', 'limite_sesiones')");
+                            t.HasCheckConstraint("ck_sesion_usuario_motivo_revocacion", "[motivo_revocacion] IN ('cierre_sesion', 'cerrada_por_usuario', 'cerrada_por_administrador', 'cambio_password', 'usuario_desactivado', 'empleado_dado_de_baja', 'empleado_reasignado', 'empresa_eliminada', 'reuso_detectado', 'acceso_revocado', 'limite_sesiones', 'empresa_desactivada')");
 
                             t.HasCheckConstraint("ck_sesion_usuario_plataforma", "[plataforma] IN ('android', 'ios', 'web')");
                         });

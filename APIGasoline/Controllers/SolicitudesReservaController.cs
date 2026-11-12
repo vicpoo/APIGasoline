@@ -68,7 +68,7 @@ public class SolicitudesReservaController : ControllerBase
     [HttpPost("{solicitudReservaId:guid}/aprobar")]
     public async Task<ActionResult<SolicitudReservaDto>> Aprobar(Guid solicitudReservaId, AprobarSolicitudReservaRequest request, CancellationToken cancellationToken)
     {
-        var command = new AprobarSolicitudReservaCommand(solicitudReservaId, request.EmpleadoConfirmadorId, request.Motivo);
+        var command = new AprobarSolicitudReservaCommand(solicitudReservaId, request.Motivo);
         return Ok(await _sender.Send(command, cancellationToken));
     }
 
@@ -76,7 +76,7 @@ public class SolicitudesReservaController : ControllerBase
     [HttpPost("{solicitudReservaId:guid}/rechazar")]
     public async Task<ActionResult<SolicitudReservaDto>> Rechazar(Guid solicitudReservaId, RechazarSolicitudReservaRequest request, CancellationToken cancellationToken)
     {
-        var command = new RechazarSolicitudReservaCommand(solicitudReservaId, request.EmpleadoConfirmadorId, request.Motivo);
+        var command = new RechazarSolicitudReservaCommand(solicitudReservaId, request.Motivo);
         return Ok(await _sender.Send(command, cancellationToken));
     }
 

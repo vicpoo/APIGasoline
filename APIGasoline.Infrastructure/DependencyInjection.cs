@@ -20,7 +20,7 @@ namespace APIGasoline.Infrastructure;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString, JwtSettings jwtSettings, SesionesSettings sesionesSettings, MinioSettings minioSettings, OutboxSettings outboxSettings, PushSettings pushSettings)
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString, JwtSettings jwtSettings, SesionesSettings sesionesSettings, MinioSettings minioSettings, OutboxSettings outboxSettings, PushSettings pushSettings, string? connectionStringMigraciones = null)
     {
         // Auditoría: el interceptor agrega un auditoria_evento por cada cambio en el mismo SaveChanges.
         // Requiere que la API registre IUsuarioActual (usuario del token).
@@ -46,7 +46,8 @@ public static class DependencyInjection
                     serviceProvider.GetRequiredService<AuditoriaInterceptor>()));
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
-        services.AddScoped<IMigradorBaseDatos, MigradorBaseDatos>();
+        // Migraciones: con "ConnectionStrings:Migraciones" usan su propio login (F013); si no, el de la API
+        services.AddScoped<IMigradorBaseDatos>(sp => new MigradorBaseDatos(sp.GetRequiredService<AppDbContext>(), connectionStringMigraciones));
         services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
 
         // Seguridad

@@ -322,7 +322,7 @@ Una fila por inicio de sesión en un dispositivo (refresh token rotativo, solo s
 | `expira_en` | timestamp | NN |  | Expiración deslizante (Sesiones:RefreshDias, 30 por defecto). Se extiende en cada renovación. |
 | `expira_absoluta_en` | timestamp | NN |  | Tope desde el inicio de sesión (Sesiones:RefreshMaxDias, 90 por defecto). Después hay que volver a escribir la contraseña. |
 | `fecha_revocacion` | timestamp |  |  | NULL = sesión activa. |
-| `motivo_revocacion` | enum('cierre_sesion','cerrada_por_usuario','cerrada_por_administrador','cambio_password','usuario_desactivado','empleado_dado_de_baja','empleado_reasignado','empresa_eliminada','reuso_detectado','acceso_revocado','limite_sesiones') |  |  | Por qué se cerró (logout, cambio de contraseña, reuso detectado, límite de sesiones…). |
+| `motivo_revocacion` | enum('cierre_sesion','cerrada_por_usuario','cerrada_por_administrador','cambio_password','usuario_desactivado','empleado_dado_de_baja','empleado_reasignado','empresa_eliminada','reuso_detectado','acceso_revocado','limite_sesiones','empresa_desactivada') |  |  | Por qué se cerró (logout, cambio de contraseña, reuso detectado, límite de sesiones, empresa desactivada…). |
 | `revocada_por_usuario_id` | binary(16) |  |  | Quién la cerró (si fue un administrador). Sin FK. |
 
 **Índices:** `ix_sesion_usuario_empresa_id_fecha_revocacion` (empresa_id, fecha_revocacion); `ix_sesion_usuario_expira_en` (expira_en); `ix_sesion_usuario_token_hash_anterior` (token_hash_anterior); `ix_sesion_usuario_usuario_id_fecha_revocacion_expira_en` (usuario_id, fecha_revocacion, expira_en); `uq_sesion_usuario_token_hash` (token_hash) **único**
@@ -809,7 +809,8 @@ Todo lo demás de la v9 (columnas, tipos, enums, FKs compuestas, CHECK de `revis
 | 8 | `20261022120000_MotivoSolicitud` | `solicitud_reserva.motivo_solicitud`. |
 | 9 | `20261030120000_TipoVehiculo` | `carro.tipo_vehiculo`. |
 | 10 | `20261106120000_SesionesUsuario` | **`sesion_usuario`**: refresh tokens con rotación, detección de reuso, expiración deslizante y absoluta, revocación por motivo. |
-| **11** | `EstructuraOrganizacional` (fase 8) | La empresa es la raíz: `corporativo.empresa_id` y `division.empresa_id`; **`corporativo_division`** (N:M); `centro_costo.corporativo_id`/`division_id` opcionales; `empresa` pierde `corporativo_id`/`division_id`; las tres tablas entran a la política de RLS; `corporativo.gestionar` pasa a ámbito empresa. Datos existentes: cada corporativo queda en la primera empresa que lo usaba (los que no usaba ninguna se borran con sus divisiones) y la relación división → corporativo se vuelve liga. |
+| 11 | `EstructuraOrganizacional` (fase 8) | La empresa es la raíz: `corporativo.empresa_id` y `division.empresa_id`; **`corporativo_division`** (N:M); `centro_costo.corporativo_id`/`division_id` opcionales; `empresa` pierde `corporativo_id`/`division_id`; las tres tablas entran a la política de RLS; `corporativo.gestionar` pasa a ámbito empresa. Datos existentes: cada corporativo queda en la primera empresa que lo usaba (los que no usaba ninguna se borran con sus divisiones) y la relación división → corporativo se vuelve liga. |
+| **12** | `EmpresaDesactivada` (fase 9A) | Nuevo motivo de cierre de sesión `empresa_desactivada`: al desactivar una empresa se cierran sus sesiones y ya no puede iniciar sesión ni renovar el token. |
 
 ---
 

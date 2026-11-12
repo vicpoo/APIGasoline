@@ -8,9 +8,12 @@ public class CambiarEstatusCarroRequest
     [GuidNoVacio]
     public Guid CarroId { get; set; }
 
-    /// <summary>Empleado que realiza el cambio.</summary>
-    [GuidNoVacio]
-    public Guid EmpleadoId { get; set; }
+    /// <summary>
+    /// OBSOLETO (F008): se ignora. Quien hace el cambio es siempre el empleado del token.
+    /// Se acepta para no romper las apps que todavía lo mandan.
+    /// </summary>
+    [Obsolete("Se ignora: quien hace el cambio es el empleado del token.")]
+    public Guid? EmpleadoId { get; set; }
 
     [Required]
     public EstadoCarro? EstatusNuevo { get; set; }

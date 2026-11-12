@@ -149,7 +149,7 @@ internal sealed class JwtFalso : IJwtTokenGenerator
 internal sealed record UsuarioActualFalso(Guid? UsuarioId, Guid? SesionId, params string[] Privilegios) : IUsuarioActual
 {
     public bool EstaAutenticado => UsuarioId is not null;
-    public Guid? EmpleadoId => null;
+    public Guid? EmpleadoId { get; init; }
     public Guid? EmpresaId => null;
     public IReadOnlyCollection<string> Roles => [];
     public OrigenAuditoria Origen => OrigenAuditoria.Movil;

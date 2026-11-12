@@ -37,5 +37,8 @@ public enum MotivoRevocacionSesion
     AccesoRevocado = 9,
 
     /// <summary>El usuario superó el máximo de sesiones abiertas: se cierra la más vieja.</summary>
-    LimiteSesiones = 10
+    LimiteSesiones = 10,
+
+    /// <summary>La empresa se marcó como inactiva (F009): sus sesiones se cierran y no puede volver a entrar.</summary>
+    EmpresaDesactivada = 11
 }

@@ -60,7 +60,6 @@ public class CambiosEstatusCarroController : ControllerBase
     {
         var command = new CambiarEstatusCarroCommand(
             request.CarroId,
-            request.EmpleadoId,
             request.EstatusNuevo!.Value,
             request.Motivo,
             request.ViajeAfectadoId,

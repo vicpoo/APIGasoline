@@ -154,8 +154,8 @@ La sesión dura un mes sin bajar la seguridad porque se usan **dos tokens**:
 - **Rotación:** cada renovación entrega un refresh token nuevo e invalida el anterior.
 - **Detección de robo:** si llega un refresh token que ya fue reemplazado, se cierra la sesión completa (motivo `reuso_detectado`). Excepción: dentro de `Sesiones:GraciaReusoSegundos` (30 s) se toma como dos renovaciones simultáneas del mismo celular y solo se rechaza.
 - **Expiración deslizante con tope:** cada renovación extiende la sesión 30 días, pero nunca más de 90 desde el login.
-- **Se revalida al renovar:** usuario activo, empleado y empresa vigentes; los roles del JWT se actualizan.
-- **Revocación automática** de las sesiones del usuario al: cambiar su contraseña (se conserva la sesión desde la que la cambió), desactivar el usuario, dar de baja o reasignar su empleado, o eliminar la empresa.
+- **Se revalida al renovar:** usuario activo, empleado y empresa vigentes y **activa**; los roles del JWT se actualizan. Con la empresa inactiva el login responde `403` y el refresh `401` (la sesión se cierra).
+- **Revocación automática** de las sesiones del usuario al: cambiar su contraseña (se conserva la sesión desde la que la cambió), desactivar el usuario, dar de baja o reasignar su empleado, o eliminar o **desactivar** la empresa (motivo `empresa_desactivada`; solo la plataforma, con `empresa.gestionar`, la activa o desactiva).
 - **Máximo de sesiones** por usuario (`Sesiones:MaxSesionesPorUsuario` = 10): al pasarse se cierra la que lleva más tiempo sin usarse.
 - **Límite de intentos por IP** (`LimiteAuth`): login 10/min y refresh/logout 60/min. Al pasarse responde `429` con `Retry-After`.
 - **Limpieza:** un worker borra cada 6 h las sesiones expiradas o cerradas hace más de 30 días.
@@ -205,7 +205,7 @@ La sesión dura un mes sin bajar la seguridad porque se usan **dos tokens**:
 |---|---|---|---|
 | GET | `/api/cambios-estatus-carro` | `carro.ver`, `carro.cambiar_estatus` | Bitácora. Filtros: `?empresaId=`, `?carroId=`, `?desde=`, `?hasta=`. |
 | GET | `/api/cambios-estatus-carro/{id}` | `carro.ver`, `carro.cambiar_estatus` | Un cambio. |
-| POST | `/api/cambios-estatus-carro` | `carro.cambiar_estatus`, `viaje.registrar` | Cambia el estatus a disponible o en mantenimiento, y lo registra en la bitácora. Un carro ocupado no se pasa a disponible aquí (409): se libera con "liberar" o "desvincular". |
+| POST | `/api/cambios-estatus-carro` | `carro.cambiar_estatus`, `viaje.registrar` | Cambia el estatus a disponible o en mantenimiento, y lo registra en la bitácora a nombre del empleado del token (`empleadoId` del cuerpo se ignora). Un carro ocupado no se pasa a disponible aquí (409): se libera con "liberar" o "desvincular". |
 | PUT | `/api/cambios-estatus-carro/{id}/foto-evidencia` | `carro.cambiar_estatus`, `viaje.registrar` | Foto de la falla o del daño. |
 
 ### 4.4 Solicitudes de reserva
@@ -215,7 +215,7 @@ La sesión dura un mes sin bajar la seguridad porque se usan **dos tokens**:
 | GET | `/api/solicitudes-reserva` | `solicitud.ver_propias`, `solicitud.ver_todas`, `viaje.registrar` | Lista. Sin `ver_todas`, solo las propias. Filtros: `?carroId=`, `?empleadoSolicitanteId=`, `?estado=`. Cada solicitud trae `solicitante` (nombre y foto) y `carro` (marca, modelo, placas y foto) para la tarjeta. |
 | GET | `/api/solicitudes-reserva/{id}` | mismos | Detalle: `motivoSolicitud`, `solicitante` (nombre, foto y licencia), `carro` (datos, estado y foto) y `confirmador`. |
 | POST | `/api/solicitudes-reserva` | `solicitud.crear` | Envía una solicitud con su `motivo` (obligatorio, máx. 255; requiere licencia registrada). |
-| POST | `/api/solicitudes-reserva/{id}/aprobar` | `solicitud.aprobar` | La aprueba: ocupa el carro y rechaza las demás pendientes de ese carro. |
+| POST | `/api/solicitudes-reserva/{id}/aprobar` | `solicitud.aprobar` | La aprueba a nombre del empleado del token (`empleadoConfirmadorId` del cuerpo se ignora): ocupa el carro y rechaza las demás pendientes de ese carro. |
 | POST | `/api/solicitudes-reserva/{id}/rechazar` | `solicitud.rechazar` | La rechaza. |
 | POST | `/api/solicitudes-reserva/{id}/cancelar` | `solicitud.crear`, `solicitud.aprobar` | La cancela. Si estaba aprobada, libera el carro. |
 | POST | `/api/solicitudes-reserva/{id}/liberar` | `viaje.registrar`, `asignacion.gestionar` | El operador entrega SU carro ("Dejar carro"): la reserva queda finalizada y el carro, disponible. La de otro empleado requiere `asignacion.gestionar`. 409 con un viaje en curso o en pausa. |

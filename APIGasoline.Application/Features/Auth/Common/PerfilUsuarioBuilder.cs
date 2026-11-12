@@ -42,8 +42,17 @@ internal static class PerfilUsuarioBuilder
         if (empleado is null && await unitOfWork.Empleados.UsuarioAsignadoAsync(usuario.UsuarioId, null, cancellationToken))
             throw new ForbiddenException("El empleado ligado a este usuario fue dado de baja.");
 
-        if (empleado is not null && !await unitOfWork.Empresas.ExistsAsync(empleado.EmpresaId, cancellationToken))
-            throw new ForbiddenException("La empresa del empleado fue dada de baja.");
+        // La empresa debe existir y estar activa (F009). Sin empleado cuenta la empresa de la cuenta.
+        var empresaId = empleado?.EmpresaId ?? usuario.EmpresaId;
+
+        if (empresaId is not null)
+        {
+            var empresa = await unitOfWork.Empresas.GetByIdAsync(empresaId.Value, cancellationToken)
+                ?? throw new ForbiddenException("La empresa del empleado fue dada de baja.");
+
+            if (!empresa.Activo)
+                throw new ForbiddenException("La empresa está inactiva. Pide a la plataforma que la reactive.");
+        }
 
         var roles = await unitOfWork.Roles.GetActivosByUsuarioAsync(usuario.UsuarioId, empleado?.EmpresaId, cancellationToken);
 

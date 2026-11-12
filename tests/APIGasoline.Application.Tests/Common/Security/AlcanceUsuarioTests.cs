@@ -29,4 +29,22 @@ public class AlcanceUsuarioTests
     public async Task SinSesion_Lanza401()
         => await Assert.ThrowsAsync<UnauthorizedException>(() =>
             new UsuarioActualFalso(null, null).ValidarPropioOAlgunPrivilegioAsync(true, Supervision, "x"));
+
+    // --- F008: quien hace la acción sale del token
+
+    [Fact]
+    public void EmpleadoActor_EsElDelToken()
+    {
+        var empleado = Guid.Parse("01920000-0000-7000-8000-0000000000e1");
+
+        Assert.Equal(empleado, new UsuarioActualFalso(Usuario, null) { EmpleadoId = empleado }.EmpleadoActor("aprobar"));
+    }
+
+    [Fact]
+    public void EmpleadoActor_SinEmpleado_Lanza403()
+        => Assert.Throws<ForbiddenException>(() => new UsuarioActualFalso(Usuario, null).EmpleadoActor("aprobar"));
+
+    [Fact]
+    public void EmpleadoActor_SinSesion_Lanza401()
+        => Assert.Throws<UnauthorizedException>(() => new UsuarioActualFalso(null, null).EmpleadoActor("aprobar"));
 }

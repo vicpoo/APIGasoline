@@ -1,5 +1,6 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Common.Interfaces;
+using APIGasoline.Application.Common.Security;
 using APIGasoline.Application.Features.SolicitudesReserva.DTOs;
 using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Enums;
@@ -13,8 +14,9 @@ namespace APIGasoline.Application.Features.SolicitudesReserva.Commands;
 /// <summary>
 /// Aprueba la solicitud, marca el carro como ocupado y rechaza automáticamente
 /// las demás solicitudes pendientes de ese mismo carro. Todo en un solo SaveChanges (atómico).
+/// El confirmador es el empleado del token (F008).
 /// </summary>
-public sealed record AprobarSolicitudReservaCommand(Guid SolicitudReservaId, Guid EmpleadoConfirmadorId, string? Motivo) : ICommand<SolicitudReservaDto>;
+public sealed record AprobarSolicitudReservaCommand(Guid SolicitudReservaId, string? Motivo) : ICommand<SolicitudReservaDto>;
 
 public sealed class AprobarSolicitudReservaCommandHandler : ICommandHandler<AprobarSolicitudReservaCommand, SolicitudReservaDto>
 {
@@ -22,9 +24,11 @@ public sealed class AprobarSolicitudReservaCommandHandler : ICommandHandler<Apro
     private readonly IMapper _mapper;
     private readonly IDateTimeProvider _dateTime;
     private readonly NotificadorPush _notificador;
+    private readonly IUsuarioActual _usuarioActual;
 
-    public AprobarSolicitudReservaCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IDateTimeProvider dateTime, NotificadorPush notificador)
+    public AprobarSolicitudReservaCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IDateTimeProvider dateTime, NotificadorPush notificador, IUsuarioActual usuarioActual)
     {
+        _usuarioActual = usuarioActual;
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _dateTime = dateTime;
@@ -36,7 +40,8 @@ public sealed class AprobarSolicitudReservaCommandHandler : ICommandHandler<Apro
         var solicitud = await _unitOfWork.SolicitudesReserva.GetByIdAsync(request.SolicitudReservaId, cancellationToken)
             ?? throw new NotFoundException($"No existe una solicitud de reserva con el id {request.SolicitudReservaId}.");
 
-        await SolicitudReservaValidator.ValidarConfirmadorAsync(_unitOfWork, solicitud.EmpresaId, request.EmpleadoConfirmadorId, cancellationToken);
+        var confirmadorId = _usuarioActual.EmpleadoActor("aprobar solicitudes");
+        await SolicitudReservaValidator.ValidarConfirmadorAsync(_unitOfWork, solicitud.EmpresaId, confirmadorId, cancellationToken);
 
         var carro = await _unitOfWork.Carros.GetByIdAsync(solicitud.CarroId, cancellationToken)
             ?? throw new NotFoundException($"No existe un carro con el id {solicitud.CarroId}.");
@@ -51,11 +56,11 @@ public sealed class AprobarSolicitudReservaCommandHandler : ICommandHandler<Apro
         var ahora = _dateTime.Now;
 
         // Reglas de dominio: solo pendientes, no aprobar la propia, carro disponible
-        solicitud.Aprobar(request.EmpleadoConfirmadorId, ahora, request.Motivo);
+        solicitud.Aprobar(confirmadorId, ahora, request.Motivo);
         // Ocupa el carro y deja el registro en la bitácora
         var cambio = CambioEstatusCarro.Registrar(
             carro,
-            request.EmpleadoConfirmadorId,
+            confirmadorId,
             EstadoCarro.Ocupado,
             $"Asignado por la solicitud de reserva {solicitud.SolicitudReservaId}.",
             fechaCambio: ahora);
@@ -69,7 +74,7 @@ public sealed class AprobarSolicitudReservaCommandHandler : ICommandHandler<Apro
         foreach (var otra in otrasPendientes)
         {
             otra.Rechazar(
-                request.EmpleadoConfirmadorId,
+                confirmadorId,
                 ahora,
                 $"Rechazada automáticamente: el carro fue asignado a la solicitud {solicitud.SolicitudReservaId}.");
 

@@ -2,8 +2,8 @@
 --  APIGasoline — Esquema de la base de datos (SQL Server)
 --  Generado con `dotnet ef migrations script` a partir de las migraciones
 --  20261111182911_InicialSqlServer, 20261111211442_AgregarEmpresaAUsuario,
---  20261111222631_SeguridadPorFilas y 20261112170727_EstructuraOrganizacional
---  (APIGasoline.Infrastructure/Migrations).
+--  20261111222631_SeguridadPorFilas, 20261112170727_EstructuraOrganizacional y
+--  20261112172840_EmpresaDesactivada (APIGasoline.Infrastructure/Migrations).
 --
 --  25 tablas · 51 llaves foráneas · 21 CHECK
 --  Estructura organizacional (fase 8): la empresa es la raíz de corporativos,
@@ -915,6 +915,17 @@ EXEC(N'ALTER SECURITY POLICY rls.aislamiento_empresa
 
 INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
 VALUES (N'20261112170727_EstructuraOrganizacional', N'10.0.12');
+
+COMMIT;
+GO
+
+BEGIN TRANSACTION;
+ALTER TABLE [sesion_usuario] DROP CONSTRAINT [ck_sesion_usuario_motivo_revocacion];
+
+ALTER TABLE [sesion_usuario] ADD CONSTRAINT [ck_sesion_usuario_motivo_revocacion] CHECK ([motivo_revocacion] IN ('cierre_sesion', 'cerrada_por_usuario', 'cerrada_por_administrador', 'cambio_password', 'usuario_desactivado', 'empleado_dado_de_baja', 'empleado_reasignado', 'empresa_eliminada', 'reuso_detectado', 'acceso_revocado', 'limite_sesiones', 'empresa_desactivada'));
+
+INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+VALUES (N'20261112172840_EmpresaDesactivada', N'10.0.12');
 
 COMMIT;
 GO

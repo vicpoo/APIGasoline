@@ -87,6 +87,7 @@ Enum sesion_usuario_motivo_revocacion {
   reuso_detectado
   acceso_revocado
   limite_sesiones
+  empresa_desactivada
 }
 
 Enum solicitud_reserva_estado {
