@@ -1,4 +1,5 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
+using APIGasoline.Application.Features.CentrosCosto.Common;
 using APIGasoline.Application.Features.CentrosCosto.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
@@ -6,7 +7,9 @@ using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.CentrosCosto.Commands;
 
-public sealed record UpdateCentroCostoCommand(Guid CentroCostoId, Guid EmpresaId, string Nombre, string Clave, bool Activo) : ICommand<CentroCostoDto>;
+/// <param name="CorporativoId">Opcional (null = sin corporativo).</param>
+/// <param name="DivisionId">Opcional (null = sin división).</param>
+public sealed record UpdateCentroCostoCommand(Guid CentroCostoId, Guid EmpresaId, string Nombre, string Clave, bool Activo, Guid? CorporativoId = null, Guid? DivisionId = null) : ICommand<CentroCostoDto>;
 
 public sealed class UpdateCentroCostoCommandHandler : ICommandHandler<UpdateCentroCostoCommand, CentroCostoDto>
 {
@@ -28,6 +31,7 @@ public sealed class UpdateCentroCostoCommandHandler : ICommandHandler<UpdateCent
         centroCosto.CambiarEmpresa(request.EmpresaId);
         centroCosto.CambiarNombre(request.Nombre);
         centroCosto.CambiarClave(request.Clave);
+        centroCosto.AsignarOrganizacion(request.CorporativoId, request.DivisionId);
 
         if (request.Activo)
             centroCosto.Activar();
@@ -36,6 +40,8 @@ public sealed class UpdateCentroCostoCommandHandler : ICommandHandler<UpdateCent
 
         if (!await _unitOfWork.Empresas.ExistsAsync(centroCosto.EmpresaId, cancellationToken))
             throw new NotFoundException($"No existe una empresa con el id {centroCosto.EmpresaId}.");
+
+        await CentroCostoOrganizacionValidator.ValidarAsync(_unitOfWork, centroCosto, cancellationToken);
 
         if (await _unitOfWork.CentrosCosto.ClaveExistsAsync(centroCosto.EmpresaId, centroCosto.Clave, centroCosto.CentroCostoId, cancellationToken))
             throw new ConflictException($"La empresa {centroCosto.EmpresaId} ya tiene otro centro de costo con la clave '{centroCosto.Clave}'.");

@@ -306,7 +306,7 @@ La sesión dura un mes sin bajar la seguridad porque se usan **dos tokens**:
 | Privilegios | `/api/privilegios` | `privilegio.ver`, `rol.gestionar` | `privilegio.gestionar` |
 | Privilegios de un rol | `/api/rol-privilegios` | `rol.ver` | `rol.gestionar` |
 | Roles de un usuario | `/api/usuario-roles` | `rol.ver` | `rol.asignar` |
-| Corporativos y divisiones | `/api/corporativos`, `/api/divisiones` | `corporativo.ver` | `corporativo.gestionar` |
+| Corporativos y divisiones (de cada empresa) | `/api/corporativos`, `/api/divisiones`, ligas N:M en `/api/corporativos/{id}/divisiones/{divisionId}`, `GET /api/divisiones/{id}/corporativos` | `corporativo.ver` | `corporativo.gestionar` (ámbito empresa) |
 | Empresas | `/api/empresas` | `empresa.ver` | `empresa.editar` / `empresa.gestionar` |
 | Centros de costo | `/api/centros-costo` | `centro_costo.ver`, `viaje.registrar`, `carga.registrar` | `centro_costo.gestionar` |
 | Outbox | `GET /api/outbox`, `POST /api/outbox/{id}/reintentar` | `outbox.gestionar` | `outbox.gestionar` |
@@ -332,11 +332,12 @@ Todos estos módulos siguen el CRUD estándar: `GET` (lista), `GET /{id}`, `POST
 1. Aplicar las migraciones: `dotnet ef database update --project APIGasoline.Infrastructure --startup-project APIGasoline`.
 2. Arrancar la API. La siembra crea los privilegios, el rol Administrador y el usuario admin.
 3. Con el admin, configurar en este orden:
-   1. Corporativo, división y empresa.
-   2. Centros de costo.
-   3. Usuarios y empleados.
-   4. Roles de la empresa y sus privilegios.
-   5. Asignar roles a los usuarios.
+   1. Empresa (la raíz).
+   2. Corporativos y divisiones de la empresa, y ligarlos (N:M).
+   3. Centros de costo (opcionalmente con su corporativo y división).
+   4. Usuarios y empleados.
+   5. Roles de la empresa y sus privilegios.
+   6. Asignar roles a los usuarios.
 
 ### 5.2 Iniciar sesión (app)
 

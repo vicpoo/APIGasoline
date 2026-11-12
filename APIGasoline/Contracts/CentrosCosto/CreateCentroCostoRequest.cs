@@ -16,4 +16,12 @@ public class CreateCentroCostoRequest
     public string Clave { get; set; } = string.Empty;
 
     public bool Activo { get; set; } = true;
+
+    /// <summary>Opcional: corporativo de la misma empresa.</summary>
+    [GuidNoVacio]
+    public Guid? CorporativoId { get; set; }
+
+    /// <summary>Opcional: división de la misma empresa (ligada al corporativo si vienen los dos).</summary>
+    [GuidNoVacio]
+    public Guid? DivisionId { get; set; }
 }

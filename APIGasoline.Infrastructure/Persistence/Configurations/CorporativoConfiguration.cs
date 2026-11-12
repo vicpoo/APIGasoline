@@ -15,6 +15,10 @@ public class CorporativoConfiguration : IEntityTypeConfiguration<Corporativo>
             .HasColumnName("corporativo_id")
             .ValueGeneratedNever();
 
+        builder.Property(c => c.EmpresaId)
+            .HasColumnName("empresa_id")
+            .IsRequired();
+
         builder.Property(c => c.Nombre)
             .HasColumnName("nombre")
             .HasMaxLength(Corporativo.NombreMaxLength)
@@ -34,5 +38,20 @@ public class CorporativoConfiguration : IEntityTypeConfiguration<Corporativo>
             .HasColumnType(TiposSql.FechaHora)
             .HasDefaultValueSql(TiposSql.Ahora)
             .ValueGeneratedOnAdd();
+
+        // Restrict: la empresa usa soft delete, nunca se borra físicamente con corporativos.
+        builder.HasOne<Empresa>()
+            .WithMany()
+            .HasForeignKey(c => c.EmpresaId)
+            .HasConstraintName("fk_corporativo_empresa")
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(c => new { c.EmpresaId, c.Nombre })
+            .IsUnique()
+            .HasDatabaseName("uq_corporativo_empresa_id_nombre");
+
+        // Llave alterna: la referencian corporativo_division y centro_costo con FK compuesta (tenant-safe)
+        builder.HasAlternateKey(c => new { c.EmpresaId, c.CorporativoId })
+            .HasName("uq_corporativo_empresa_id_corporativo_id");
     }
 }

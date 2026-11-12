@@ -15,8 +15,8 @@ public class DivisionConfiguration : IEntityTypeConfiguration<Division>
             .HasColumnName("division_id")
             .ValueGeneratedNever();
 
-        builder.Property(d => d.CorporativoId)
-            .HasColumnName("corporativo_id")
+        builder.Property(d => d.EmpresaId)
+            .HasColumnName("empresa_id")
             .IsRequired();
 
         builder.Property(d => d.Nombre)
@@ -39,18 +39,19 @@ public class DivisionConfiguration : IEntityTypeConfiguration<Division>
             .HasDefaultValueSql(TiposSql.Ahora)
             .ValueGeneratedOnAdd();
 
-        // Restrict: no se puede borrar un corporativo que todavía tiene divisiones.
-        builder.HasOne<Corporativo>()
+        // Restrict: la empresa usa soft delete, nunca se borra físicamente con divisiones.
+        builder.HasOne<Empresa>()
             .WithMany()
-            .HasForeignKey(d => d.CorporativoId)
-            .HasConstraintName("fk_division_corporativo")
+            .HasForeignKey(d => d.EmpresaId)
+            .HasConstraintName("fk_division_empresa")
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasIndex(d => d.CorporativoId)
-            .HasDatabaseName("ix_division_corporativo_id");
+        builder.HasIndex(d => new { d.EmpresaId, d.Nombre })
+            .IsUnique()
+            .HasDatabaseName("uq_division_empresa_id_nombre");
 
-        // Llave alterna: es la que referencian las FK compuestas (tenant-safe)
-        builder.HasAlternateKey(d => new { d.CorporativoId, d.DivisionId })
-            .HasName("uq_division_corporativo_id_division_id");
+        // Llave alterna: la referencian corporativo_division y centro_costo con FK compuesta (tenant-safe)
+        builder.HasAlternateKey(d => new { d.EmpresaId, d.DivisionId })
+            .HasName("uq_division_empresa_id_division_id");
     }
 }

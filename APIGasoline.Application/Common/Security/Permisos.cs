@@ -129,7 +129,7 @@ public static class Permisos
     public static readonly IReadOnlyList<DefinicionPrivilegio> Catalogo =
     [
         new(PlataformaMultiempresa, "Operar en todas las empresas", "Consultar y operar datos de cualquier empresa.", AmbitoPrivilegio.Plataforma),
-        new(CorporativoGestionar, "Administrar corporativos y divisiones", "Crear, editar y eliminar corporativos y divisiones.", AmbitoPrivilegio.Plataforma),
+        new(CorporativoGestionar, "Administrar corporativos y divisiones", "Crear, editar, ligar y eliminar los corporativos y divisiones de su empresa.", AmbitoPrivilegio.Empresa),
         new(EmpresaGestionar, "Crear y eliminar empresas", "Dar de alta y eliminar empresas.", AmbitoPrivilegio.Plataforma),
         new(PrivilegioGestionar, "Administrar el catálogo de privilegios", "Crear, editar y eliminar privilegios.", AmbitoPrivilegio.Plataforma),
         new(OutboxGestionar, "Administrar el outbox de notificaciones", "Ver y reintentar mensajes push.", AmbitoPrivilegio.Plataforma),

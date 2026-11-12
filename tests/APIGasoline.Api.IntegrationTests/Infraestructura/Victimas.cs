@@ -35,6 +35,40 @@ public static class Victimas
             return centro.CentroCostoId;
         });
 
+    public static Task<Guid> CorporativoAsync(this Escenario e, DatosEmpresa d)
+        => e.EnBdAsync(async c =>
+        {
+            var corporativo = Corporativo.Crear(d.EmpresaId, Unico("Corporativo víctima "));
+            c.Corporativos.Add(corporativo);
+            await c.SaveChangesAsync();
+            return corporativo.CorporativoId;
+        });
+
+    public static Task<Guid> DivisionAsync(this Escenario e, DatosEmpresa d)
+        => e.EnBdAsync(async c =>
+        {
+            var division = Division.Crear(d.EmpresaId, Unico("División víctima "));
+            c.Divisiones.Add(division);
+            await c.SaveChangesAsync();
+            return division.DivisionId;
+        });
+
+    /// <summary>Corporativo y división nuevos de la empresa; ligados si <paramref name="ligados"/>.</summary>
+    public static Task<(Guid CorporativoId, Guid DivisionId)> CorporativoYDivisionAsync(this Escenario e, DatosEmpresa d, bool ligados)
+        => e.EnBdAsync(async c =>
+        {
+            var corporativo = Corporativo.Crear(d.EmpresaId, Unico("Corporativo víctima "));
+            var division = Division.Crear(d.EmpresaId, Unico("División víctima "));
+            c.Corporativos.Add(corporativo);
+            c.Divisiones.Add(division);
+
+            if (ligados)
+                c.CorporativoDivisiones.Add(CorporativoDivision.Ligar(corporativo, division));
+
+            await c.SaveChangesAsync();
+            return (corporativo.CorporativoId, division.DivisionId);
+        });
+
     public static Task<Guid> RolAsync(this Escenario e, DatosEmpresa d)
         => e.EnBdAsync(async c =>
         {

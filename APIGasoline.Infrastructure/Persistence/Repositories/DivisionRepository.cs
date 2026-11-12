@@ -16,12 +16,15 @@ public class DivisionRepository : IDivisionRepository
     public Task<Division?> GetByIdAsync(Guid divisionId, CancellationToken cancellationToken = default)
         => _context.Divisiones.FirstOrDefaultAsync(d => d.DivisionId == divisionId, cancellationToken);
 
-    public async Task<IReadOnlyList<Division>> GetAllAsync(Guid? corporativoId = null, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Division>> GetAllAsync(Guid? empresaId = null, Guid? corporativoId = null, CancellationToken cancellationToken = default)
     {
         var query = _context.Divisiones.AsNoTracking();
 
+        if (empresaId is not null)
+            query = query.Where(d => d.EmpresaId == empresaId);
+
         if (corporativoId is not null)
-            query = query.Where(d => d.CorporativoId == corporativoId);
+            query = query.Where(d => _context.CorporativoDivisiones.Any(l => l.DivisionId == d.DivisionId && l.CorporativoId == corporativoId));
 
         return await query
             .OrderBy(d => d.DivisionId)
@@ -31,8 +34,10 @@ public class DivisionRepository : IDivisionRepository
     public Task<bool> ExistsAsync(Guid divisionId, CancellationToken cancellationToken = default)
         => _context.Divisiones.AnyAsync(d => d.DivisionId == divisionId, cancellationToken);
 
-    public Task<bool> ExistsByCorporativoAsync(Guid corporativoId, CancellationToken cancellationToken = default)
-        => _context.Divisiones.AnyAsync(d => d.CorporativoId == corporativoId, cancellationToken);
+    public Task<bool> NombreExistsAsync(Guid empresaId, string nombre, Guid? excludeDivisionId = null, CancellationToken cancellationToken = default)
+        => _context.Divisiones.AnyAsync(
+            d => d.EmpresaId == empresaId && d.Nombre == nombre && (excludeDivisionId == null || d.DivisionId != excludeDivisionId),
+            cancellationToken);
 
     public async Task AddAsync(Division division, CancellationToken cancellationToken = default)
         => await _context.Divisiones.AddAsync(division, cancellationToken);

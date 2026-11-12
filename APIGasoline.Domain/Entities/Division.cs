@@ -2,13 +2,19 @@
 
 namespace APIGasoline.Domain.Entities;
 
-
+/// <summary>
+/// División de una empresa. Se relaciona con uno o varios corporativos de la misma empresa
+/// (N:M, por <see cref="CorporativoDivision"/>).
+/// </summary>
 public class Division
 {
     public const int NombreMaxLength = 100;
 
     public Guid DivisionId { get; private set; } = Guid.CreateVersion7();
-    public Guid CorporativoId { get; private set; }
+
+    /// <summary>Empresa dueña de la división. No cambia.</summary>
+    public Guid EmpresaId { get; private set; }
+
     public string Nombre { get; private set; } = string.Empty;
     public bool Activo { get; private set; } = true;
 
@@ -20,22 +26,16 @@ public class Division
     {
     }
 
-    public static Division Crear(Guid corporativoId, string nombre, bool activo = true)
+    public static Division Crear(Guid empresaId, string nombre, bool activo = true)
     {
-        var division = new Division();
-        division.CambiarCorporativo(corporativoId);
+        if (empresaId == Guid.Empty)
+            throw new DomainException("El id de la empresa es obligatorio.");
+
+        var division = new Division { EmpresaId = empresaId };
         division.CambiarNombre(nombre);
         division.Activo = activo;
 
         return division;
-    }
-
-    public void CambiarCorporativo(Guid corporativoId)
-    {
-        if (corporativoId == Guid.Empty)
-            throw new DomainException("El id del corporativo es obligatorio.");
-
-        CorporativoId = corporativoId;
     }
 
     public void CambiarNombre(string nombre)

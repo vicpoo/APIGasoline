@@ -42,14 +42,14 @@ Esta carpeta se armó **a partir del código de la API**, no de documentación p
 
 | Concepto | Cantidad |
 |---|---|
-| Tablas | 24 (+ `__EFMigrationsHistory` de EF) |
-| Columnas | 233 |
-| Llaves foráneas | 47 (21 compuestas `(empresa_id, x_id)`) |
-| Índices (sin contar PK) | 89 |
+| Tablas | 25 (+ `__EFMigrationsHistory` de EF) |
+| Columnas | 239 |
+| Llaves foráneas | 51 (25 compuestas con `empresa_id`) |
+| Índices (sin contar PK) | 92 |
 | Restricciones CHECK | 1 (`ck_revision_auditoria_alcance`) |
 | Columnas generadas | 1 (`rol.empresa_clave`) |
 | Columnas `enum` | 17, de 14 tipos distintos (todos coinciden con los enums del dominio) |
-| Tablas con `empresa_id` | 17 (sin contar `empresa`) |
+| Tablas con `empresa_id` | 20 (sin contar `empresa`) |
 | Privilegios en el catálogo (`Permisos.cs`) | 42 |
 
 ```text
@@ -97,7 +97,7 @@ empresa/{empresa_id}/{entidad}/{id}/{carpeta}/{tipo}-{uuid}.{ext}
 
 ### 3.1. Lo que garantiza la base de datos
 
-- **21 llaves foráneas compuestas** `(empresa_id, x_id) → tabla(empresa_id, x_id)`. Cada tabla referenciada tiene su índice único `uq_<tabla>_empresa_id_<tabla>_id`. Con eso **MySQL rechaza** relaciones que cruzan empresas, por ejemplo un viaje de la empresa A con un carro de la B:
+- **25 llaves foráneas compuestas** `(empresa_id, x_id) → tabla(empresa_id, x_id)`. Cada tabla referenciada tiene su índice único `uq_<tabla>_empresa_id_<tabla>_id`. Con eso **MySQL rechaza** relaciones que cruzan empresas, por ejemplo un viaje de la empresa A con un carro de la B:
 
 | Tabla | Referencias compuestas (misma empresa) |
 |---|---|
@@ -108,7 +108,8 @@ empresa/{empresa_id}/{entidad}/{id}/{carpeta}/{tipo}-{uuid}.{ext}
 | `cambio_estatus_carro` | carro, empleado, viaje afectado |
 | `dispositivo_empleado`, `notificacion` | empleado |
 | `revision_auditoria` | viaje, carro, empleado revisor |
-| `empresa` | división `(corporativo_id, division_id)` del mismo corporativo |
+| `corporativo_division` | corporativo y división de la misma empresa (fase 8) |
+| `centro_costo` | corporativo, división y la liga corporativo-división, todos opcionales (fase 8; SQL Server no revisa una FK compuesta con alguna columna NULL) |
 
 ### 3.2. Lo que la base de datos **no** garantiza (lo hace la API)
 
@@ -116,7 +117,7 @@ empresa/{empresa_id}/{entidad}/{id}/{carpeta}/{tipo}-{uuid}.{ext}
 - **Seguridad:** `usuario_rol` y `rol_privilegio` no llevan `empresa_id`. Que a un usuario de la empresa A no se le asigne un rol de la B, y que un rol de empresa no reciba privilegios de ámbito `plataforma`, se valida solo en la API.
 - **`sesion_usuario.empresa_id`** y **`sesion_usuario.revocada_por_usuario_id`** no tienen FK.
 - **Referencias lógicas sin FK:** `notificacion.referencia_id`, `outbox_mensaje.agregado_id`, `auditoria_evento.entidad_id`.
-- **`privilegio`, `corporativo` y `division`** no tienen `empresa_id` (son de plataforma).
+- **`privilegio`** no tiene `empresa_id` (es el catálogo de la plataforma). Desde la fase 8 `corporativo` y `division` sí son de una empresa.
 - **`usuario.empresa_id`** (fase 3) dice de qué empresa es la cuenta; NULL = administrador de la plataforma o cuenta aún sin asignar. Al crearle su empleado se le asigna la empresa del empleado, y una cuenta nunca pasa de una empresa a otra. La migración `AgregarEmpresaAUsuario` la llenó con la empresa del empleado (o, sin empleado, la de sus roles de empresa).
 - **`carro.placas` y `usuario.email`** son únicos en todo el sistema, no por empresa.
 
@@ -124,13 +125,13 @@ empresa/{empresa_id}/{entidad}/{id}/{carpeta}/{tipo}-{uuid}.{ext}
 
 | Tabla | Qué ve un usuario de la empresa X (sin `plataforma.multiempresa`) |
 |---|---|
-| Con `empresa_id` (carro, centro_costo, empleado, solicitud_reserva, viaje, viaje_pausa, punto_ruta, ruta_procesada, carga_combustible, cambio_estatus_carro, notificacion, dispositivo_empleado, revision_auditoria) | Solo `empresa_id = X` |
+| Con `empresa_id` (corporativo, division, corporativo_division, carro, centro_costo, empleado, solicitud_reserva, viaje, viaje_pausa, punto_ruta, ruta_procesada, carga_combustible, cambio_estatus_carro, notificacion, dispositivo_empleado, revision_auditoria) | Solo `empresa_id = X` |
 | `empresa` | Solo X |
 | `usuario` | Solo `empresa_id = X` |
 | `rol` | Los de X y los globales (los globales solo se leen) |
 | `usuario_rol` | Los de usuarios de X |
 | `rol_privilegio` | Los de roles que puede ver |
-| `privilegio`, `corporativo`, `division` | Todo (catálogos); solo la plataforma los modifica |
+| `privilegio` | Todo (catálogo); solo la plataforma lo modifica |
 | `auditoria_evento`, `outbox_mensaje`, `sesion_usuario` | Sin filtro: sus endpoints validan la empresa o el usuario dueño |
 
 - Un registro de otra empresa "no existe": su detalle responde 404 y las listas no lo traen.
@@ -144,11 +145,11 @@ empresa/{empresa_id}/{entidad}/{id}/{carpeta}/{tipo}-{uuid}.{ext}
 Segundo candado, dentro de la base de datos: aunque una consulta se salte el filtro de EF (SQL a mano, `IgnoreQueryFilters`, un error), SQL Server tampoco devuelve ni deja escribir filas de otra empresa.
 
 - **Cómo sabe SQL Server la empresa:** cada vez que EF abre una conexión, `ContextoSesionSqlInterceptor` manda dos valores de `SESSION_CONTEXT`: `apigasoline.empresa_id` (binary(16)) y `apigasoline.ve_todas` (bit, 1 = plataforma o procesos del sistema).
-- **Política:** `rls.aislamiento_empresa` (migración `SeguridadPorFilas`), sobre las mismas 18 tablas que filtra EF:
+- **Política:** `rls.aislamiento_empresa` (migración `SeguridadPorFilas`; la fase 8 le agrega corporativo, division y corporativo_division con `ALTER SECURITY POLICY`), sobre las mismas 21 tablas que filtra EF:
 
 | Tablas | Leer (FILTER) | Escribir (BLOCK) |
 |---|---|---|
-| carro, centro_costo, empleado, solicitud_reserva, viaje, viaje_pausa, punto_ruta, ruta_procesada, carga_combustible, cambio_estatus_carro, notificacion, dispositivo_empleado, revision_auditoria, empresa, usuario | `rls.fn_misma_empresa(empresa_id)` | La misma, AFTER INSERT y AFTER UPDATE (no se puede dejar una fila en otra empresa) |
+| corporativo, division, corporativo_division, carro, centro_costo, empleado, solicitud_reserva, viaje, viaje_pausa, punto_ruta, ruta_procesada, carga_combustible, cambio_estatus_carro, notificacion, dispositivo_empleado, revision_auditoria, empresa, usuario | `rls.fn_misma_empresa(empresa_id)` | La misma, AFTER INSERT y AFTER UPDATE (no se puede dejar una fila en otra empresa) |
 | rol | `rls.fn_rol_visible(empresa_id)`: propios y globales | `rls.fn_misma_empresa(empresa_id)`, también BEFORE UPDATE/DELETE (los globales no se tocan) |
 | usuario_rol | `rls.fn_usuario_de_la_empresa(usuario_id)` | `rls.fn_asignacion_de_la_empresa(usuario_id, rol_id)`: usuario y rol de la empresa |
 | rol_privilegio | `rls.fn_rol_privilegio_visible(rol_id)` | `rls.fn_rol_de_la_empresa(rol_id)` |
@@ -161,7 +162,7 @@ Segundo candado, dentro de la base de datos: aunque una consulta se salte el fil
 
 - **Índices únicos de toda la BD** (placas, correo, token del celular): si el valor repetido es de otra empresa, el handler no lo ve y el que lo detecta es el índice. La API responde 409 con un mensaje que no dice el valor ni de quién es (`ViolacionUnicidad`).
 - **La política está con `SCHEMABINDING = ON`:** una migración que quiera cambiar `empresa_id` (o `usuario_id`/`rol_id` en `usuario_rol` y `rol_privilegio`) en estas tablas tiene que quitar la política, cambiar la columna y volver a crearla.
-- **Tablas sin RLS:** `privilegio`, `corporativo`, `division` (catálogos de la plataforma) y `auditoria_evento`, `outbox_mensaje`, `sesion_usuario` (técnicas), igual que en EF.
+- **Tablas sin RLS:** `privilegio` (catálogo de la plataforma) y `auditoria_evento`, `outbox_mensaje`, `sesion_usuario` (técnicas), igual que en EF.
 - `SeguridadPorFilasTests` (pruebas de integración) habla con SQL Server directo para comprobarlo y falla si una tabla filtrada en EF no tiene su política.
 
 ---
@@ -185,17 +186,18 @@ usuario 1 ──< sesion_usuario
 | Regla | Relaciones |
 |---|---|
 | **CASCADE** | `viaje` → `punto_ruta`, `viaje_pausa`, `ruta_procesada`; `empleado` → `dispositivo_empleado`; `usuario` → `usuario_rol`, `sesion_usuario`; `rol` → `usuario_rol`, `rol_privilegio`; `privilegio` → `rol_privilegio` |
-| **RESTRICT** | Todas las demás (37). Por eso un carro o viaje con historial no se puede borrar físicamente; la API responde 409 y pide darlo de baja. |
+| **RESTRICT** | Todas las demás (41). Por eso un carro o viaje con historial no se puede borrar físicamente; la API responde 409 y pide darlo de baja. |
 
 ---
 
 ## 6. Diagrama de relaciones
 
 ```text
-CORPORATIVO
-  ├──< DIVISION
-  └──< EMPRESA (opcionalmente en una DIVISION del mismo corporativo)
-         ├──< CENTRO_COSTO
+EMPRESA (la raíz, fase 8)
+         ├──< CORPORATIVO >──┐
+         │                   ├── CORPORATIVO_DIVISION (N:M, misma empresa)
+         ├──< DIVISION    >──┘
+         ├──< CENTRO_COSTO (corporativo y división opcionales; si trae los dos, deben estar ligados)
          ├──< ROL (propios; los globales tienen empresa_id NULL)
          ├──< EMPLEADO ── 1:1 ── USUARIO ──< USUARIO_ROL >── ROL ──< ROL_PRIVILEGIO >── PRIVILEGIO
          │      ├──< DISPOSITIVO_EMPLEADO                └──< SESION_USUARIO
@@ -329,50 +331,80 @@ Una fila por inicio de sesión en un dispositivo (refresh token rotativo, solo s
 
 ### Estructura corporativa
 
-#### `corporativo`
+Desde la fase 8 (migración `EstructuraOrganizacional`) la **empresa es la raíz**:
 
-Grupo corporativo que agrupa empresas.
+| Relación | Cardinalidad |
+|---|---|
+| Empresa → corporativos | 1:N |
+| Empresa → divisiones | 1:N |
+| Empresa → centros de costo | 1:N |
+| Corporativo ↔ divisiones | N:M (`corporativo_division`) |
+| Corporativo → centros de costo | 1:N (opcional) |
+| División → centros de costo | 1:N (opcional) |
 
-| Columna | Tipo | Llaves / restricciones | Default | Descripción |
-|---|---|---|---|---|
-| `corporativo_id` | binary(16) | PK |  | Identificador (UUID v7 generado por la app). |
-| `nombre` | varchar(150) | NN |  | Nombre del corporativo. |
-| `activo` | tinyint(1) | NN | 1 | Activo / inactivo. |
-| `fecha_registro` | timestamp |  | now() | Fecha de alta. |
-
-#### `division`
-
-División dentro de un corporativo.
-
-| Columna | Tipo | Llaves / restricciones | Default | Descripción |
-|---|---|---|---|---|
-| `division_id` | binary(16) | PK |  | Identificador (UUID v7 generado por la app). |
-| `corporativo_id` | binary(16) | NN, FK → corporativo |  | Referencia a corporativo. |
-| `nombre` | varchar(100) | NN |  | Nombre de la división. |
-| `activo` | tinyint(1) | NN | 1 | Activo / inactivo. |
-| `fecha_registro` | timestamp |  | now() | Fecha de alta. |
-
-**Índices:** `ix_division_corporativo_id` (corporativo_id); `uq_division_corporativo_id_division_id` (corporativo_id, division_id) **único**
-
-**Llaves foráneas:** (corporativo_id) → `corporativo`(corporativo_id) ON DELETE RESTRICT
+Cada empresa administra los suyos con el privilegio `corporativo.gestionar` (ámbito empresa desde la fase 8) y los ve con `corporativo.ver`.
 
 #### `empresa`
 
-El tenant: todo lo de negocio cuelga de una empresa.
+El tenant y la raíz de la organización: todo lo de negocio cuelga de una empresa.
 
 | Columna | Tipo | Llaves / restricciones | Default | Descripción |
 |---|---|---|---|---|
 | `empresa_id` | binary(16) | PK |  | Identificador (UUID v7 generado por la app). |
-| `corporativo_id` | binary(16) | FK → corporativo, FK → division (compuesta) |  | Corporativo (opcional). |
-| `division_id` | binary(16) | FK → division (compuesta) |  | División (opcional). FK compuesta (corporativo_id, division_id): la división debe ser del mismo corporativo. |
 | `nombre` | varchar(150) | NN |  | Nombre (aparece en los reportes). |
 | `eliminado` | tinyint(1) | NN | 0 | Borrado lógico. Filtro global de EF (HasQueryFilter). Sus empleados ya no pueden iniciar sesión. |
 | `fecha_registro` | timestamp |  | now() | Fecha de alta. |
 | `activo` | tinyint(1) | NN | 1 | Empresa activa o inactiva (no es lo mismo que eliminada). |
 
-**Índices:** `ix_empresa_corporativo_id` (corporativo_id); `ix_empresa_corporativo_id_division_id` (corporativo_id, division_id); `ix_empresa_division_id` (division_id); `uq_empresa_corporativo_id_empresa_id` (corporativo_id, empresa_id) **único**
+Sin llaves foráneas propias (fase 8: ya no apunta a corporativo ni a división).
 
-**Llaves foráneas:** (corporativo_id) → `corporativo`(corporativo_id) ON DELETE RESTRICT; (corporativo_id, division_id) → `division`(corporativo_id, division_id) ON DELETE RESTRICT
+#### `corporativo`
+
+Grupo corporativo de una empresa.
+
+| Columna | Tipo | Llaves / restricciones | Default | Descripción |
+|---|---|---|---|---|
+| `corporativo_id` | binary(16) | PK |  | Identificador (UUID v7 generado por la app). |
+| `empresa_id` | binary(16) | NN, FK → empresa |  | Empresa dueña (tenant). |
+| `nombre` | nvarchar(150) | NN |  | Nombre del corporativo. Único dentro de la empresa. |
+| `activo` | bit | NN | 1 | Activo / inactivo. |
+| `fecha_registro` | datetime2(0) |  | SYSDATETIME() | Fecha de alta. |
+
+**Índices:** `uq_corporativo_empresa_id_corporativo_id` (empresa_id, corporativo_id) **único** (llave alterna); `uq_corporativo_empresa_id_nombre` (empresa_id, nombre) **único**
+
+**Llaves foráneas:** (empresa_id) → `empresa`(empresa_id) ON DELETE RESTRICT
+
+#### `division`
+
+División de una empresa; se liga a uno o varios corporativos de la misma empresa.
+
+| Columna | Tipo | Llaves / restricciones | Default | Descripción |
+|---|---|---|---|---|
+| `division_id` | binary(16) | PK |  | Identificador (UUID v7 generado por la app). |
+| `empresa_id` | binary(16) | NN, FK → empresa |  | Empresa dueña (tenant). |
+| `nombre` | nvarchar(100) | NN |  | Nombre de la división. Único dentro de la empresa. |
+| `activo` | bit | NN | 1 | Activo / inactivo. |
+| `fecha_registro` | datetime2(0) |  | SYSDATETIME() | Fecha de alta. |
+
+**Índices:** `uq_division_empresa_id_division_id` (empresa_id, division_id) **único** (llave alterna); `uq_division_empresa_id_nombre` (empresa_id, nombre) **único**
+
+**Llaves foráneas:** (empresa_id) → `empresa`(empresa_id) ON DELETE RESTRICT
+
+#### `corporativo_division`
+
+Liga N:M entre corporativos y divisiones de la misma empresa.
+
+| Columna | Tipo | Llaves / restricciones | Default | Descripción |
+|---|---|---|---|---|
+| `corporativo_division_id` | binary(16) | PK |  | Identificador (UUID v7 generado por la app). |
+| `empresa_id` | binary(16) | NN |  | Empresa (tenant); forma parte de las dos FK compuestas. |
+| `corporativo_id` | binary(16) | NN, FK compuesta → corporativo |  | Corporativo. |
+| `division_id` | binary(16) | NN, FK compuesta → division |  | División. |
+| `fecha_registro` | datetime2(0) |  | SYSDATETIME() | Fecha en que se ligaron. |
+
+**Índices:** `uq_corporativo_division_corporativo_id_division_id` (corporativo_id, division_id) **único**; `uq_corporativo_division_empresa_id_corporativo_id_division_id` (empresa_id, corporativo_id, division_id) **único** (llave alterna, la usa centro_costo); `ix_corporativo_division_empresa_id_division_id` (empresa_id, division_id)
+
+**Llaves foráneas:** (empresa_id, corporativo_id) → `corporativo`(empresa_id, corporativo_id) ON DELETE RESTRICT; (empresa_id, division_id) → `division`(empresa_id, division_id) ON DELETE RESTRICT
 
 #### `centro_costo`
 
@@ -382,14 +414,16 @@ El tenant: todo lo de negocio cuelga de una empresa.
 |---|---|---|---|---|
 | `centro_costo_id` | binary(16) | PK |  | Identificador (UUID v7 generado por la app). |
 | `empresa_id` | binary(16) | NN, FK → empresa |  | Empresa (tenant). |
+| `corporativo_id` | binary(16) | FK compuesta → corporativo |  | Corporativo de la misma empresa (opcional, fase 8). |
+| `division_id` | binary(16) | FK compuesta → division |  | División de la misma empresa (opcional, fase 8). Con corporativo, la pareja debe estar ligada. |
 | `nombre` | varchar(150) | NN |  | Nombre (ej. Operaciones central). |
 | `clave` | varchar(100) | NN |  | Clave del centro (ej. CC-104). Única dentro de la empresa. |
 | `activo` | tinyint(1) | NN | 1 | Solo los activos se pueden elegir. |
 | `fecha_registro` | timestamp |  | now() | Fecha de alta. |
 
-**Índices:** `ix_centro_costo_empresa_id` (empresa_id); `uq_centro_costo_empresa_id_centro_costo_id` (empresa_id, centro_costo_id) **único**; `uq_centro_costo_empresa_id_clave` (empresa_id, clave) **único**
+**Índices:** `ix_centro_costo_empresa_id` (empresa_id); `ix_centro_costo_empresa_id_corporativo_id_division_id` (empresa_id, corporativo_id, division_id); `ix_centro_costo_empresa_id_division_id` (empresa_id, division_id); `uq_centro_costo_empresa_id_centro_costo_id` (empresa_id, centro_costo_id) **único**; `uq_centro_costo_empresa_id_clave` (empresa_id, clave) **único**
 
-**Llaves foráneas:** (empresa_id) → `empresa`(empresa_id) ON DELETE RESTRICT
+**Llaves foráneas:** (empresa_id) → `empresa`(empresa_id) ON DELETE RESTRICT; (empresa_id, corporativo_id) → `corporativo`(empresa_id, corporativo_id) ON DELETE RESTRICT; (empresa_id, division_id) → `division`(empresa_id, division_id) ON DELETE RESTRICT; (empresa_id, corporativo_id, division_id) → `corporativo_division`(empresa_id, corporativo_id, division_id) ON DELETE RESTRICT
 
 ### Personas
 
@@ -774,7 +808,8 @@ Todo lo demás de la v9 (columnas, tipos, enums, FKs compuestas, CHECK de `revis
 | 7 | `20261021120000_PausasDeViaje` | `viaje_pausa`. |
 | 8 | `20261022120000_MotivoSolicitud` | `solicitud_reserva.motivo_solicitud`. |
 | 9 | `20261030120000_TipoVehiculo` | `carro.tipo_vehiculo`. |
-| **10** | `20261106120000_SesionesUsuario` | **`sesion_usuario`**: refresh tokens con rotación, detección de reuso, expiración deslizante y absoluta, revocación por motivo. |
+| 10 | `20261106120000_SesionesUsuario` | **`sesion_usuario`**: refresh tokens con rotación, detección de reuso, expiración deslizante y absoluta, revocación por motivo. |
+| **11** | `EstructuraOrganizacional` (fase 8) | La empresa es la raíz: `corporativo.empresa_id` y `division.empresa_id`; **`corporativo_division`** (N:M); `centro_costo.corporativo_id`/`division_id` opcionales; `empresa` pierde `corporativo_id`/`division_id`; las tres tablas entran a la política de RLS; `corporativo.gestionar` pasa a ámbito empresa. Datos existentes: cada corporativo queda en la primera empresa que lo usaba (los que no usaba ninguna se borran con sus divisiones) y la relación división → corporativo se vuelve liga. |
 
 ---
 

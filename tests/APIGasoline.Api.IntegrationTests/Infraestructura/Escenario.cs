@@ -56,6 +56,9 @@ public sealed class DatosEmpresa
     public Guid RolAdminId { get; set; }
     public Guid RolOperadorId { get; set; }
     public Guid CentroCostoId { get; set; }
+    public Guid CorporativoId { get; set; }
+    public Guid DivisionId { get; set; }
+    public Guid CorporativoDivisionId { get; set; }
     public Guid Carro1Id { get; set; }
     public Guid Carro2Id { get; set; }
 
@@ -409,6 +412,9 @@ public sealed class Escenario : IAsyncLifetime
         d.RolPrivilegioId = (await contexto.RolPrivilegios.FirstAsync(rp => rp.RolId == d.RolOperadorId)).RolPrivilegioId;
 
         d.CentroCostoId = (await contexto.CentrosCosto.SingleAsync(c => c.EmpresaId == d.EmpresaId)).CentroCostoId;
+        d.CorporativoId = (await contexto.Corporativos.SingleAsync(c => c.EmpresaId == d.EmpresaId)).CorporativoId;
+        d.DivisionId = (await contexto.Divisiones.SingleAsync(x => x.EmpresaId == d.EmpresaId)).DivisionId;
+        d.CorporativoDivisionId = (await contexto.CorporativoDivisiones.SingleAsync(l => l.EmpresaId == d.EmpresaId)).CorporativoDivisionId;
         d.Carro1Id = (await contexto.Carros.SingleAsync(c => c.Placas == $"DEMO-{d.Letra}01")).CarroId;
         d.Carro2Id = (await contexto.Carros.SingleAsync(c => c.Placas == $"DEMO-{d.Letra}02")).CarroId;
         return 0;

@@ -1,3 +1,4 @@
 ﻿namespace APIGasoline.Application.Features.Empresas.DTOs;
 
-public record EmpresaDto(Guid EmpresaId, Guid? CorporativoId, Guid? DivisionId, string Nombre, bool Activo, DateTime? FechaRegistro);
+/// <summary>La empresa es la raíz: sus corporativos, divisiones y centros de costo apuntan a ella.</summary>
+public record EmpresaDto(Guid EmpresaId, string Nombre, bool Activo, DateTime? FechaRegistro);

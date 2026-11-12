@@ -32,8 +32,6 @@ public sealed class AislamientoEmpresaInterceptor : SaveChangesInterceptor
     public static readonly IReadOnlySet<Type> SoloPlataforma = new HashSet<Type>
     {
         typeof(Privilegio),
-        typeof(Corporativo),
-        typeof(Division),
     };
 
     /// <summary>Sin columna empresa_id: su empresa sale del usuario o del rol al que apuntan.</summary>

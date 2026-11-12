@@ -1,7 +1,7 @@
 // ============================================================
 // APIGasoline — Base de datos (MySQL 8)
 // GENERADO desde la API: migraciones de EF Core aplicadas a un MySQL vacío
-// y leídas de information_schema. Versión del modelo: 10 (20261106120000_SesionesUsuario).
+// y leídas de information_schema. Versión del modelo: 11 (EstructuraOrganizacional, fase 8; la fase 8 se editó a mano).
 // Pegar en https://dbdiagram.io para ver el diagrama.
 // ============================================================
 
@@ -216,53 +216,68 @@ Table sesion_usuario {
   Note: 'Una fila por inicio de sesión en un dispositivo (refresh token rotativo, solo se guarda su hash).'
 }
 
-// ---------------- Estructura corporativa
-Table corporativo {
-  corporativo_id binary(16) [pk, note: 'Identificador (UUID v7 generado por la app).']
-  nombre varchar(150) [not null, note: 'Nombre del corporativo.']
-  activo tinyint(1) [not null, default: 1, note: 'Activo / inactivo.']
-  fecha_registro timestamp [default: `now()`, note: 'Fecha de alta.']
-
-  Note: 'Grupo corporativo que agrupa empresas.'
-}
-
-Table division {
-  division_id binary(16) [pk, note: 'Identificador (UUID v7 generado por la app).']
-  corporativo_id binary(16) [not null, note: 'Referencia a corporativo.']
-  nombre varchar(100) [not null, note: 'Nombre de la división.']
-  activo tinyint(1) [not null, default: 1, note: 'Activo / inactivo.']
-  fecha_registro timestamp [default: `now()`, note: 'Fecha de alta.']
-
-  indexes {
-    corporativo_id [name: 'ix_division_corporativo_id']
-    (corporativo_id, division_id) [name: 'uq_division_corporativo_id_division_id', unique]
-  }
-
-  Note: 'División dentro de un corporativo.'
-}
-
+// ---------------- Estructura organizacional (fase 8: la empresa es la raíz)
 Table empresa {
   empresa_id binary(16) [pk, note: 'Identificador (UUID v7 generado por la app).']
-  corporativo_id binary(16) [note: 'Corporativo (opcional).']
-  division_id binary(16) [note: 'División (opcional). FK compuesta (corporativo_id, division_id): la división debe ser del mismo corporativo.']
   nombre varchar(150) [not null, note: 'Nombre (aparece en los reportes).']
   eliminado tinyint(1) [not null, default: 0, note: 'Borrado lógico. Filtro global de EF (HasQueryFilter). Sus empleados ya no pueden iniciar sesión.']
   fecha_registro timestamp [default: `now()`, note: 'Fecha de alta.']
   activo tinyint(1) [not null, default: 1, note: 'Empresa activa o inactiva (no es lo mismo que eliminada).']
 
+  Note: 'El tenant y la raíz de la organización: corporativos, divisiones y centros de costo cuelgan de ella.'
+}
+
+Table corporativo {
+  corporativo_id binary(16) [pk, note: 'Identificador (UUID v7 generado por la app).']
+  empresa_id binary(16) [not null, note: 'Empresa dueña (tenant).']
+  nombre varchar(150) [not null, note: 'Nombre del corporativo. Único dentro de la empresa.']
+  activo tinyint(1) [not null, default: 1, note: 'Activo / inactivo.']
+  fecha_registro timestamp [default: `now()`, note: 'Fecha de alta.']
+
   indexes {
-    corporativo_id [name: 'ix_empresa_corporativo_id']
-    (corporativo_id, division_id) [name: 'ix_empresa_corporativo_id_division_id']
-    division_id [name: 'ix_empresa_division_id']
-    (corporativo_id, empresa_id) [name: 'uq_empresa_corporativo_id_empresa_id', unique]
+    (empresa_id, corporativo_id) [name: 'uq_corporativo_empresa_id_corporativo_id', unique]
+    (empresa_id, nombre) [name: 'uq_corporativo_empresa_id_nombre', unique]
   }
 
-  Note: 'El tenant: todo lo de negocio cuelga de una empresa.'
+  Note: 'Grupo corporativo de una empresa (1:N desde empresa).'
+}
+
+Table division {
+  division_id binary(16) [pk, note: 'Identificador (UUID v7 generado por la app).']
+  empresa_id binary(16) [not null, note: 'Empresa dueña (tenant).']
+  nombre varchar(100) [not null, note: 'Nombre de la división. Único dentro de la empresa.']
+  activo tinyint(1) [not null, default: 1, note: 'Activo / inactivo.']
+  fecha_registro timestamp [default: `now()`, note: 'Fecha de alta.']
+
+  indexes {
+    (empresa_id, division_id) [name: 'uq_division_empresa_id_division_id', unique]
+    (empresa_id, nombre) [name: 'uq_division_empresa_id_nombre', unique]
+  }
+
+  Note: 'División de una empresa (1:N desde empresa); se liga N:M con corporativos.'
+}
+
+Table corporativo_division {
+  corporativo_division_id binary(16) [pk, note: 'Identificador (UUID v7 generado por la app).']
+  empresa_id binary(16) [not null, note: 'Empresa (tenant); parte de las dos FK compuestas.']
+  corporativo_id binary(16) [not null, note: 'Corporativo de la misma empresa.']
+  division_id binary(16) [not null, note: 'División de la misma empresa.']
+  fecha_registro timestamp [default: `now()`, note: 'Fecha en que se ligaron.']
+
+  indexes {
+    (corporativo_id, division_id) [name: 'uq_corporativo_division_corporativo_id_division_id', unique]
+    (empresa_id, corporativo_id, division_id) [name: 'uq_corporativo_division_empresa_id_corporativo_id_division_id', unique]
+    (empresa_id, division_id) [name: 'ix_corporativo_division_empresa_id_division_id']
+  }
+
+  Note: 'Liga N:M corporativo ↔ división (misma empresa).'
 }
 
 Table centro_costo {
   centro_costo_id binary(16) [pk, note: 'Identificador (UUID v7 generado por la app).']
   empresa_id binary(16) [not null, note: 'Empresa (tenant).']
+  corporativo_id binary(16) [note: 'Corporativo de la misma empresa (opcional).']
+  division_id binary(16) [note: 'División de la misma empresa (opcional). Con corporativo, la pareja debe estar ligada.']
   nombre varchar(150) [not null, note: 'Nombre (ej. Operaciones central).']
   clave varchar(100) [not null, note: 'Clave del centro (ej. CC-104). Única dentro de la empresa.']
   activo tinyint(1) [not null, default: 1, note: 'Solo los activos se pueden elegir.']
@@ -270,6 +285,8 @@ Table centro_costo {
 
   indexes {
     empresa_id [name: 'ix_centro_costo_empresa_id']
+    (empresa_id, corporativo_id, division_id) [name: 'ix_centro_costo_empresa_id_corporativo_id_division_id']
+    (empresa_id, division_id) [name: 'ix_centro_costo_empresa_id_division_id']
     (empresa_id, centro_costo_id) [name: 'uq_centro_costo_empresa_id_centro_costo_id', unique]
     (empresa_id, clave) [name: 'uq_centro_costo_empresa_id_clave', unique]
   }
@@ -640,13 +657,17 @@ Ref fk_carga_combustible_empresa: carga_combustible.empresa_id > empresa.empresa
 Ref fk_carga_combustible_viaje: carga_combustible.(empresa_id, viaje_id) > viaje.(empresa_id, viaje_id) [delete: restrict]
 Ref fk_carro_empresa: carro.empresa_id > empresa.empresa_id [delete: restrict]
 Ref fk_centro_costo_empresa: centro_costo.empresa_id > empresa.empresa_id [delete: restrict]
+Ref fk_centro_costo_corporativo: centro_costo.(empresa_id, corporativo_id) > corporativo.(empresa_id, corporativo_id) [delete: restrict]
+Ref fk_centro_costo_division: centro_costo.(empresa_id, division_id) > division.(empresa_id, division_id) [delete: restrict]
+Ref fk_centro_costo_corporativo_division: centro_costo.(empresa_id, corporativo_id, division_id) > corporativo_division.(empresa_id, corporativo_id, division_id) [delete: restrict]
+Ref fk_corporativo_empresa: corporativo.empresa_id > empresa.empresa_id [delete: restrict]
+Ref fk_corporativo_division_corporativo: corporativo_division.(empresa_id, corporativo_id) > corporativo.(empresa_id, corporativo_id) [delete: restrict]
+Ref fk_corporativo_division_division: corporativo_division.(empresa_id, division_id) > division.(empresa_id, division_id) [delete: restrict]
+Ref fk_division_empresa: division.empresa_id > empresa.empresa_id [delete: restrict]
 Ref fk_dispositivo_empleado_empleado: dispositivo_empleado.(empresa_id, empleado_id) > empleado.(empresa_id, empleado_id) [delete: cascade]
 Ref fk_dispositivo_empleado_empresa: dispositivo_empleado.empresa_id > empresa.empresa_id [delete: restrict]
-Ref fk_division_corporativo: division.corporativo_id > corporativo.corporativo_id [delete: restrict]
 Ref fk_empleado_empresa: empleado.empresa_id > empresa.empresa_id [delete: restrict]
 Ref fk_empleado_usuario: empleado.usuario_id - usuario.usuario_id [delete: restrict]
-Ref fk_empresa_corporativo: empresa.corporativo_id > corporativo.corporativo_id [delete: restrict]
-Ref fk_empresa_division: empresa.(corporativo_id, division_id) > division.(corporativo_id, division_id) [delete: restrict]
 Ref fk_notificacion_empleado_destinatario: notificacion.(empresa_id, empleado_destinatario_id) > empleado.(empresa_id, empleado_id) [delete: restrict]
 Ref fk_notificacion_empresa: notificacion.empresa_id > empresa.empresa_id [delete: restrict]
 Ref fk_outbox_mensaje_empresa: outbox_mensaje.empresa_id > empresa.empresa_id [delete: restrict]

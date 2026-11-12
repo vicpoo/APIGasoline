@@ -6,9 +6,9 @@ using APIGasoline.Application.Common.Messaging;
 namespace APIGasoline.Application.Features.Empresas.Queries;
 
 /// <summary>
-/// Lista las empresas no eliminadas. Se puede filtrar por corporativo, por división o por ambos.
+/// Lista las empresas no eliminadas que puede ver el usuario.
 /// </summary>
-public sealed record GetEmpresasQuery(Guid? CorporativoId = null, Guid? DivisionId = null) : IQuery<IReadOnlyList<EmpresaDto>>;
+public sealed record GetEmpresasQuery : IQuery<IReadOnlyList<EmpresaDto>>;
 
 public sealed class GetEmpresasQueryHandler : IQueryHandler<GetEmpresasQuery, IReadOnlyList<EmpresaDto>>
 {
@@ -23,7 +23,7 @@ public sealed class GetEmpresasQueryHandler : IQueryHandler<GetEmpresasQuery, IR
 
     public async Task<IReadOnlyList<EmpresaDto>> Handle(GetEmpresasQuery request, CancellationToken cancellationToken)
     {
-        var empresas = await _unitOfWork.Empresas.GetAllAsync(request.CorporativoId, request.DivisionId, cancellationToken);
+        var empresas = await _unitOfWork.Empresas.GetAllAsync(cancellationToken);
         return _mapper.Map<IReadOnlyList<EmpresaDto>>(empresas);
     }
 }

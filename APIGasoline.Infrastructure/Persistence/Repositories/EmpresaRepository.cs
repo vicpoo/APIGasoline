@@ -18,33 +18,14 @@ public class EmpresaRepository : IEmpresaRepository
     public Task<Empresa?> GetByIdAsync(Guid empresaId, CancellationToken cancellationToken = default)
         => _context.Empresas.FirstOrDefaultAsync(e => e.EmpresaId == empresaId, cancellationToken);
 
-    public async Task<IReadOnlyList<Empresa>> GetAllAsync(Guid? corporativoId = null, Guid? divisionId = null, CancellationToken cancellationToken = default)
-    {
-        var query = _context.Empresas.AsNoTracking();
-
-        if (corporativoId is not null)
-            query = query.Where(e => e.CorporativoId == corporativoId);
-
-        if (divisionId is not null)
-            query = query.Where(e => e.DivisionId == divisionId);
-
-        return await query
+    public async Task<IReadOnlyList<Empresa>> GetAllAsync(CancellationToken cancellationToken = default)
+        => await _context.Empresas
+            .AsNoTracking()
             .OrderBy(e => e.EmpresaId)
             .ToListAsync(cancellationToken);
-    }
 
     public Task<bool> ExistsAsync(Guid empresaId, CancellationToken cancellationToken = default)
         => _context.Empresas.AnyAsync(e => e.EmpresaId == empresaId, cancellationToken);
-
-    public Task<bool> ExistsByCorporativoAsync(Guid corporativoId, CancellationToken cancellationToken = default)
-        => _context.Empresas
-            .IgnoreQueryFilters()
-            .AnyAsync(e => e.CorporativoId == corporativoId, cancellationToken);
-
-    public Task<bool> ExistsByDivisionAsync(Guid divisionId, CancellationToken cancellationToken = default)
-        => _context.Empresas
-            .IgnoreQueryFilters()
-            .AnyAsync(e => e.DivisionId == divisionId, cancellationToken);
 
     public async Task AddAsync(Empresa empresa, CancellationToken cancellationToken = default)
         => await _context.Empresas.AddAsync(empresa, cancellationToken);

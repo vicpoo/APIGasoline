@@ -15,12 +15,6 @@ public class EmpresaConfiguration : IEntityTypeConfiguration<Empresa>
             .HasColumnName("empresa_id")
             .ValueGeneratedNever();
 
-        builder.Property(e => e.CorporativoId)
-            .HasColumnName("corporativo_id");
-
-        builder.Property(e => e.DivisionId)
-            .HasColumnName("division_id");
-
         builder.Property(e => e.Nombre)
             .HasColumnName("nombre")
             .HasMaxLength(Empresa.NombreMaxLength)
@@ -50,33 +44,5 @@ public class EmpresaConfiguration : IEntityTypeConfiguration<Empresa>
         // Filtro global con nombre: todas las consultas ignoran las empresas eliminadas.
         // (El filtro por empresa se agrega en AppDbContext.)
         builder.HasQueryFilter(FiltrosConsulta.Eliminado, e => !e.Eliminado);
-
-        // Restrict: no se puede borrar un corporativo o una división que tenga empresas.
-        builder.HasOne<Corporativo>()
-            .WithMany()
-            .HasForeignKey(e => e.CorporativoId)
-            .HasConstraintName("fk_empresa_corporativo")
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne<Division>()
-            .WithMany()
-            .HasForeignKey(e => new { e.CorporativoId, e.DivisionId })
-            .HasPrincipalKey(d => new { d.CorporativoId, d.DivisionId })
-            .HasConstraintName("fk_empresa_division")
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasIndex(e => e.CorporativoId)
-            .HasDatabaseName("ix_empresa_corporativo_id");
-
-        builder.HasIndex(e => e.DivisionId)
-            .HasDatabaseName("ix_empresa_division_id");
-
-        // Para la FK compuesta hacia division
-        builder.HasIndex(e => new { e.CorporativoId, e.DivisionId })
-            .HasDatabaseName("ix_empresa_corporativo_id_division_id");
-
-        builder.HasIndex(e => new { e.CorporativoId, e.EmpresaId })
-            .IsUnique()
-            .HasDatabaseName("uq_empresa_corporativo_id_empresa_id");
     }
 }

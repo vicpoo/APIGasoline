@@ -5,7 +5,7 @@ namespace APIGasoline.Contracts.Divisiones;
 public class CreateDivisionRequest
 {
     [GuidNoVacio]
-    public Guid CorporativoId { get; set; }
+    public Guid EmpresaId { get; set; }
 
     [Required]
     [StringLength(100)]

@@ -34,7 +34,7 @@ La primera vez tarda unos minutos (descarga las imágenes de Docker). Después, 
 | `admin.b@demo.local` | `Demo#Gasolina2026` | Administrador de **Empresa Demo B**. |
 | `operador.b@demo.local` | `Demo#Gasolina2026` | Operador de la Empresa Demo B. |
 
-Cada empresa demo trae un centro de costo y dos vehículos (`DEMO-A01`, `DEMO-A02` / `DEMO-B01`, `DEMO-B02`).
+Cada empresa demo trae un corporativo y una división ligados entre sí, un centro de costo colgado de ellos y dos vehículos (`DEMO-A01`, `DEMO-A02` / `DEMO-B01`, `DEMO-B02`).
 
 ### Sin Aspire (alternativa)
 
@@ -104,7 +104,7 @@ Para borrar la base de datos de Aspire y empezar de cero: detén el AppHost y en
 | `FugasLecturaTests` | Ver un registro de B, o listas filtrando por B | 403/404, y ningún id de B en la respuesta |
 | `FugasEscrituraTests` | Editar, borrar o mover registros de B (o pasar los suyos a B) | Rechazo, y el registro de B queda igual |
 | `FugasCreacionTests` | Crear cosas dentro de B o colgadas de registros de B | Rechazo, y no aparece nada nuevo en B |
-| `SoloPlataformaTests` | Acciones de plataforma (empresas, corporativos, privilegios, outbox) | 403 |
+| `SoloPlataformaTests` | Acciones de plataforma (crear y borrar empresas, privilegios, outbox) | 403 |
 
 Cada caso tiene un **control** (`ControlesDeLaMatrizTests`): el dueño sí puede hacer lo mismo. Si un control falla, el caso está mal armado. `CoberturaEndpointsTests` falla si algún endpoint de la API no está en la matriz (`Matriz/CatalogoFugas.cs`).
 
@@ -132,6 +132,7 @@ El atacante es un segundo operador de la Empresa A (o un gestor de roles con poc
 - **Escrituras:** `AislamientoEmpresaInterceptor` revisa todo lo que va a guardar cada `SaveChanges` y responde **403** si se crea, modifica o borra algo de otra empresa (también roles globales y cambios de `empresaId`).
 - **De qué empresa es la petición:** `IContextoEmpresa`, que `ContextoEmpresaMiddleware` inicializa justo después de autenticar con la empresa del token. Con `plataforma.multiempresa`, o sin usuario (login, workers, siembra), no hay filtro. Si hay usuario y no se inicializó, falla cerrado.
 - **Usuarios:** `usuario.empresa_id` dice de qué empresa es la cuenta. Un administrador de empresa crea usuarios solo en la suya; la plataforma puede mandar `empresaId` (o ninguno: se asigna al crearle su empleado).
+- **Estructura organizacional (fase 8):** la empresa es la raíz. Cada empresa tiene sus corporativos y divisiones (ligados N:M con `POST/DELETE /api/corporativos/{id}/divisiones/{divisionId}`) y sus centros de costo pueden colgar de un corporativo y una división ligados. Todo se aísla igual que lo demás (filtro, guardián y RLS) y se administra con `corporativo.gestionar` (ámbito empresa).
 - `AislamientoEmpresaTests` (pruebas de arquitectura) falla si una tabla nueva queda sin filtro o sin regla en el guardián, o si alguien usa `IgnoreQueryFilters()` sin nombre.
 - **Row-Level Security (segundo candado, en SQL Server):** cada conexión de EF le manda a SQL Server la empresa de la petición (`SESSION_CONTEXT`) y la política `rls.aislamiento_empresa` filtra y bloquea filas aunque la consulta se salte el filtro de EF. `SeguridadPorFilasTests` lo prueba hablando con SQL Server directo. Detalle en `BD/README.md` (sección 3.4).
 

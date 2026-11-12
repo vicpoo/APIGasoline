@@ -8,8 +8,6 @@ public class Empresa
     public const int NombreMaxLength = 150;
 
     public Guid EmpresaId { get; private set; } = Guid.CreateVersion7();
-    public Guid? CorporativoId { get; private set; }
-    public Guid? DivisionId { get; private set; }
     public string Nombre { get; private set; } = string.Empty;
 
 
@@ -25,11 +23,14 @@ public class Empresa
     {
     }
 
-    public static Empresa Crear(string nombre, Guid? corporativoId, Guid? divisionId)
+    /// <summary>
+    /// La empresa es la raíz de la organización: sus corporativos, divisiones y centros de costo
+    /// apuntan a ella (no al revés).
+    /// </summary>
+    public static Empresa Crear(string nombre)
     {
         var empresa = new Empresa();
         empresa.CambiarNombre(nombre);
-        empresa.AsignarOrganizacion(corporativoId, divisionId);
 
         return empresa;
     }
@@ -47,21 +48,6 @@ public class Empresa
         Nombre = normalizado;
     }
 
-
-    public void AsignarOrganizacion(Guid? corporativoId, Guid? divisionId)
-    {
-        if (corporativoId == Guid.Empty)
-            throw new DomainException("El id del corporativo es obligatorio.");
-
-        if (divisionId == Guid.Empty)
-            throw new DomainException("El id de la división es obligatorio.");
-
-        if (divisionId is not null && corporativoId is null)
-            throw new DomainException("Para asignar una división también debe indicarse el corporativo.");
-
-        CorporativoId = corporativoId;
-        DivisionId = divisionId;
-    }
 
     public void Activar() => Activo = true;
 

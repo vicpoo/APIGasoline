@@ -1,5 +1,4 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
-using APIGasoline.Application.Features.Empresas.Common;
 using APIGasoline.Application.Features.Empresas.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
@@ -8,7 +7,7 @@ using APIGasoline.Application.Common.Messaging;
 namespace APIGasoline.Application.Features.Empresas.Commands;
 
 /// <param name="Activo">HU-ADM-01: activa o inactiva. null = no cambia.</param>
-public sealed record UpdateEmpresaCommand(Guid EmpresaId, string Nombre, Guid? CorporativoId, Guid? DivisionId, bool? Activo = null) : ICommand<EmpresaDto>;
+public sealed record UpdateEmpresaCommand(Guid EmpresaId, string Nombre, bool? Activo = null) : ICommand<EmpresaDto>;
 
 public sealed class UpdateEmpresaCommandHandler : ICommandHandler<UpdateEmpresaCommand, EmpresaDto>
 {
@@ -28,14 +27,11 @@ public sealed class UpdateEmpresaCommandHandler : ICommandHandler<UpdateEmpresaC
 
         // El dominio valida y normaliza los datos
         empresa.CambiarNombre(request.Nombre);
-        empresa.AsignarOrganizacion(request.CorporativoId, request.DivisionId);
 
         if (request.Activo is true)
             empresa.Activar();
         else if (request.Activo is false)
             empresa.Desactivar();
-
-        await EmpresaOrganizacionValidator.ValidarAsync(_unitOfWork, empresa.CorporativoId, empresa.DivisionId, cancellationToken);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

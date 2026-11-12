@@ -21,16 +21,13 @@ public class EmpresasController : ControllerBase
     }
 
     /// <summary>
-    /// Lista las empresas no eliminadas. Filtros opcionales: ?corporativoId=1 y/o ?divisionId=2
+    /// Lista las empresas no eliminadas que puede ver el usuario.
     /// </summary>
     [RequierePrivilegio(Permisos.EmpresaVer, Permisos.EmpresaGestionar)]
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<EmpresaDto>>> GetAll(
-        [FromQuery] Guid? corporativoId,
-        [FromQuery] Guid? divisionId,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyList<EmpresaDto>>> GetAll(CancellationToken cancellationToken)
     {
-        var empresas = await _sender.Send(new GetEmpresasQuery(corporativoId, divisionId), cancellationToken);
+        var empresas = await _sender.Send(new GetEmpresasQuery(), cancellationToken);
         return Ok(empresas);
     }
 
@@ -46,7 +43,7 @@ public class EmpresasController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<EmpresaDto>> Create(CreateEmpresaRequest request, CancellationToken cancellationToken)
     {
-        var command = new CreateEmpresaCommand(request.Nombre, request.CorporativoId, request.DivisionId);
+        var command = new CreateEmpresaCommand(request.Nombre);
         var empresa = await _sender.Send(command, cancellationToken);
 
         return CreatedAtAction(nameof(GetById), new { empresaId = empresa.EmpresaId }, empresa);
@@ -56,7 +53,7 @@ public class EmpresasController : ControllerBase
     [HttpPut("{empresaId:guid}")]
     public async Task<ActionResult<EmpresaDto>> Update(Guid empresaId, UpdateEmpresaRequest request, CancellationToken cancellationToken)
     {
-        var command = new UpdateEmpresaCommand(empresaId, request.Nombre, request.CorporativoId, request.DivisionId, request.Activo);
+        var command = new UpdateEmpresaCommand(empresaId, request.Nombre, request.Activo);
         var empresa = await _sender.Send(command, cancellationToken);
 
         return Ok(empresa);

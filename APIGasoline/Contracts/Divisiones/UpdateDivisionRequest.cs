@@ -4,9 +4,6 @@ namespace APIGasoline.Contracts.Divisiones;
 
 public class UpdateDivisionRequest
 {
-    [GuidNoVacio]
-    public Guid CorporativoId { get; set; }
-
     [Required]
     [StringLength(100)]
     public string Nombre { get; set; } = string.Empty;

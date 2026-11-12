@@ -21,13 +21,17 @@ public class CentrosCostoController : ControllerBase
     }
 
     /// <summary>
-    /// Lista los centros de costo. Filtro opcional: ?empresaId=1
+    /// Lista los centros de costo. Filtros opcionales: ?empresaId=, ?corporativoId= y ?divisionId=
     /// </summary>
     [RequierePrivilegio(Permisos.CentroCostoVer, Permisos.ViajeRegistrar, Permisos.CargaRegistrar)]
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<CentroCostoDto>>> GetAll([FromQuery] Guid? empresaId, CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyList<CentroCostoDto>>> GetAll(
+        [FromQuery] Guid? empresaId,
+        [FromQuery] Guid? corporativoId,
+        [FromQuery] Guid? divisionId,
+        CancellationToken cancellationToken)
     {
-        var centrosCosto = await _sender.Send(new GetCentrosCostoQuery(empresaId), cancellationToken);
+        var centrosCosto = await _sender.Send(new GetCentrosCostoQuery(empresaId, corporativoId, divisionId), cancellationToken);
         return Ok(centrosCosto);
     }
 
@@ -43,7 +47,7 @@ public class CentrosCostoController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<CentroCostoDto>> Create(CreateCentroCostoRequest request, CancellationToken cancellationToken)
     {
-        var command = new CreateCentroCostoCommand(request.EmpresaId, request.Nombre, request.Clave, request.Activo);
+        var command = new CreateCentroCostoCommand(request.EmpresaId, request.Nombre, request.Clave, request.Activo, request.CorporativoId, request.DivisionId);
         var centroCosto = await _sender.Send(command, cancellationToken);
 
         return CreatedAtAction(nameof(GetById), new { centroCostoId = centroCosto.CentroCostoId }, centroCosto);
@@ -53,7 +57,7 @@ public class CentrosCostoController : ControllerBase
     [HttpPut("{centroCostoId:guid}")]
     public async Task<ActionResult<CentroCostoDto>> Update(Guid centroCostoId, UpdateCentroCostoRequest request, CancellationToken cancellationToken)
     {
-        var command = new UpdateCentroCostoCommand(centroCostoId, request.EmpresaId, request.Nombre, request.Clave, request.Activo);
+        var command = new UpdateCentroCostoCommand(centroCostoId, request.EmpresaId, request.Nombre, request.Clave, request.Activo, request.CorporativoId, request.DivisionId);
         var centroCosto = await _sender.Send(command, cancellationToken);
 
         return Ok(centroCosto);

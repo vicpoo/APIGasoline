@@ -6,9 +6,9 @@ using APIGasoline.Application.Common.Messaging;
 namespace APIGasoline.Application.Features.CentrosCosto.Queries;
 
 /// <summary>
-/// Lista los centros de costo. Se puede filtrar por empresa.
+/// Lista los centros de costo. Se puede filtrar por empresa, corporativo y división.
 /// </summary>
-public sealed record GetCentrosCostoQuery(Guid? EmpresaId = null) : IQuery<IReadOnlyList<CentroCostoDto>>;
+public sealed record GetCentrosCostoQuery(Guid? EmpresaId = null, Guid? CorporativoId = null, Guid? DivisionId = null) : IQuery<IReadOnlyList<CentroCostoDto>>;
 
 public sealed class GetCentrosCostoQueryHandler : IQueryHandler<GetCentrosCostoQuery, IReadOnlyList<CentroCostoDto>>
 {
@@ -23,7 +23,7 @@ public sealed class GetCentrosCostoQueryHandler : IQueryHandler<GetCentrosCostoQ
 
     public async Task<IReadOnlyList<CentroCostoDto>> Handle(GetCentrosCostoQuery request, CancellationToken cancellationToken)
     {
-        var centrosCosto = await _unitOfWork.CentrosCosto.GetAllAsync(request.EmpresaId, cancellationToken);
+        var centrosCosto = await _unitOfWork.CentrosCosto.GetAllAsync(request.EmpresaId, request.CorporativoId, request.DivisionId, cancellationToken);
         return _mapper.Map<IReadOnlyList<CentroCostoDto>>(centrosCosto);
     }
 }

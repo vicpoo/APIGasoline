@@ -27,7 +27,6 @@ public sealed class AislamientoEmpresaTests
     private static readonly string[] PuedenQuitarTodosLosFiltros =
     [
         "EmpleadoRepository",            // UsuarioAsignadoAsync: el índice único es de toda la BD
-        "EmpresaRepository",             // ExistsByCorporativo/Division: solo la plataforma borra corporativos y divisiones
         "AislamientoEmpresaInterceptor", // necesita saber de qué empresa es el registro ajeno para rechazarlo
     ];
 
@@ -42,6 +41,17 @@ public sealed class AislamientoEmpresaTests
         => SinViolaciones(
             Tablas.Where(t => !SinFiltroPermitido.Contains(t.ClrType) && t.FindDeclaredQueryFilter(FiltrosConsulta.Empresa) is null),
             "no tiene el filtro global 'Empresa' (agrégalo en AppDbContext.AplicarFiltroPorEmpresa o, si es técnica o de la plataforma, en las listas del guardián)");
+
+    /// <summary>Fase 8: la estructura organizacional es de cada empresa, ya no de la plataforma.</summary>
+    [Theory]
+    [InlineData(typeof(APIGasoline.Domain.Entities.Corporativo))]
+    [InlineData(typeof(APIGasoline.Domain.Entities.Division))]
+    [InlineData(typeof(APIGasoline.Domain.Entities.CorporativoDivision))]
+    public void La_estructura_organizacional_se_aisla_por_empresa(Type tipo)
+    {
+        Assert.NotNull(Modelo.FindEntityType(tipo)?.FindDeclaredQueryFilter(FiltrosConsulta.Empresa));
+        Assert.DoesNotContain(tipo, AislamientoEmpresaInterceptor.SoloPlataforma);
+    }
 
     [Fact]
     public void Las_tablas_exentas_existen_en_el_modelo()

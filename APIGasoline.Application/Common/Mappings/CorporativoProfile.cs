@@ -9,5 +9,6 @@ public class CorporativoProfile : Profile
     public CorporativoProfile()
     {
         CreateMap<Corporativo, CorporativoDto>();
+        CreateMap<CorporativoDivision, CorporativoDivisionDto>();
     }
 }

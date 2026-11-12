@@ -32,6 +32,7 @@ public class AppDbContext : DbContext
     public DbSet<RolPrivilegio> RolPrivilegios => Set<RolPrivilegio>();
     public DbSet<Corporativo> Corporativos => Set<Corporativo>();
     public DbSet<Division> Divisiones => Set<Division>();
+    public DbSet<CorporativoDivision> CorporativoDivisiones => Set<CorporativoDivision>();
     public DbSet<Empresa> Empresas => Set<Empresa>();
     public DbSet<CentroCosto> CentrosCosto => Set<CentroCosto>();
     public DbSet<Empleado> Empleados => Set<Empleado>();
@@ -77,11 +78,14 @@ public class AppDbContext : DbContext
     /// Aislamiento entre empresas en TODAS las lecturas: un usuario que no es de la plataforma solo
     /// ve las filas de su empresa (un registro de otra empresa "no existe": 404, y las listas no lo traen).
     /// Las escrituras las revisa <see cref="AislamientoEmpresaInterceptor"/>.
-    /// Tablas sin filtro: catálogos de la plataforma (privilegio, corporativo, división) y tablas técnicas
+    /// Tablas sin filtro: catálogo de la plataforma (privilegio) y tablas técnicas
     /// (auditoría, outbox, sesiones), que sus handlers validan por su cuenta.
     /// </summary>
     private void AplicarFiltroPorEmpresa(ModelBuilder modelBuilder)
     {
+        FiltrarPorColumnaEmpresa<Corporativo>(modelBuilder);
+        FiltrarPorColumnaEmpresa<Division>(modelBuilder);
+        FiltrarPorColumnaEmpresa<CorporativoDivision>(modelBuilder);
         FiltrarPorColumnaEmpresa<Carro>(modelBuilder);
         FiltrarPorColumnaEmpresa<CentroCosto>(modelBuilder);
         FiltrarPorColumnaEmpresa<Empleado>(modelBuilder);

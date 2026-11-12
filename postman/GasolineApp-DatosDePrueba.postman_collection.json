@@ -3120,6 +3120,71 @@
       "description": "",
       "item": [
         {
+          "name": "Empresa de pruebas",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}/api/empresas",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "api",
+                "empresas"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Empresa Pruebas App\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Si ya existe, guarda su id y se salta la creación (la colección se puede correr varias veces)",
+                  "const lookupUrl = pm.variables.replaceIn('{{host}}/api/empresas');",
+                  "pm.sendRequest({ url: lookupUrl, header: [{ key: 'Authorization', value: 'Bearer ' + pm.collectionVariables.get('tokenAdmin') }] }, (err, res) => {",
+                  "  if (err || res.code !== 200) return;",
+                  "  const found = res.json().find(x => x.nombre === 'Empresa Pruebas App');",
+                  "  if (found) {",
+                  "    pm.collectionVariables.set('empresaId', found.empresaId);",
+                  "    console.log('Ya existía: empresaId = ' + found.empresaId);",
+                  "    pm.execution.skipRequest();",
+                  "  }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Creado (201) o ya existía (409)', () => pm.expect([200, 201, 409]).to.include(pm.response.code));",
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "  pm.collectionVariables.set('empresaId', pm.response.json().empresaId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Corporativo de pruebas",
           "request": {
             "method": "POST",
@@ -3142,7 +3207,7 @@
             "description": "",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Corporativo Pruebas App\",\n  \"activo\": true\n}",
+              "raw": "{\n  \"empresaId\": \"{{empresaId}}\",\n  \"nombre\": \"Corporativo Pruebas App\",\n  \"activo\": true\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -3157,7 +3222,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "// Si ya existe, guarda su id y se salta la creación (la colección se puede correr varias veces)",
-                  "const lookupUrl = pm.variables.replaceIn('{{host}}/api/corporativos');",
+                  "const lookupUrl = pm.variables.replaceIn('{{host}}/api/corporativos?empresaId={{empresaId}}');",
                   "pm.sendRequest({ url: lookupUrl, header: [{ key: 'Authorization', value: 'Bearer ' + pm.collectionVariables.get('tokenAdmin') }] }, (err, res) => {",
                   "  if (err || res.code !== 200) return;",
                   "  const found = res.json().find(x => x.nombre === 'Corporativo Pruebas App');",
@@ -3207,7 +3272,7 @@
             "description": "",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"corporativoId\": \"{{corporativoId}}\",\n  \"nombre\": \"División Pruebas App\",\n  \"activo\": true\n}",
+              "raw": "{\n  \"empresaId\": \"{{empresaId}}\",\n  \"nombre\": \"División Pruebas App\",\n  \"activo\": true\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -3222,7 +3287,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "// Si ya existe, guarda su id y se salta la creación (la colección se puede correr varias veces)",
-                  "const lookupUrl = pm.variables.replaceIn('{{host}}/api/divisiones');",
+                  "const lookupUrl = pm.variables.replaceIn('{{host}}/api/divisiones?empresaId={{empresaId}}');",
                   "pm.sendRequest({ url: lookupUrl, header: [{ key: 'Authorization', value: 'Bearer ' + pm.collectionVariables.get('tokenAdmin') }] }, (err, res) => {",
                   "  if (err || res.code !== 200) return;",
                   "  const found = res.json().find(x => x.nombre === 'División Pruebas App');",
@@ -3250,65 +3315,32 @@
           ]
         },
         {
-          "name": "Empresa de pruebas",
+          "name": "Ligar división al corporativo",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [],
             "url": {
-              "raw": "{{host}}/api/empresas",
+              "raw": "{{host}}/api/corporativos/{{corporativoId}}/divisiones/{{divisionId}}",
               "host": [
                 "{{host}}"
               ],
               "path": [
                 "api",
-                "empresas"
+                "corporativos",
+                "{{corporativoId}}",
+                "divisiones",
+                "{{divisionId}}"
               ]
             },
-            "description": "",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Empresa Pruebas App\",\n  \"corporativoId\": \"{{corporativoId}}\",\n  \"divisionId\": \"{{divisionId}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
+            "description": ""
           },
           "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "// Si ya existe, guarda su id y se salta la creación (la colección se puede correr varias veces)",
-                  "const lookupUrl = pm.variables.replaceIn('{{host}}/api/empresas');",
-                  "pm.sendRequest({ url: lookupUrl, header: [{ key: 'Authorization', value: 'Bearer ' + pm.collectionVariables.get('tokenAdmin') }] }, (err, res) => {",
-                  "  if (err || res.code !== 200) return;",
-                  "  const found = res.json().find(x => x.nombre === 'Empresa Pruebas App');",
-                  "  if (found) {",
-                  "    pm.collectionVariables.set('empresaId', found.empresaId);",
-                  "    console.log('Ya existía: empresaId = ' + found.empresaId);",
-                  "    pm.execution.skipRequest();",
-                  "  }",
-                  "});"
-                ]
-              }
-            },
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Creado (201) o ya existía (409)', () => pm.expect([200, 201, 409]).to.include(pm.response.code));",
-                  "if (pm.response.code === 201 || pm.response.code === 200) {",
-                  "  pm.collectionVariables.set('empresaId', pm.response.json().empresaId);",
-                  "}"
+                  "pm.test('Ligada (201) o ya estaba ligada (409)', () => pm.expect([201, 409]).to.include(pm.response.code));"
                 ]
               }
             }
@@ -3337,7 +3369,7 @@
             "description": "",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"empresaId\": \"{{empresaId}}\",\n  \"nombre\": \"Operaciones central\",\n  \"clave\": \"CC-104\",\n  \"activo\": true\n}",
+              "raw": "{\n  \"empresaId\": \"{{empresaId}}\",\n  \"nombre\": \"Operaciones central\",\n  \"clave\": \"CC-104\",\n  \"activo\": true,\n  \"corporativoId\": \"{{corporativoId}}\",\n  \"divisionId\": \"{{divisionId}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"

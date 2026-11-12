@@ -41,7 +41,7 @@ public class DivisionTests
     }
 
     [Fact]
-    public void Crear_CorporativoCero_LanzaDomainException()
+    public void Crear_EmpresaCero_LanzaDomainException()
     {
         Assert.Throws<DomainException>(() => Division.Crear(Guid.Empty, "División Transporte"));
     }

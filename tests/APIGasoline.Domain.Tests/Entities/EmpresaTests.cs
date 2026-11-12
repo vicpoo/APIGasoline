@@ -4,48 +4,17 @@ using APIGasoline.Domain.Exceptions;
 namespace APIGasoline.Domain.Tests.Entities;
 
 /// <summary>
-/// Reglas de la empresa: puede ser independiente, pertenecer solo a un corporativo o a corporativo + división;
-/// nunca a una división sin corporativo. Soft delete que no se repite.
+/// Reglas de la empresa: es la raíz de la organización (sus corporativos, divisiones y centros
+/// apuntan a ella), nombre obligatorio y soft delete que no se repite.
 /// </summary>
 public class EmpresaTests
 {
     [Fact]
-    public void Crear_ConCorporativoYDivision_SeAsignaLaOrganizacion()
+    public void Crear_NombreConEspacios_SeRecorta()
     {
-        var empresa = Empresa.Crear("Gasolinera Tuxtla Centro", Id(1), Id(1));
+        var empresa = Empresa.Crear("  Gasolinera Tuxtla Centro  ");
 
-        Assert.Equal(Id(1), empresa.CorporativoId);
-        Assert.Equal(Id(1), empresa.DivisionId);
-    }
-
-    [Fact]
-    public void Crear_SoloConCorporativo_SeAcepta()
-    {
-        var empresa = Empresa.Crear("Transportes del Sur", Id(1), null);
-
-        Assert.Null(empresa.DivisionId);
-    }
-
-    [Fact]
-    public void Crear_Independiente_SeAcepta()
-    {
-        var empresa = Empresa.Crear("Empresa Independiente", null, null);
-
-        Assert.Null(empresa.CorporativoId);
-    }
-
-    [Fact]
-    public void Crear_DivisionSinCorporativo_LanzaDomainException()
-    {
-        Assert.Throws<DomainException>(() => Empresa.Crear("Empresa X", null, Id(1)));
-    }
-
-    [Theory]
-    [InlineData(0, null)]
-    [InlineData(1, 0)]
-    public void Crear_IdsDeOrganizacionInvalidos_LanzaDomainException(int? corporativoId, int? divisionId)
-    {
-        Assert.Throws<DomainException>(() => Empresa.Crear("Empresa X", Id(corporativoId), Id(divisionId)));
+        Assert.Equal("Gasolinera Tuxtla Centro", empresa.Nombre);
     }
 
     [Theory]
@@ -53,19 +22,19 @@ public class EmpresaTests
     [InlineData("   ")]
     public void Crear_SinNombre_LanzaDomainException(string nombre)
     {
-        Assert.Throws<DomainException>(() => Empresa.Crear(nombre, null, null));
+        Assert.Throws<DomainException>(() => Empresa.Crear(nombre));
     }
 
     [Fact]
     public void Crear_NombreMayorA150_LanzaDomainException()
     {
-        Assert.Throws<DomainException>(() => Empresa.Crear(new string('x', 151), null, null));
+        Assert.Throws<DomainException>(() => Empresa.Crear(new string('x', 151)));
     }
 
     [Fact]
     public void Eliminar_YaEliminada_LanzaDomainException()
     {
-        var empresa = Empresa.Crear("Gasolinera Tuxtla Centro", null, null);
+        var empresa = Empresa.Crear("Gasolinera Tuxtla Centro");
         empresa.Eliminar();
 
         Assert.Throws<DomainException>(() => empresa.Eliminar());
@@ -76,7 +45,7 @@ public class EmpresaTests
     [Fact]
     public void Crear_QuedaActiva()
     {
-        var empresa = Empresa.Crear("Gasolinera Tuxtla Centro", null, null);
+        var empresa = Empresa.Crear("Gasolinera Tuxtla Centro");
 
         Assert.True(empresa.Activo);
     }
@@ -84,7 +53,7 @@ public class EmpresaTests
     [Fact]
     public void Desactivar_YActivar_CambiaElEstado()
     {
-        var empresa = Empresa.Crear("Gasolinera Tuxtla Centro", null, null);
+        var empresa = Empresa.Crear("Gasolinera Tuxtla Centro");
 
         empresa.Desactivar();
         Assert.False(empresa.Activo);

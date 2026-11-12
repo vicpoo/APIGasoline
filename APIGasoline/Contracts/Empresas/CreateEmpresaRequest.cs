@@ -7,10 +7,4 @@ public class CreateEmpresaRequest
     [Required]
     [StringLength(150)]
     public string Nombre { get; set; } = string.Empty;
-
-    [GuidNoVacio]
-    public Guid? CorporativoId { get; set; }
-
-    [GuidNoVacio]
-    public Guid? DivisionId { get; set; }
 }

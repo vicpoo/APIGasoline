@@ -399,6 +399,14 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("clave");
 
+                    b.Property<byte[]>("CorporativoId")
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("corporativo_id");
+
+                    b.Property<byte[]>("DivisionId")
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("division_id");
+
                     b.Property<byte[]>("EmpresaId")
                         .IsRequired()
                         .HasColumnType("binary(16)")
@@ -428,6 +436,12 @@ namespace APIGasoline.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("uq_centro_costo_empresa_id_clave");
 
+                    b.HasIndex("EmpresaId", "DivisionId")
+                        .HasDatabaseName("ix_centro_costo_empresa_id_division_id");
+
+                    b.HasIndex("EmpresaId", "CorporativoId", "DivisionId")
+                        .HasDatabaseName("ix_centro_costo_empresa_id_corporativo_id_division_id");
+
                     b.ToTable("centro_costo", (string)null);
                 });
 
@@ -441,6 +455,11 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasColumnType("bit")
                         .HasDefaultValue(true)
                         .HasColumnName("activo");
+
+                    b.Property<byte[]>("EmpresaId")
+                        .IsRequired()
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("empresa_id");
 
                     b.Property<DateTime?>("FechaRegistro")
                         .ValueGeneratedOnAdd()
@@ -456,7 +475,56 @@ namespace APIGasoline.Infrastructure.Migrations
 
                     b.HasKey("CorporativoId");
 
+                    b.HasAlternateKey("EmpresaId", "CorporativoId")
+                        .HasName("uq_corporativo_empresa_id_corporativo_id");
+
+                    b.HasIndex("EmpresaId", "Nombre")
+                        .IsUnique()
+                        .HasDatabaseName("uq_corporativo_empresa_id_nombre");
+
                     b.ToTable("corporativo", (string)null);
+                });
+
+            modelBuilder.Entity("APIGasoline.Domain.Entities.CorporativoDivision", b =>
+                {
+                    b.Property<byte[]>("CorporativoDivisionId")
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("corporativo_division_id");
+
+                    b.Property<byte[]>("CorporativoId")
+                        .IsRequired()
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("corporativo_id");
+
+                    b.Property<byte[]>("DivisionId")
+                        .IsRequired()
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("division_id");
+
+                    b.Property<byte[]>("EmpresaId")
+                        .IsRequired()
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("empresa_id");
+
+                    b.Property<DateTime?>("FechaRegistro")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2(0)")
+                        .HasColumnName("fecha_registro")
+                        .HasDefaultValueSql("SYSDATETIME()");
+
+                    b.HasKey("CorporativoDivisionId");
+
+                    b.HasAlternateKey("EmpresaId", "CorporativoId", "DivisionId")
+                        .HasName("uq_corporativo_division_empresa_id_corporativo_id_division_id");
+
+                    b.HasIndex("CorporativoId", "DivisionId")
+                        .IsUnique()
+                        .HasDatabaseName("uq_corporativo_division_corporativo_id_division_id");
+
+                    b.HasIndex("EmpresaId", "DivisionId")
+                        .HasDatabaseName("ix_corporativo_division_empresa_id_division_id");
+
+                    b.ToTable("corporativo_division", (string)null);
                 });
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.DispositivoEmpleado", b =>
@@ -536,10 +604,10 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasDefaultValue(true)
                         .HasColumnName("activo");
 
-                    b.Property<byte[]>("CorporativoId")
+                    b.Property<byte[]>("EmpresaId")
                         .IsRequired()
                         .HasColumnType("binary(16)")
-                        .HasColumnName("corporativo_id");
+                        .HasColumnName("empresa_id");
 
                     b.Property<DateTime?>("FechaRegistro")
                         .ValueGeneratedOnAdd()
@@ -555,11 +623,12 @@ namespace APIGasoline.Infrastructure.Migrations
 
                     b.HasKey("DivisionId");
 
-                    b.HasAlternateKey("CorporativoId", "DivisionId")
-                        .HasName("uq_division_corporativo_id_division_id");
+                    b.HasAlternateKey("EmpresaId", "DivisionId")
+                        .HasName("uq_division_empresa_id_division_id");
 
-                    b.HasIndex("CorporativoId")
-                        .HasDatabaseName("ix_division_corporativo_id");
+                    b.HasIndex("EmpresaId", "Nombre")
+                        .IsUnique()
+                        .HasDatabaseName("uq_division_empresa_id_nombre");
 
                     b.ToTable("division", (string)null);
                 });
@@ -637,14 +706,6 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasDefaultValue(true)
                         .HasColumnName("activo");
 
-                    b.Property<byte[]>("CorporativoId")
-                        .HasColumnType("binary(16)")
-                        .HasColumnName("corporativo_id");
-
-                    b.Property<byte[]>("DivisionId")
-                        .HasColumnType("binary(16)")
-                        .HasColumnName("division_id");
-
                     b.Property<bool>("Eliminado")
                         .HasColumnType("bit")
                         .HasDefaultValue(false)
@@ -663,20 +724,6 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasColumnName("nombre");
 
                     b.HasKey("EmpresaId");
-
-                    b.HasIndex("CorporativoId")
-                        .HasDatabaseName("ix_empresa_corporativo_id");
-
-                    b.HasIndex("DivisionId")
-                        .HasDatabaseName("ix_empresa_division_id");
-
-                    b.HasIndex("CorporativoId", "DivisionId")
-                        .HasDatabaseName("ix_empresa_corporativo_id_division_id");
-
-                    b.HasIndex("CorporativoId", "EmpresaId")
-                        .IsUnique()
-                        .HasDatabaseName("uq_empresa_corporativo_id_empresa_id")
-                        .HasFilter("[corporativo_id] IS NOT NULL");
 
                     b.ToTable("empresa", (string)null);
                 });
@@ -1765,6 +1812,56 @@ namespace APIGasoline.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_centro_costo_empresa");
+
+                    b.HasOne("APIGasoline.Domain.Entities.Corporativo", null)
+                        .WithMany()
+                        .HasForeignKey("EmpresaId", "CorporativoId")
+                        .HasPrincipalKey("EmpresaId", "CorporativoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_centro_costo_corporativo");
+
+                    b.HasOne("APIGasoline.Domain.Entities.Division", null)
+                        .WithMany()
+                        .HasForeignKey("EmpresaId", "DivisionId")
+                        .HasPrincipalKey("EmpresaId", "DivisionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_centro_costo_division");
+
+                    b.HasOne("APIGasoline.Domain.Entities.CorporativoDivision", null)
+                        .WithMany()
+                        .HasForeignKey("EmpresaId", "CorporativoId", "DivisionId")
+                        .HasPrincipalKey("EmpresaId", "CorporativoId", "DivisionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_centro_costo_corporativo_division");
+                });
+
+            modelBuilder.Entity("APIGasoline.Domain.Entities.Corporativo", b =>
+                {
+                    b.HasOne("APIGasoline.Domain.Entities.Empresa", null)
+                        .WithMany()
+                        .HasForeignKey("EmpresaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_corporativo_empresa");
+                });
+
+            modelBuilder.Entity("APIGasoline.Domain.Entities.CorporativoDivision", b =>
+                {
+                    b.HasOne("APIGasoline.Domain.Entities.Corporativo", null)
+                        .WithMany()
+                        .HasForeignKey("EmpresaId", "CorporativoId")
+                        .HasPrincipalKey("EmpresaId", "CorporativoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_corporativo_division_corporativo");
+
+                    b.HasOne("APIGasoline.Domain.Entities.Division", null)
+                        .WithMany()
+                        .HasForeignKey("EmpresaId", "DivisionId")
+                        .HasPrincipalKey("EmpresaId", "DivisionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_corporativo_division_division");
                 });
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.DispositivoEmpleado", b =>
@@ -1787,12 +1884,12 @@ namespace APIGasoline.Infrastructure.Migrations
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.Division", b =>
                 {
-                    b.HasOne("APIGasoline.Domain.Entities.Corporativo", null)
+                    b.HasOne("APIGasoline.Domain.Entities.Empresa", null)
                         .WithMany()
-                        .HasForeignKey("CorporativoId")
+                        .HasForeignKey("EmpresaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_division_corporativo");
+                        .HasConstraintName("fk_division_empresa");
                 });
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.Empleado", b =>
@@ -1810,22 +1907,6 @@ namespace APIGasoline.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_empleado_usuario");
-                });
-
-            modelBuilder.Entity("APIGasoline.Domain.Entities.Empresa", b =>
-                {
-                    b.HasOne("APIGasoline.Domain.Entities.Corporativo", null)
-                        .WithMany()
-                        .HasForeignKey("CorporativoId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_empresa_corporativo");
-
-                    b.HasOne("APIGasoline.Domain.Entities.Division", null)
-                        .WithMany()
-                        .HasForeignKey("CorporativoId", "DivisionId")
-                        .HasPrincipalKey("CorporativoId", "DivisionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_empresa_division");
                 });
 
             modelBuilder.Entity("APIGasoline.Domain.Entities.Notificacion", b =>

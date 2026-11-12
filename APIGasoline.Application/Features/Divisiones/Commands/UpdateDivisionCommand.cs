@@ -1,12 +1,13 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
+using APIGasoline.Application.Common.Messaging;
 using APIGasoline.Application.Features.Divisiones.DTOs;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
-using APIGasoline.Application.Common.Messaging;
 
 namespace APIGasoline.Application.Features.Divisiones.Commands;
 
-public sealed record UpdateDivisionCommand(Guid DivisionId, Guid CorporativoId, string Nombre, bool Activo) : ICommand<DivisionDto>;
+/// <summary>La empresa de la división no cambia.</summary>
+public sealed record UpdateDivisionCommand(Guid DivisionId, string Nombre, bool Activo) : ICommand<DivisionDto>;
 
 public sealed class UpdateDivisionCommandHandler : ICommandHandler<UpdateDivisionCommand, DivisionDto>
 {
@@ -25,7 +26,6 @@ public sealed class UpdateDivisionCommandHandler : ICommandHandler<UpdateDivisio
             ?? throw new NotFoundException($"No existe una división con el id {request.DivisionId}.");
 
         // El dominio valida y normaliza los datos
-        division.CambiarCorporativo(request.CorporativoId);
         division.CambiarNombre(request.Nombre);
 
         if (request.Activo)
@@ -33,8 +33,8 @@ public sealed class UpdateDivisionCommandHandler : ICommandHandler<UpdateDivisio
         else
             division.Desactivar();
 
-        if (!await _unitOfWork.Corporativos.ExistsAsync(division.CorporativoId, cancellationToken))
-            throw new NotFoundException($"No existe un corporativo con el id {division.CorporativoId}.");
+        if (await _unitOfWork.Divisiones.NombreExistsAsync(division.EmpresaId, division.Nombre, division.DivisionId, cancellationToken))
+            throw new ConflictException($"La empresa {division.EmpresaId} ya tiene otra división llamada '{division.Nombre}'.");
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

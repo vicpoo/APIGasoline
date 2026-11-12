@@ -22,6 +22,7 @@ public class UnitOfWork : IUnitOfWork
         RolPrivilegios = new RolPrivilegioRepository(context);
         Corporativos = new CorporativoRepository(context);
         Divisiones = new DivisionRepository(context);
+        CorporativoDivisiones = new CorporativoDivisionRepository(context);
         Empresas = new EmpresaRepository(context);
         CentrosCosto = new CentroCostoRepository(context);
         Empleados = new EmpleadoRepository(context);
@@ -50,6 +51,7 @@ public class UnitOfWork : IUnitOfWork
     public IRolPrivilegioRepository RolPrivilegios { get; }
     public ICorporativoRepository Corporativos { get; }
     public IDivisionRepository Divisiones { get; }
+    public ICorporativoDivisionRepository CorporativoDivisiones { get; }
     public IEmpresaRepository Empresas { get; }
     public ICentroCostoRepository CentrosCosto { get; }
     public IEmpleadoRepository Empleados { get; }

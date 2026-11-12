@@ -1,11 +1,14 @@
 -- ============================================================
 --  APIGasoline — Esquema de la base de datos (SQL Server)
 --  Generado con `dotnet ef migrations script` a partir de las migraciones
---  20261111182911_InicialSqlServer, 20261111211442_AgregarEmpresaAUsuario y
---  20261111222631_SeguridadPorFilas (APIGasoline.Infrastructure/Migrations).
+--  20261111182911_InicialSqlServer, 20261111211442_AgregarEmpresaAUsuario,
+--  20261111222631_SeguridadPorFilas y 20261112170727_EstructuraOrganizacional
+--  (APIGasoline.Infrastructure/Migrations).
 --
---  24 tablas · 47 llaves foráneas · 21 CHECK
---  Row-Level Security: política rls.aislamiento_empresa sobre 18 tablas. Sin
+--  25 tablas · 51 llaves foráneas · 21 CHECK
+--  Estructura organizacional (fase 8): la empresa es la raíz de corporativos,
+--  divisiones (N:M en corporativo_division) y centros de costo.
+--  Row-Level Security: política rls.aislamiento_empresa sobre 21 tablas. Sin
 --  SESSION_CONTEXT no se ve ninguna fila; para consultar a mano, antes:
 --    EXEC sys.sp_set_session_context N'apigasoline.ve_todas', 1;
 --  IDs en binary(16) (UUID v7 en orden RFC 4122) · fechas en datetime2(0)
@@ -748,6 +751,170 @@ WITH (STATE = ON, SCHEMABINDING = ON);');
 
 INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
 VALUES (N'20261111222631_SeguridadPorFilas', N'10.0.12');
+
+COMMIT;
+GO
+
+BEGIN TRANSACTION;
+ALTER TABLE [division] DROP CONSTRAINT [fk_division_corporativo];
+
+ALTER TABLE [empresa] DROP CONSTRAINT [fk_empresa_corporativo];
+
+ALTER TABLE [empresa] DROP CONSTRAINT [fk_empresa_division];
+
+DROP INDEX [ix_empresa_corporativo_id] ON [empresa];
+
+DROP INDEX [ix_empresa_corporativo_id_division_id] ON [empresa];
+
+DROP INDEX [ix_empresa_division_id] ON [empresa];
+
+DROP INDEX [uq_empresa_corporativo_id_empresa_id] ON [empresa];
+
+ALTER TABLE [division] DROP CONSTRAINT [uq_division_corporativo_id_division_id];
+
+DROP INDEX [ix_division_corporativo_id] ON [division];
+
+ALTER TABLE [corporativo] ADD [empresa_id] binary(16) NULL;
+
+ALTER TABLE [division] ADD [empresa_id] binary(16) NULL;
+
+ALTER TABLE [centro_costo] ADD [corporativo_id] binary(16) NULL;
+
+ALTER TABLE [centro_costo] ADD [division_id] binary(16) NULL;
+
+CREATE TABLE [corporativo_division] (
+    [corporativo_division_id] binary(16) NOT NULL,
+    [empresa_id] binary(16) NOT NULL,
+    [corporativo_id] binary(16) NOT NULL,
+    [division_id] binary(16) NOT NULL,
+    [fecha_registro] datetime2(0) NULL DEFAULT (SYSDATETIME()),
+    CONSTRAINT [PK_corporativo_division] PRIMARY KEY ([corporativo_division_id])
+);
+
+EXEC(N'EXEC sys.sp_set_session_context @key = N''apigasoline.ve_todas'', @value = 1;');
+
+EXEC(N'UPDATE c SET c.empresa_id = (SELECT MIN(e.empresa_id) FROM dbo.empresa AS e WHERE e.corporativo_id = c.corporativo_id)
+FROM dbo.corporativo AS c;');
+
+EXEC(N'UPDATE d SET d.empresa_id = c.empresa_id
+FROM dbo.division AS d
+JOIN dbo.corporativo AS c ON c.corporativo_id = d.corporativo_id;');
+
+EXEC(N'DELETE FROM dbo.division WHERE empresa_id IS NULL;');
+
+EXEC(N'DELETE FROM dbo.corporativo WHERE empresa_id IS NULL;');
+
+EXEC(N'INSERT INTO dbo.corporativo_division (corporativo_division_id, empresa_id, corporativo_id, division_id)
+SELECT CAST(NEWID() AS binary(16)), d.empresa_id, d.corporativo_id, d.division_id
+FROM dbo.division AS d;');
+
+EXEC(N'WITH repetidos AS (
+    SELECT nombre, ROW_NUMBER() OVER (PARTITION BY empresa_id, nombre ORDER BY corporativo_id) AS n
+    FROM dbo.corporativo)
+UPDATE repetidos SET nombre = LEFT(nombre, 140) + N'' #'' + CAST(n AS nvarchar(10)) WHERE n > 1;');
+
+EXEC(N'WITH repetidos AS (
+    SELECT nombre, ROW_NUMBER() OVER (PARTITION BY empresa_id, nombre ORDER BY division_id) AS n
+    FROM dbo.division)
+UPDATE repetidos SET nombre = LEFT(nombre, 90) + N'' #'' + CAST(n AS nvarchar(10)) WHERE n > 1;');
+
+EXEC(N'ALTER SECURITY POLICY rls.aislamiento_empresa
+    DROP FILTER PREDICATE ON dbo.empresa,
+    DROP BLOCK PREDICATE ON dbo.empresa AFTER INSERT,
+    DROP BLOCK PREDICATE ON dbo.empresa AFTER UPDATE;');
+
+DECLARE @var nvarchar(max);
+SELECT @var = QUOTENAME([d].[name])
+FROM [sys].[default_constraints] [d]
+INNER JOIN [sys].[columns] [c] ON [d].[parent_column_id] = [c].[column_id] AND [d].[parent_object_id] = [c].[object_id]
+WHERE ([d].[parent_object_id] = OBJECT_ID(N'[empresa]') AND [c].[name] = N'corporativo_id');
+IF @var IS NOT NULL EXEC(N'ALTER TABLE [empresa] DROP CONSTRAINT ' + @var + ';');
+ALTER TABLE [empresa] DROP COLUMN [corporativo_id];
+
+DECLARE @var1 nvarchar(max);
+SELECT @var1 = QUOTENAME([d].[name])
+FROM [sys].[default_constraints] [d]
+INNER JOIN [sys].[columns] [c] ON [d].[parent_column_id] = [c].[column_id] AND [d].[parent_object_id] = [c].[object_id]
+WHERE ([d].[parent_object_id] = OBJECT_ID(N'[empresa]') AND [c].[name] = N'division_id');
+IF @var1 IS NOT NULL EXEC(N'ALTER TABLE [empresa] DROP CONSTRAINT ' + @var1 + ';');
+ALTER TABLE [empresa] DROP COLUMN [division_id];
+
+EXEC(N'ALTER SECURITY POLICY rls.aislamiento_empresa
+    ADD FILTER PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.empresa,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.empresa AFTER INSERT,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.empresa AFTER UPDATE;');
+
+DECLARE @var2 nvarchar(max);
+SELECT @var2 = QUOTENAME([d].[name])
+FROM [sys].[default_constraints] [d]
+INNER JOIN [sys].[columns] [c] ON [d].[parent_column_id] = [c].[column_id] AND [d].[parent_object_id] = [c].[object_id]
+WHERE ([d].[parent_object_id] = OBJECT_ID(N'[division]') AND [c].[name] = N'corporativo_id');
+IF @var2 IS NOT NULL EXEC(N'ALTER TABLE [division] DROP CONSTRAINT ' + @var2 + ';');
+ALTER TABLE [division] DROP COLUMN [corporativo_id];
+
+DECLARE @var3 nvarchar(max);
+SELECT @var3 = QUOTENAME([d].[name])
+FROM [sys].[default_constraints] [d]
+INNER JOIN [sys].[columns] [c] ON [d].[parent_column_id] = [c].[column_id] AND [d].[parent_object_id] = [c].[object_id]
+WHERE ([d].[parent_object_id] = OBJECT_ID(N'[corporativo]') AND [c].[name] = N'empresa_id');
+IF @var3 IS NOT NULL EXEC(N'ALTER TABLE [corporativo] DROP CONSTRAINT ' + @var3 + ';');
+ALTER TABLE [corporativo] ALTER COLUMN [empresa_id] binary(16) NOT NULL;
+
+DECLARE @var4 nvarchar(max);
+SELECT @var4 = QUOTENAME([d].[name])
+FROM [sys].[default_constraints] [d]
+INNER JOIN [sys].[columns] [c] ON [d].[parent_column_id] = [c].[column_id] AND [d].[parent_object_id] = [c].[object_id]
+WHERE ([d].[parent_object_id] = OBJECT_ID(N'[division]') AND [c].[name] = N'empresa_id');
+IF @var4 IS NOT NULL EXEC(N'ALTER TABLE [division] DROP CONSTRAINT ' + @var4 + ';');
+ALTER TABLE [division] ALTER COLUMN [empresa_id] binary(16) NOT NULL;
+
+ALTER TABLE [corporativo] ADD CONSTRAINT [uq_corporativo_empresa_id_corporativo_id] UNIQUE ([empresa_id], [corporativo_id]);
+
+ALTER TABLE [division] ADD CONSTRAINT [uq_division_empresa_id_division_id] UNIQUE ([empresa_id], [division_id]);
+
+ALTER TABLE [corporativo_division] ADD CONSTRAINT [uq_corporativo_division_empresa_id_corporativo_id_division_id] UNIQUE ([empresa_id], [corporativo_id], [division_id]);
+
+CREATE UNIQUE INDEX [uq_corporativo_empresa_id_nombre] ON [corporativo] ([empresa_id], [nombre]);
+
+CREATE UNIQUE INDEX [uq_division_empresa_id_nombre] ON [division] ([empresa_id], [nombre]);
+
+CREATE UNIQUE INDEX [uq_corporativo_division_corporativo_id_division_id] ON [corporativo_division] ([corporativo_id], [division_id]);
+
+CREATE INDEX [ix_corporativo_division_empresa_id_division_id] ON [corporativo_division] ([empresa_id], [division_id]);
+
+CREATE INDEX [ix_centro_costo_empresa_id_corporativo_id_division_id] ON [centro_costo] ([empresa_id], [corporativo_id], [division_id]);
+
+CREATE INDEX [ix_centro_costo_empresa_id_division_id] ON [centro_costo] ([empresa_id], [division_id]);
+
+ALTER TABLE [corporativo] ADD CONSTRAINT [fk_corporativo_empresa] FOREIGN KEY ([empresa_id]) REFERENCES [empresa] ([empresa_id]) ON DELETE NO ACTION;
+
+ALTER TABLE [division] ADD CONSTRAINT [fk_division_empresa] FOREIGN KEY ([empresa_id]) REFERENCES [empresa] ([empresa_id]) ON DELETE NO ACTION;
+
+ALTER TABLE [corporativo_division] ADD CONSTRAINT [fk_corporativo_division_corporativo] FOREIGN KEY ([empresa_id], [corporativo_id]) REFERENCES [corporativo] ([empresa_id], [corporativo_id]) ON DELETE NO ACTION;
+
+ALTER TABLE [corporativo_division] ADD CONSTRAINT [fk_corporativo_division_division] FOREIGN KEY ([empresa_id], [division_id]) REFERENCES [division] ([empresa_id], [division_id]) ON DELETE NO ACTION;
+
+ALTER TABLE [centro_costo] ADD CONSTRAINT [fk_centro_costo_corporativo] FOREIGN KEY ([empresa_id], [corporativo_id]) REFERENCES [corporativo] ([empresa_id], [corporativo_id]) ON DELETE NO ACTION;
+
+ALTER TABLE [centro_costo] ADD CONSTRAINT [fk_centro_costo_division] FOREIGN KEY ([empresa_id], [division_id]) REFERENCES [division] ([empresa_id], [division_id]) ON DELETE NO ACTION;
+
+ALTER TABLE [centro_costo] ADD CONSTRAINT [fk_centro_costo_corporativo_division] FOREIGN KEY ([empresa_id], [corporativo_id], [division_id]) REFERENCES [corporativo_division] ([empresa_id], [corporativo_id], [division_id]) ON DELETE NO ACTION;
+
+EXEC(N'UPDATE dbo.privilegio SET ambito = ''empresa'' WHERE clave = ''corporativo.gestionar'';');
+
+EXEC(N'ALTER SECURITY POLICY rls.aislamiento_empresa
+    ADD FILTER PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.corporativo,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.corporativo AFTER INSERT,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.corporativo AFTER UPDATE,
+    ADD FILTER PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.division,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.division AFTER INSERT,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.division AFTER UPDATE,
+    ADD FILTER PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.corporativo_division,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.corporativo_division AFTER INSERT,
+    ADD BLOCK PREDICATE rls.fn_misma_empresa(empresa_id) ON dbo.corporativo_division AFTER UPDATE;');
+
+INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+VALUES (N'20261112170727_EstructuraOrganizacional', N'10.0.12');
 
 COMMIT;
 GO

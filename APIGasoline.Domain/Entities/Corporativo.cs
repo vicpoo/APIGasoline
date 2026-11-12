@@ -2,12 +2,19 @@
 
 namespace APIGasoline.Domain.Entities;
 
-
+/// <summary>
+/// Corporativo de una empresa. La empresa es la raíz: tiene sus corporativos, sus divisiones
+/// (relacionadas N:M con los corporativos por <see cref="CorporativoDivision"/>) y sus centros de costo.
+/// </summary>
 public class Corporativo
 {
     public const int NombreMaxLength = 150;
 
     public Guid CorporativoId { get; private set; } = Guid.CreateVersion7();
+
+    /// <summary>Empresa dueña del corporativo. No cambia.</summary>
+    public Guid EmpresaId { get; private set; }
+
     public string Nombre { get; private set; } = string.Empty;
     public bool Activo { get; private set; } = true;
 
@@ -19,9 +26,12 @@ public class Corporativo
     {
     }
 
-    public static Corporativo Crear(string nombre, bool activo = true)
+    public static Corporativo Crear(Guid empresaId, string nombre, bool activo = true)
     {
-        var corporativo = new Corporativo();
+        if (empresaId == Guid.Empty)
+            throw new DomainException("El id de la empresa es obligatorio.");
+
+        var corporativo = new Corporativo { EmpresaId = empresaId };
         corporativo.CambiarNombre(nombre);
         corporativo.Activo = activo;
 

@@ -66,6 +66,45 @@ public sealed class SeguridadPorFilasTests(Escenario e)
         Assert.Equal(ErrorPredicadoDeBloqueo, error.Number);
     }
 
+    /// <summary>Fase 8: corporativos, divisiones y sus ligas también son de cada empresa.</summary>
+    [Fact]
+    public async Task Con_la_empresa_A_la_estructura_organizacional_de_B_no_existe()
+    {
+        var (corporativoB, divisionB) = await e.CorporativoYDivisionAsync(e.B, ligados: false);
+        await using var conexion = await AbrirAsync(empresa: e.A.EmpresaId);
+
+        foreach (var tabla in new[] { "corporativo", "division", "corporativo_division" })
+        {
+            Assert.Equal(0, await ContarDeAsync(conexion, tabla, e.B.EmpresaId));
+            Assert.True(await ContarDeAsync(conexion, tabla, e.A.EmpresaId) > 0, $"Control: A debería ver sus filas de {tabla}.");
+        }
+
+        // Ligar en B (un corporativo y una división reales de B, sin ligar) lo frena el predicado de bloqueo
+        var error = await Assert.ThrowsAsync<SqlException>(() => EjecutarAsync(conexion,
+            "INSERT INTO corporativo_division (corporativo_division_id, empresa_id, corporativo_id, division_id) VALUES (@id, @b, @c, @d)",
+            ("@id", Guid.CreateVersion7()), ("@b", e.B.EmpresaId), ("@c", corporativoB), ("@d", divisionB)));
+
+        Assert.Equal(ErrorPredicadoDeBloqueo, error.Number);
+    }
+
+    [Fact]
+    public async Task La_BD_no_deja_ligar_ni_usar_un_corporativo_de_otra_empresa()
+    {
+        // Aun viendo todas las empresas (plataforma), las FK compuestas con empresa_id lo impiden
+        await using var conexion = await AbrirAsync(veTodas: true);
+
+        var liga = await Assert.ThrowsAsync<SqlException>(() => EjecutarAsync(conexion,
+            "INSERT INTO corporativo_division (corporativo_division_id, empresa_id, corporativo_id, division_id) VALUES (@id, @a, @c, @d)",
+            ("@id", Guid.CreateVersion7()), ("@a", e.A.EmpresaId), ("@c", e.A.CorporativoId), ("@d", e.B.DivisionId)));
+
+        var centro = await Assert.ThrowsAsync<SqlException>(() => EjecutarAsync(conexion,
+            "UPDATE centro_costo SET corporativo_id = @c WHERE centro_costo_id = @id",
+            ("@c", e.B.CorporativoId), ("@id", e.A.CentroCostoId)));
+
+        Assert.Equal(547, liga.Number);   // violación de FK
+        Assert.Equal(547, centro.Number);
+    }
+
     [Fact]
     public async Task Con_la_empresa_A_no_se_puede_editar_ni_borrar_lo_de_B()
     {

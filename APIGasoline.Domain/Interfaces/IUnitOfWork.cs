@@ -9,6 +9,7 @@ public interface IUnitOfWork : IDisposable
     IRolPrivilegioRepository RolPrivilegios { get; }
     ICorporativoRepository Corporativos { get; }
     IDivisionRepository Divisiones { get; }
+    ICorporativoDivisionRepository CorporativoDivisiones { get; }
     IEmpresaRepository Empresas { get; }
     ICentroCostoRepository CentrosCosto { get; }
     IEmpleadoRepository Empleados { get; }

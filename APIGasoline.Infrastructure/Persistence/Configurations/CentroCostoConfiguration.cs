@@ -19,6 +19,13 @@ public class CentroCostoConfiguration : IEntityTypeConfiguration<CentroCosto>
             .HasColumnName("empresa_id")
             .IsRequired();
 
+        // Opcionales: un centro puede no pertenecer a ningún corporativo o división
+        builder.Property(cc => cc.CorporativoId)
+            .HasColumnName("corporativo_id");
+
+        builder.Property(cc => cc.DivisionId)
+            .HasColumnName("division_id");
+
         builder.Property(cc => cc.Nombre)
             .HasColumnName("nombre")
             .HasMaxLength(CentroCosto.NombreMaxLength)
@@ -57,6 +64,39 @@ public class CentroCostoConfiguration : IEntityTypeConfiguration<CentroCosto>
         // Llave alterna: la referencian viaje y carga_combustible con FK compuesta (tenant-safe)
         builder.HasAlternateKey(cc => new { cc.EmpresaId, cc.CentroCostoId })
             .HasName("uq_centro_costo_empresa_id_centro_costo_id");
+
+        // FK compuestas con empresa_id: el corporativo y la división deben ser de la misma empresa.
+        // SQL Server no revisa una FK compuesta si alguna columna es NULL, así que son opcionales.
+        builder.HasOne<Corporativo>()
+            .WithMany()
+            .HasForeignKey(cc => new { cc.EmpresaId, cc.CorporativoId })
+            .HasPrincipalKey(c => new { c.EmpresaId, c.CorporativoId })
+            .HasConstraintName("fk_centro_costo_corporativo")
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<Division>()
+            .WithMany()
+            .HasForeignKey(cc => new { cc.EmpresaId, cc.DivisionId })
+            .HasPrincipalKey(d => new { d.EmpresaId, d.DivisionId })
+            .HasConstraintName("fk_centro_costo_division")
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Con los dos llenos, la pareja corporativo + división debe estar ligada
+        builder.HasOne<CorporativoDivision>()
+            .WithMany()
+            .HasForeignKey(cc => new { cc.EmpresaId, cc.CorporativoId, cc.DivisionId })
+            .HasPrincipalKey(l => new { l.EmpresaId, l.CorporativoId, l.DivisionId })
+            .HasConstraintName("fk_centro_costo_corporativo_division")
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(cc => new { cc.EmpresaId, cc.CorporativoId, cc.DivisionId })
+            .HasDatabaseName("ix_centro_costo_empresa_id_corporativo_id_division_id");
+
+        builder.HasIndex(cc => new { cc.EmpresaId, cc.DivisionId })
+            .HasDatabaseName("ix_centro_costo_empresa_id_division_id");
 
         builder.HasIndex(cc => new { cc.EmpresaId, cc.Clave })
             .IsUnique()

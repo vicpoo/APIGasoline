@@ -99,7 +99,7 @@ public sealed class SembrarDatosDemoCommandHandler : ICommandHandler<SembrarDato
 
     private async Task SembrarEmpresaAsync(string letra, IReadOnlyList<Privilegio> privilegios, string passwordHash, CancellationToken cancellationToken)
     {
-        var empresa = Empresa.Crear($"Empresa Demo {letra}", corporativoId: null, divisionId: null);
+        var empresa = Empresa.Crear($"Empresa Demo {letra}");
         await _unitOfWork.Empresas.AddAsync(empresa, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -119,8 +119,15 @@ public sealed class SembrarDatosDemoCommandHandler : ICommandHandler<SembrarDato
         await CrearEmpleadoAsync(empresa, $"admin.{minuscula}@demo.local", $"Admin Demo {letra}", administrador, conLicencia: false, passwordHash, cancellationToken);
         await CrearEmpleadoAsync(empresa, $"operador.{minuscula}@demo.local", $"Operador Demo {letra}", operador, conLicencia: true, passwordHash, cancellationToken);
 
+        // Estructura organizacional: empresa -> corporativo <-> división -> centro de costo
+        var corporativo = Corporativo.Crear(empresa.EmpresaId, $"Corporativo Demo {letra}");
+        var division = Division.Crear(empresa.EmpresaId, $"División Norte {letra}");
+        await _unitOfWork.Corporativos.AddAsync(corporativo, cancellationToken);
+        await _unitOfWork.Divisiones.AddAsync(division, cancellationToken);
+        await _unitOfWork.CorporativoDivisiones.AddAsync(CorporativoDivision.Ligar(corporativo, division), cancellationToken);
+
         await _unitOfWork.CentrosCosto.AddAsync(
-            CentroCosto.Crear(empresa.EmpresaId, $"Operaciones {letra}", $"CC-{letra}-01"),
+            CentroCosto.Crear(empresa.EmpresaId, $"Operaciones {letra}", $"CC-{letra}-01", corporativoId: corporativo.CorporativoId, divisionId: division.DivisionId),
             cancellationToken);
 
         var anioActual = _dateTime.Now.Year;

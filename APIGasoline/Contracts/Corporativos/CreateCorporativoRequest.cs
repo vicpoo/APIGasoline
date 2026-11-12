@@ -4,6 +4,9 @@ namespace APIGasoline.Contracts.Corporativos;
 
 public class CreateCorporativoRequest
 {
+    [GuidNoVacio]
+    public Guid EmpresaId { get; set; }
+
     [Required]
     [StringLength(150)]
     public string Nombre { get; set; } = string.Empty;

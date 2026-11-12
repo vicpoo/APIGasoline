@@ -285,187 +285,145 @@ Content-Type: application/json
 DELETE {{host}}/api/rol-privilegios/1
 
 
-# ========================= CORPORATIVOS =========================
+# =========================== EMPRESAS ===========================
+# Fase 8: la empresa es la raíz. Sus corporativos, divisiones y centros de costo apuntan a ella.
+# Pon aquí los ids que te devuelva la API (UUID v7).
+@empresaId = 00000000-0000-0000-0000-000000000001
+@corporativoId = 00000000-0000-0000-0000-000000000002
+@divisionId = 00000000-0000-0000-0000-000000000003
 
-### C1. Listar todos los corporativos
-GET {{host}}/api/corporativos
+### E1. Listar las empresas (no eliminadas) que puedo ver
+GET {{host}}/api/empresas
 Accept: application/json
 
-### C2. Crear un corporativo
+### E2. Crear una empresa (solo plataforma)
+POST {{host}}/api/empresas
+Content-Type: application/json
+
+{
+  "nombre": "Gasolinera Tuxtla Centro"
+}
+
+### E3. Obtener una empresa por id
+GET {{host}}/api/empresas/{{empresaId}}
+Accept: application/json
+
+### E4. Actualizar una empresa
+PUT {{host}}/api/empresas/{{empresaId}}
+Content-Type: application/json
+
+{
+  "nombre": "Gasolinera Tuxtla Norte",
+  "activo": true
+}
+
+### E5. Eliminar una empresa (soft delete, solo plataforma)
+DELETE {{host}}/api/empresas/{{empresaId}}
+
+
+# ========================= CORPORATIVOS =========================
+# Requiere la empresa (E2). Privilegios: corporativo.ver / corporativo.gestionar (ámbito empresa).
+
+### C1. Listar los corporativos (filtros opcionales: empresaId, divisionId)
+GET {{host}}/api/corporativos?empresaId={{empresaId}}
+Accept: application/json
+
+### C2. Crear un corporativo en la empresa
 POST {{host}}/api/corporativos
 Content-Type: application/json
 
 {
+  "empresaId": "{{empresaId}}",
   "nombre": "Grupo Corporativo del Sureste",
   "activo": true
 }
 
 ### C3. Obtener un corporativo por id
-GET {{host}}/api/corporativos/1
+GET {{host}}/api/corporativos/{{corporativoId}}
 Accept: application/json
 
-### C4. Actualizar un corporativo
-PUT {{host}}/api/corporativos/1
+### C4. Actualizar un corporativo (la empresa no cambia)
+PUT {{host}}/api/corporativos/{{corporativoId}}
 Content-Type: application/json
 
 {
   "nombre": "Grupo Corporativo del Sureste S.A. de C.V.",
-  "activo": false
+  "activo": true
 }
 
-### C5. Probar validación (400): nombre vacío
+### C5. Probar conflicto (409): nombre repetido en la misma empresa
 POST {{host}}/api/corporativos
 Content-Type: application/json
 
 {
-  "nombre": "",
+  "empresaId": "{{empresaId}}",
+  "nombre": "Grupo Corporativo del Sureste S.A. de C.V.",
   "activo": true
 }
 
-### C6. Eliminar un corporativo
-DELETE {{host}}/api/corporativos/1
-
-### C7. Probar no encontrado (404)
-GET {{host}}/api/corporativos/1
-Accept: application/json
+### C6. Eliminar un corporativo (409 si tiene divisiones ligadas o centros de costo)
+DELETE {{host}}/api/corporativos/{{corporativoId}}
 
 
 # ========================== DIVISIONES ==========================
-# Requiere que exista el corporativo (crea primero con C2)
 
-### D1. Listar todas las divisiones
-GET {{host}}/api/divisiones
+### D1. Listar las divisiones (filtros opcionales: empresaId, corporativoId)
+GET {{host}}/api/divisiones?empresaId={{empresaId}}
 Accept: application/json
 
-### D2. Listar las divisiones de un corporativo
-GET {{host}}/api/divisiones?corporativoId=1
-Accept: application/json
-
-### D3. Crear una división
+### D2. Crear una división en la empresa
 POST {{host}}/api/divisiones
 Content-Type: application/json
 
 {
-  "corporativoId": 1,
+  "empresaId": "{{empresaId}}",
   "nombre": "División Combustibles",
   "activo": true
 }
 
-### D4. Obtener una división por id
-GET {{host}}/api/divisiones/1
+### D3. Obtener una división por id
+GET {{host}}/api/divisiones/{{divisionId}}
 Accept: application/json
 
-### D5. Actualizar una división
-PUT {{host}}/api/divisiones/1
+### D4. Actualizar una división (la empresa no cambia)
+PUT {{host}}/api/divisiones/{{divisionId}}
 Content-Type: application/json
 
 {
-  "corporativoId": 1,
   "nombre": "División Transporte",
-  "activo": false
-}
-
-### D6. Probar no encontrado (404): corporativo inexistente
-POST {{host}}/api/divisiones
-Content-Type: application/json
-
-{
-  "corporativoId": 9999,
-  "nombre": "División X",
   "activo": true
 }
 
-### D7. Probar conflicto (409): borrar corporativo que tiene divisiones
-DELETE {{host}}/api/corporativos/1
-
-### D8. Eliminar una división
-DELETE {{host}}/api/divisiones/1
-
-
-# =========================== EMPRESAS ===========================
-# Requiere corporativo y división (crea primero con C2 y D3)
-
-### E1. Listar todas las empresas (no eliminadas)
-GET {{host}}/api/empresas
+### D5. Corporativos a los que está ligada la división
+GET {{host}}/api/divisiones/{{divisionId}}/corporativos
 Accept: application/json
 
-### E2. Listar las empresas de un corporativo
-GET {{host}}/api/empresas?corporativoId=1
+### D6. Eliminar una división (409 si está ligada o tiene centros de costo)
+DELETE {{host}}/api/divisiones/{{divisionId}}
+
+
+# =================== CORPORATIVO <-> DIVISIÓN (N:M) ===================
+
+### L1. Ligar una división con un corporativo (los dos de la misma empresa)
+POST {{host}}/api/corporativos/{{corporativoId}}/divisiones/{{divisionId}}
+
+### L2. Ver la liga
+GET {{host}}/api/corporativos/{{corporativoId}}/divisiones/{{divisionId}}
 Accept: application/json
 
-### E3. Listar las empresas de una división
-GET {{host}}/api/empresas?divisionId=1
+### L3. Divisiones ligadas al corporativo
+GET {{host}}/api/corporativos/{{corporativoId}}/divisiones
 Accept: application/json
 
-### E4. Crear una empresa con corporativo y división
-POST {{host}}/api/empresas
-Content-Type: application/json
+### L4. Probar conflicto (409): ligar otra vez
+POST {{host}}/api/corporativos/{{corporativoId}}/divisiones/{{divisionId}}
 
-{
-  "nombre": "Gasolinera Tuxtla Centro",
-  "corporativoId": 1,
-  "divisionId": 1
-}
-
-### E5. Crear una empresa solo con corporativo (sin división)
-POST {{host}}/api/empresas
-Content-Type: application/json
-
-{
-  "nombre": "Transportes del Sur",
-  "corporativoId": 1
-}
-
-### E6. Crear una empresa independiente (sin corporativo)
-POST {{host}}/api/empresas
-Content-Type: application/json
-
-{
-  "nombre": "Empresa Independiente"
-}
-
-### E7. Obtener una empresa por id
-GET {{host}}/api/empresas/1
-Accept: application/json
-
-### E8. Actualizar una empresa
-PUT {{host}}/api/empresas/1
-Content-Type: application/json
-
-{
-  "nombre": "Gasolinera Tuxtla Norte",
-  "corporativoId": 1,
-  "divisionId": null
-}
-
-### E9. Probar validación (400): división sin corporativo
-POST {{host}}/api/empresas
-Content-Type: application/json
-
-{
-  "nombre": "Empresa X",
-  "divisionId": 1
-}
-
-### E10. Probar no encontrado (404): corporativo inexistente
-POST {{host}}/api/empresas
-Content-Type: application/json
-
-{
-  "nombre": "Empresa Y",
-  "corporativoId": 9999
-}
-
-### E11. Eliminar una empresa (soft delete)
-DELETE {{host}}/api/empresas/1
-
-### E12. Ya no aparece (404)
-GET {{host}}/api/empresas/1
-Accept: application/json
+### L5. Desligar (409 si hay centros de costo de ese corporativo y esa división)
+DELETE {{host}}/api/corporativos/{{corporativoId}}/divisiones/{{divisionId}}
 
 
 # ======================= CENTROS DE COSTO =======================
-# Requiere que exista la empresa (crea primero con E4)
+# Requiere que exista la empresa (crea primero con E2)
 
 ### CC1. Listar todos los centros de costo
 GET {{host}}/api/centros-costo
@@ -475,16 +433,22 @@ Accept: application/json
 GET {{host}}/api/centros-costo?empresaId=1
 Accept: application/json
 
-### CC3. Crear un centro de costo
+### CC3. Crear un centro de costo (corporativo y división opcionales; si van los dos, deben estar ligados)
 POST {{host}}/api/centros-costo
 Content-Type: application/json
 
 {
-  "empresaId": 1,
+  "empresaId": "{{empresaId}}",
   "nombre": "Logística",
   "clave": "CC-LOG-01",
-  "activo": true
+  "activo": true,
+  "corporativoId": "{{corporativoId}}",
+  "divisionId": "{{divisionId}}"
 }
+
+### CC3b. Listar los centros de un corporativo o de una división
+GET {{host}}/api/centros-costo?corporativoId={{corporativoId}}&divisionId={{divisionId}}
+Accept: application/json
 
 ### CC4. Obtener un centro de costo por id
 GET {{host}}/api/centros-costo/1
@@ -528,7 +492,7 @@ DELETE {{host}}/api/centros-costo/1
 
 
 # =========================== EMPLEADOS ===========================
-# Requiere empresa y usuario (crea primero con E4 y con la prueba 2 de usuarios)
+# Requiere empresa y usuario (crea primero con E2 y con la prueba 2 de usuarios)
 
 ### EM1. Listar todos los empleados (no eliminados)
 GET {{host}}/api/empleados
@@ -624,7 +588,7 @@ Accept: application/json
 
 
 # ============================ CARROS ============================
-# Requiere que exista la empresa (crea primero con E4)
+# Requiere que exista la empresa (crea primero con E2)
 # Estados en JSON: "disponible", "ocupado", "enMantenimiento"
 
 ### CA1. Listar todos los carros
