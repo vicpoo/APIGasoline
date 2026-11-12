@@ -16,7 +16,9 @@ namespace APIGasoline.Application.Features.PuntosRuta.Commands;
 /// Registra varios puntos GPS de un viaje en una sola llamada.
 /// - La empresa se toma del viaje (no se confía en la app).
 /// - Es idempotente: los puntos con un timestamp ya registrado para el viaje se ignoran,
-///   así la app puede reenviar un lote si se cortó la conexión.
+///   así la app puede reenviar un lote si se cortó la conexión. Si el mismo lote llega dos veces
+///   al mismo tiempo, el índice único (viaje, timestamp) frena el segundo y aquí se vuelve a
+///   filtrar contra lo ya guardado (F010): responde como reintento, sin duplicar.
 /// - Todo el lote se guarda en un solo SaveChanges (si un punto es inválido, no se guarda ninguno).
 /// - Los puntos que caen dentro de una pausa del viaje se descartan (la app apaga el GPS en pausa;
 ///   esto es solo la red de seguridad para que la ruta no cuente el tiempo detenido).
@@ -84,14 +86,10 @@ public sealed class RegistrarLotePuntosRutaCommandHandler : ICommandHandler<Regi
         var fueraDePausa = puntos.Where(p => !pausas.Any(pausa => pausa.Contiene(p.TimestampCaptura))).ToList();
         var enPausa = puntos.Count - fueraDePausa.Count;
 
-        var existentes = await _unitOfWork.PuntosRuta.GetTimestampsByViajeAsync(viaje.ViajeId, cancellationToken);
-        var nuevos = DeduplicadorPuntosRuta.FiltrarNuevos(fueraDePausa, existentes);
+        var nuevos = await GuardarNuevosAsync(viaje.ViajeId, fueraDePausa, cancellationToken);
 
         if (nuevos.Count > 0)
         {
-            await _unitOfWork.PuntosRuta.AddRangeAsync(nuevos, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-
             // Puntos que llegan después de cerrar el viaje (por ejemplo, sincronización offline)
             if (!viaje.EstaEnCurso)
                 await _publisher.Publish(new RutaViajeModificadaNotification(viaje.ViajeId), cancellationToken);
@@ -106,5 +104,32 @@ public sealed class RegistrarLotePuntosRutaCommandHandler : ICommandHandler<Regi
             nuevos.Count,
             request.Puntos.Count - nuevos.Count - enPausa,
             enPausa);
+    }
+
+    /// <summary>
+    /// Guarda los puntos que todavía no existen. Si otra petición guardó algunos en el mismo instante
+    /// (índice único), vuelve a leer y lo intenta una vez más solo con los que siguen faltando.
+    /// </summary>
+    private async Task<IReadOnlyList<PuntoRuta>> GuardarNuevosAsync(Guid viajeId, IReadOnlyList<PuntoRuta> candidatos, CancellationToken cancellationToken)
+    {
+        for (var intento = 1; ; intento++)
+        {
+            var existentes = await _unitOfWork.PuntosRuta.GetTimestampsByViajeAsync(viajeId, cancellationToken);
+            var nuevos = DeduplicadorPuntosRuta.FiltrarNuevos(candidatos, existentes);
+
+            if (nuevos.Count == 0)
+                return nuevos;
+
+            await _unitOfWork.PuntosRuta.AddRangeAsync(nuevos, cancellationToken);
+
+            if (intento == 2)
+            {
+                await _unitOfWork.SaveChangesAsync(cancellationToken); // si vuelve a chocar: 409
+                return nuevos;
+            }
+
+            if (await _unitOfWork.SaveChangesSalvoDuplicadoAsync(cancellationToken))
+                return nuevos;
+        }
     }
 }

@@ -1,4 +1,5 @@
-﻿using APIGasoline.Application.Features.Viajes.Common;
+﻿using APIGasoline.Domain.Common;
+using APIGasoline.Application.Features.Viajes.Common;
 using APIGasoline.Application.Common.Security;
 using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Common.Storage;
@@ -19,9 +20,11 @@ public sealed record GetViajesQuery(
     Guid? CarroId = null,
     Guid? EmpleadoOperadorId = null,
     Guid? SolicitudReservaId = null,
-    EstadoViaje? Estado = null) : IQuery<IReadOnlyList<ViajeDto>>;
+    EstadoViaje? Estado = null,
+    int? Pagina = null,
+    int? TamanoPagina = null) : IQuery<PaginaDe<ViajeDto>>;
 
-public sealed class GetViajesQueryHandler : IQueryHandler<GetViajesQuery, IReadOnlyList<ViajeDto>>
+public sealed class GetViajesQueryHandler : IQueryHandler<GetViajesQuery, PaginaDe<ViajeDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
@@ -43,17 +46,19 @@ public sealed class GetViajesQueryHandler : IQueryHandler<GetViajesQuery, IReadO
         _dateTime = dateTime;
     }
 
-    public async Task<IReadOnlyList<ViajeDto>> Handle(GetViajesQuery request, CancellationToken cancellationToken)
+    public async Task<PaginaDe<ViajeDto>> Handle(GetViajesQuery request, CancellationToken cancellationToken)
     {
         // Solo su empresa (salvo plataforma.multiempresa) y, sin viaje.ver_todos, solo sus viajes
         var empresaId = await _usuarioActual.ResolverEmpresaAsync(request.EmpresaId, cancellationToken);
         var empleadoOperadorId = await _usuarioActual.ResolverEmpleadoAsync(request.EmpleadoOperadorId, Permisos.ViajeVerTodos, cancellationToken);
 
-        var viajes = await _unitOfWork.Viajes.GetAllAsync(
+        var pagina = await _unitOfWork.Viajes.GetPaginaAsync(
+            new Paginacion(request.Pagina, request.TamanoPagina),
             empresaId, request.CarroId, empleadoOperadorId, request.SolicitudReservaId, request.Estado, cancellationToken);
 
-        var dtos = await _mapper.Map<IReadOnlyList<ViajeDto>>(viajes).ConUrlsAsync(_storage, cancellationToken);
+        // Fotos firmadas, pausas y operador: solo de la página que se devuelve
+        var dtos = await _mapper.Map<IReadOnlyList<ViajeDto>>(pagina.Elementos).ConUrlsAsync(_storage, cancellationToken);
         var conPausas = await dtos.ConPausasAsync(_unitOfWork, _mapper, _dateTime.Now, cancellationToken);
-        return await conPausas.ConOperadorAsync(_unitOfWork, _storage, cancellationToken);
+        return pagina.Con(await conPausas.ConOperadorAsync(_unitOfWork, _storage, cancellationToken));
     }
 }

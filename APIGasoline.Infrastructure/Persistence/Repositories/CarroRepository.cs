@@ -1,4 +1,5 @@
-﻿using APIGasoline.Domain.Entities;
+﻿using APIGasoline.Domain.Common;
+using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -31,6 +32,13 @@ public class CarroRepository : ICarroRepository
     }
 
     public async Task<IReadOnlyList<Carro>> GetAllAsync(Guid? empresaId = null, EstadoCarro? estado = null, CancellationToken cancellationToken = default)
+        => await Consultar(empresaId, estado).ToListAsync(cancellationToken);
+
+    /// <summary>F011: como <see cref="GetAllAsync"/>, pero solo una página (y el total).</summary>
+    public Task<PaginaDe<Carro>> GetPaginaAsync(Paginacion pagina, Guid? empresaId = null, EstadoCarro? estado = null, CancellationToken cancellationToken = default)
+        => Consultar(empresaId, estado).APaginaAsync(pagina, cancellationToken);
+
+    private IQueryable<Carro> Consultar(Guid? empresaId, EstadoCarro? estado)
     {
         var query = _context.Carros.AsNoTracking();
 
@@ -40,9 +48,8 @@ public class CarroRepository : ICarroRepository
         if (estado is not null)
             query = query.Where(c => c.Estado == estado);
 
-        return await query
-            .OrderBy(c => c.CarroId)
-            .ToListAsync(cancellationToken);
+        return query
+            .OrderBy(c => c.CarroId);
     }
 
     public Task<bool> ExistsAsync(Guid carroId, CancellationToken cancellationToken = default)

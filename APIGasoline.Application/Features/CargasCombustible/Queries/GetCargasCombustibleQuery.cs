@@ -1,4 +1,5 @@
-﻿using APIGasoline.Application.Features.Viajes.Common;
+﻿using APIGasoline.Domain.Common;
+using APIGasoline.Application.Features.Viajes.Common;
 using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Common.Security;
 using APIGasoline.Application.Common.Interfaces;
@@ -18,9 +19,11 @@ public sealed record GetCargasCombustibleQuery(
     Guid? EmpresaId = null,
     Guid? ViajeId = null,
     DateTime? Desde = null,
-    DateTime? Hasta = null) : IQuery<IReadOnlyList<CargaCombustibleDto>>;
+    DateTime? Hasta = null,
+    int? Pagina = null,
+    int? TamanoPagina = null) : IQuery<PaginaDe<CargaCombustibleDto>>;
 
-public sealed class GetCargasCombustibleQueryHandler : IQueryHandler<GetCargasCombustibleQuery, IReadOnlyList<CargaCombustibleDto>>
+public sealed class GetCargasCombustibleQueryHandler : IQueryHandler<GetCargasCombustibleQuery, PaginaDe<CargaCombustibleDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
@@ -35,7 +38,7 @@ public sealed class GetCargasCombustibleQueryHandler : IQueryHandler<GetCargasCo
         _usuarioActual = usuarioActual;
     }
 
-    public async Task<IReadOnlyList<CargaCombustibleDto>> Handle(GetCargasCombustibleQuery request, CancellationToken cancellationToken)
+    public async Task<PaginaDe<CargaCombustibleDto>> Handle(GetCargasCombustibleQuery request, CancellationToken cancellationToken)
     {
         var empresaId = await _usuarioActual.ResolverEmpresaAsync(request.EmpresaId, cancellationToken);
 
@@ -54,9 +57,11 @@ public sealed class GetCargasCombustibleQueryHandler : IQueryHandler<GetCargasCo
             throw new ForbiddenException("Indica el viaje (?viajeId=) o necesitas el privilegio 'viaje.ver_todos'.");
         }
 
-        var cargas = await _unitOfWork.CargasCombustible.GetAllAsync(
+        var pagina = await _unitOfWork.CargasCombustible.GetPaginaAsync(
+            new Paginacion(request.Pagina, request.TamanoPagina),
             empresaId, request.ViajeId, request.Desde, request.Hasta, cancellationToken);
 
-        return await _mapper.Map<IReadOnlyList<CargaCombustibleDto>>(cargas).ConUrlsAsync(_storage, cancellationToken);
+        // Comprobantes firmados solo de la página que se devuelve
+        return pagina.Con(await _mapper.Map<IReadOnlyList<CargaCombustibleDto>>(pagina.Elementos).ConUrlsAsync(_storage, cancellationToken));
     }
 }

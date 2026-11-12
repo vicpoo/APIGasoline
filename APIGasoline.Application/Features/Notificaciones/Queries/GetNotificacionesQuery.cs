@@ -1,4 +1,5 @@
-﻿using APIGasoline.Application.Common.Interfaces;
+﻿using APIGasoline.Domain.Common;
+using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Common.Security;
 using APIGasoline.Application.Features.Notificaciones.DTOs;
 using APIGasoline.Domain.Enums;
@@ -15,9 +16,11 @@ public sealed record GetNotificacionesQuery(
     Guid? EmpresaId = null,
     Guid? EmpleadoDestinatarioId = null,
     bool SoloNoLeidas = false,
-    TipoNotificacion? Tipo = null) : IQuery<IReadOnlyList<NotificacionDto>>;
+    TipoNotificacion? Tipo = null,
+    int? Pagina = null,
+    int? TamanoPagina = null) : IQuery<PaginaDe<NotificacionDto>>;
 
-public sealed class GetNotificacionesQueryHandler : IQueryHandler<GetNotificacionesQuery, IReadOnlyList<NotificacionDto>>
+public sealed class GetNotificacionesQueryHandler : IQueryHandler<GetNotificacionesQuery, PaginaDe<NotificacionDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
@@ -30,15 +33,16 @@ public sealed class GetNotificacionesQueryHandler : IQueryHandler<GetNotificacio
         _usuarioActual = usuarioActual;
     }
 
-    public async Task<IReadOnlyList<NotificacionDto>> Handle(GetNotificacionesQuery request, CancellationToken cancellationToken)
+    public async Task<PaginaDe<NotificacionDto>> Handle(GetNotificacionesQuery request, CancellationToken cancellationToken)
     {
         // Cada quien ve su bandeja; con notificacion.enviar, también las de otros (de su empresa)
         var empresaId = await _usuarioActual.ResolverEmpresaAsync(request.EmpresaId, cancellationToken);
         var empleadoDestinatarioId = await _usuarioActual.ResolverEmpleadoAsync(request.EmpleadoDestinatarioId, Permisos.NotificacionEnviar, cancellationToken);
 
-        var notificaciones = await _unitOfWork.Notificaciones.GetAllAsync(
+        var pagina = await _unitOfWork.Notificaciones.GetPaginaAsync(
+            new Paginacion(request.Pagina, request.TamanoPagina),
             empresaId, empleadoDestinatarioId, request.SoloNoLeidas, request.Tipo, cancellationToken);
 
-        return _mapper.Map<IReadOnlyList<NotificacionDto>>(notificaciones);
+        return pagina.Con(_mapper.Map<IReadOnlyList<NotificacionDto>>(pagina.Elementos));
     }
 }

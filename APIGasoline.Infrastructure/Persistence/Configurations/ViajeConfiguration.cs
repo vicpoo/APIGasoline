@@ -141,5 +141,12 @@ public class ViajeConfiguration : IEntityTypeConfiguration<Viaje>
         builder.HasIndex(v => new { v.EmpresaId, v.SolicitudReservaId }).HasDatabaseName("ix_viaje_empresa_id_solicitud_reserva_id");
         builder.HasIndex(v => new { v.EmpresaId, v.EmpleadoOperadorId }).HasDatabaseName("ix_viaje_empresa_id_empleado_operador_id");
         builder.HasIndex(v => new { v.EmpresaId, v.CentroCostoId }).HasDatabaseName("ix_viaje_empresa_id_centro_costo_id");
+
+        // F010: un solo viaje en curso por carro, aunque lleguen dos inicios al mismo tiempo
+        // (doble toque, dos teléfonos, reintento offline). Índice único filtrado de SQL Server.
+        builder.HasIndex(v => v.CarroId)
+            .IsUnique()
+            .HasFilter("[estado] = 'en_curso'")
+            .HasDatabaseName("uq_viaje_carro_id_en_curso");
     }
 }

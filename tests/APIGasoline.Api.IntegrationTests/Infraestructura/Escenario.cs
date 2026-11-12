@@ -35,9 +35,11 @@ public enum Actor
     GestorRolesA,
 }
 
-/// <summary>Respuesta HTTP ya leída.</summary>
-public sealed record Respuesta(HttpStatusCode Status, string Cuerpo)
+/// <summary>Respuesta HTTP ya leída (con sus headers, por ejemplo X-Total-Count de los listados paginados).</summary>
+public sealed record Respuesta(HttpStatusCode Status, string Cuerpo, IReadOnlyDictionary<string, string>? Headers = null)
 {
+    public string? Header(string nombre) => Headers is not null && Headers.TryGetValue(nombre, out var valor) ? valor : null;
+
     public bool Exito => (int)Status is >= 200 and < 300;
 
     public override string ToString()
@@ -221,7 +223,12 @@ public sealed class Escenario : IAsyncLifetime
     {
         using var peticion = new HttpRequestMessage(metodo, url) { Content = cuerpo };
         using var respuesta = await _clientes[actor].SendAsync(peticion);
-        return new Respuesta(respuesta.StatusCode, await respuesta.Content.ReadAsStringAsync());
+
+        var headers = respuesta.Headers.Concat(respuesta.Content.Headers)
+            .GroupBy(h => h.Key, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => string.Join(",", g.SelectMany(h => h.Value)), StringComparer.OrdinalIgnoreCase);
+
+        return new Respuesta(respuesta.StatusCode, await respuesta.Content.ReadAsStringAsync(), headers);
     }
 
     public Task<Respuesta> GetAsync(Actor actor, string url) => EnviarAsync(actor, HttpMethod.Get, url);

@@ -447,6 +447,7 @@ Table viaje {
     (empresa_id, carro_id) [name: 'ix_viaje_empresa_id_carro_id']
     (empresa_id, carro_id, fecha_inicio) [name: 'ix_viaje_empresa_id_carro_id_fecha_inicio']
     (empresa_id, centro_costo_id) [name: 'ix_viaje_empresa_id_centro_costo_id']
+    carro_id [name: 'uq_viaje_carro_id_en_curso', unique, note: "F010: filtrado WHERE estado = 'en_curso' (un viaje en curso por carro)"]
     (empresa_id, empleado_operador_id) [name: 'ix_viaje_empresa_id_empleado_operador_id']
     (empresa_id, solicitud_reserva_id) [name: 'ix_viaje_empresa_id_solicitud_reserva_id']
     (empresa_id, viaje_id) [name: 'uq_viaje_empresa_id_viaje_id', unique]
@@ -469,6 +470,7 @@ Table viaje_pausa {
     empresa_id [name: 'ix_viaje_pausa_empresa_id']
     (empresa_id, viaje_id) [name: 'ix_viaje_pausa_empresa_id_viaje_id']
     (viaje_id, fecha_inicio) [name: 'ix_viaje_pausa_viaje_id_fecha_inicio']
+    viaje_id [name: 'uq_viaje_pausa_viaje_id_abierta', unique, note: 'F010: filtrado WHERE fecha_fin IS NULL (una pausa abierta por viaje)']
   }
 
   Note: 'Pausas de un viaje (no cuentan como tiempo ni recorrido).'
@@ -489,7 +491,7 @@ Table punto_ruta {
   indexes {
     empresa_id [name: 'ix_punto_ruta_empresa_id']
     (empresa_id, viaje_id) [name: 'ix_punto_ruta_empresa_id_viaje_id']
-    (viaje_id, timestamp_captura) [name: 'ix_punto_ruta_viaje_id_timestamp_captura']
+    (viaje_id, timestamp_captura) [name: 'uq_punto_ruta_viaje_id_timestamp_captura', unique, note: 'F010: un punto por momento de captura']
     (empresa_id, punto_ruta_id) [name: 'uq_punto_ruta_empresa_id_punto_ruta_id', unique]
   }
 

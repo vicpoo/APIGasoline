@@ -1,4 +1,5 @@
-﻿using APIGasoline.Domain.Entities;
+﻿using APIGasoline.Domain.Common;
+using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Enums;
 
 namespace APIGasoline.Domain.Interfaces;
@@ -14,6 +15,9 @@ public interface INotificacionRepository
         bool soloNoLeidas = false,
         TipoNotificacion? tipo = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>Lo mismo que <see cref="GetAllAsync"/>, paginado: solo la página pedida y el total (F011).</summary>
+    Task<PaginaDe<Notificacion>> GetPaginaAsync(Paginacion pagina, Guid? empresaId = null, Guid? empleadoDestinatarioId = null, bool soloNoLeidas = false, TipoNotificacion? tipo = null, CancellationToken cancellationToken = default);
 
     Task<int> ContarNoLeidasAsync(Guid empleadoDestinatarioId, CancellationToken cancellationToken = default);
 

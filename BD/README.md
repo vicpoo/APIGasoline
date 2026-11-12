@@ -45,7 +45,7 @@ Esta carpeta se armó **a partir del código de la API**, no de documentación p
 | Tablas | 25 (+ `__EFMigrationsHistory` de EF) |
 | Columnas | 239 |
 | Llaves foráneas | 51 (25 compuestas con `empresa_id`) |
-| Índices (sin contar PK) | 92 |
+| Índices (sin contar PK) | 94 |
 | Restricciones CHECK | 1 (`ck_revision_auditoria_alcance`) |
 | Columnas generadas | 1 (`rol.empresa_clave`) |
 | Columnas `enum` | 17, de 14 tipos distintos (todos coinciden con los enums del dominio) |
@@ -573,7 +573,7 @@ Cada uso del carro: km inicial/final, fotos del tablero, estado.
 | `foto_tablero_inicial` | varchar(255) |  |  | Llave en MinIO de la foto del odómetro al iniciar. |
 | `centro_costo_id` | binary(16) | FK → centro_costo (compuesta) |  | v6. Área a la que se carga el viaje (opcional). |
 
-**Índices:** `ix_viaje_empresa_id` (empresa_id); `ix_viaje_empresa_id_carro_id` (empresa_id, carro_id); `ix_viaje_empresa_id_carro_id_fecha_inicio` (empresa_id, carro_id, fecha_inicio); `ix_viaje_empresa_id_centro_costo_id` (empresa_id, centro_costo_id); `ix_viaje_empresa_id_empleado_operador_id` (empresa_id, empleado_operador_id); `ix_viaje_empresa_id_solicitud_reserva_id` (empresa_id, solicitud_reserva_id); `uq_viaje_empresa_id_viaje_id` (empresa_id, viaje_id) **único**
+**Índices:** `ix_viaje_empresa_id` (empresa_id); `ix_viaje_empresa_id_carro_id` (empresa_id, carro_id); `ix_viaje_empresa_id_carro_id_fecha_inicio` (empresa_id, carro_id, fecha_inicio); `ix_viaje_empresa_id_centro_costo_id` (empresa_id, centro_costo_id); `ix_viaje_empresa_id_empleado_operador_id` (empresa_id, empleado_operador_id); `ix_viaje_empresa_id_solicitud_reserva_id` (empresa_id, solicitud_reserva_id); `uq_viaje_carro_id_en_curso` (carro_id) **único filtrado** `WHERE estado = 'en_curso'` (un viaje en curso por carro, F010); `uq_viaje_empresa_id_viaje_id` (empresa_id, viaje_id) **único**
 
 **Llaves foráneas:** (empresa_id, carro_id) → `carro`(empresa_id, carro_id) ON DELETE RESTRICT; (empresa_id, centro_costo_id) → `centro_costo`(empresa_id, centro_costo_id) ON DELETE RESTRICT; (empresa_id, empleado_operador_id) → `empleado`(empresa_id, empleado_id) ON DELETE RESTRICT; (empresa_id) → `empresa`(empresa_id) ON DELETE RESTRICT; (empresa_id, solicitud_reserva_id) → `solicitud_reserva`(empresa_id, solicitud_reserva_id) ON DELETE RESTRICT
 
@@ -592,7 +592,7 @@ Pausas de un viaje (no cuentan como tiempo ni recorrido).
 | `ubicacion_lat` | decimal(9,6) |  |  | Latitud. |
 | `ubicacion_lng` | decimal(9,6) |  |  | Longitud. |
 
-**Índices:** `ix_viaje_pausa_empresa_id` (empresa_id); `ix_viaje_pausa_empresa_id_viaje_id` (empresa_id, viaje_id); `ix_viaje_pausa_viaje_id_fecha_inicio` (viaje_id, fecha_inicio)
+**Índices:** `ix_viaje_pausa_empresa_id` (empresa_id); `ix_viaje_pausa_empresa_id_viaje_id` (empresa_id, viaje_id); `ix_viaje_pausa_viaje_id_fecha_inicio` (viaje_id, fecha_inicio); `uq_viaje_pausa_viaje_id_abierta` (viaje_id) **único filtrado** `WHERE fecha_fin IS NULL` (una pausa abierta por viaje, F010)
 
 **Llaves foráneas:** (empresa_id) → `empresa`(empresa_id) ON DELETE RESTRICT; (empresa_id, viaje_id) → `viaje`(empresa_id, viaje_id) ON DELETE CASCADE
 
@@ -613,7 +613,7 @@ Puntos GPS crudos capturados por el celular (nunca se modifican).
 | `timestamp_captura` | timestamp | NN |  | Hora del celular. |
 | `fecha_recepcion` | timestamp |  | now() | Cuándo llegó al servidor (hora del servidor). |
 
-**Índices:** `ix_punto_ruta_empresa_id` (empresa_id); `ix_punto_ruta_empresa_id_viaje_id` (empresa_id, viaje_id); `ix_punto_ruta_viaje_id_timestamp_captura` (viaje_id, timestamp_captura); `uq_punto_ruta_empresa_id_punto_ruta_id` (empresa_id, punto_ruta_id) **único**
+**Índices:** `ix_punto_ruta_empresa_id` (empresa_id); `ix_punto_ruta_empresa_id_viaje_id` (empresa_id, viaje_id); `uq_punto_ruta_viaje_id_timestamp_captura` (viaje_id, timestamp_captura) **único** (F010); `uq_punto_ruta_empresa_id_punto_ruta_id` (empresa_id, punto_ruta_id) **único**
 
 **Llaves foráneas:** (empresa_id) → `empresa`(empresa_id) ON DELETE RESTRICT; (empresa_id, viaje_id) → `viaje`(empresa_id, viaje_id) ON DELETE CASCADE
 
@@ -810,7 +810,8 @@ Todo lo demás de la v9 (columnas, tipos, enums, FKs compuestas, CHECK de `revis
 | 9 | `20261030120000_TipoVehiculo` | `carro.tipo_vehiculo`. |
 | 10 | `20261106120000_SesionesUsuario` | **`sesion_usuario`**: refresh tokens con rotación, detección de reuso, expiración deslizante y absoluta, revocación por motivo. |
 | 11 | `EstructuraOrganizacional` (fase 8) | La empresa es la raíz: `corporativo.empresa_id` y `division.empresa_id`; **`corporativo_division`** (N:M); `centro_costo.corporativo_id`/`division_id` opcionales; `empresa` pierde `corporativo_id`/`division_id`; las tres tablas entran a la política de RLS; `corporativo.gestionar` pasa a ámbito empresa. Datos existentes: cada corporativo queda en la primera empresa que lo usaba (los que no usaba ninguna se borran con sus divisiones) y la relación división → corporativo se vuelve liga. |
-| **12** | `EmpresaDesactivada` (fase 9A) | Nuevo motivo de cierre de sesión `empresa_desactivada`: al desactivar una empresa se cierran sus sesiones y ya no puede iniciar sesión ni renovar el token. |
+| 12 | `EmpresaDesactivada` (fase 9A) | Nuevo motivo de cierre de sesión `empresa_desactivada`: al desactivar una empresa se cierran sus sesiones y ya no puede iniciar sesión ni renovar el token. |
+| **13** | `IndicesUnicosConcurrencia` (fase 9B) | Índices únicos (F010): un viaje en curso por carro y una pausa abierta por viaje (filtrados) y `(viaje_id, timestamp_captura)` en `punto_ruta`. Antes de crearlos se limpian duplicados: puntos repetidos se borran, pausas abiertas de más se cierran y viajes en curso de más quedan interrumpidos. |
 
 ---
 

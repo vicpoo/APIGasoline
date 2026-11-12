@@ -38,12 +38,14 @@ public class ViajesController : ControllerBase
         [FromQuery] Guid? empleadoOperadorId,
         [FromQuery] Guid? solicitudReservaId,
         [FromQuery] EstadoViaje? estado,
+        [FromQuery] int? pagina,
+        [FromQuery] int? tamanoPagina,
         CancellationToken cancellationToken)
     {
         var viajes = await _sender.Send(
-            new GetViajesQuery(empresaId, carroId, empleadoOperadorId, solicitudReservaId, estado), cancellationToken);
+            new GetViajesQuery(empresaId, carroId, empleadoOperadorId, solicitudReservaId, estado, pagina, tamanoPagina), cancellationToken);
 
-        return Ok(viajes);
+        return this.OkPaginado(viajes);
     }
 
     [RequierePrivilegio(Permisos.ViajeVerDetalle, Permisos.ViajeRegistrar)]

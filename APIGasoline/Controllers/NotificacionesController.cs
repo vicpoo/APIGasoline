@@ -1,4 +1,5 @@
-﻿using APIGasoline.Application.Features.Notificaciones.Commands;
+﻿using APIGasoline.Extensions;
+using APIGasoline.Application.Features.Notificaciones.Commands;
 using APIGasoline.Application.Features.Notificaciones.DTOs;
 using APIGasoline.Application.Features.Notificaciones.Queries;
 using APIGasoline.Contracts.Notificaciones;
@@ -31,12 +32,14 @@ public class NotificacionesController : ControllerBase
         [FromQuery] Guid? empleadoDestinatarioId,
         [FromQuery] bool soloNoLeidas,
         [FromQuery] TipoNotificacion? tipo,
+        [FromQuery] int? pagina,
+        [FromQuery] int? tamanoPagina,
         CancellationToken cancellationToken)
     {
         var notificaciones = await _sender.Send(
-            new GetNotificacionesQuery(empresaId, empleadoDestinatarioId, soloNoLeidas, tipo), cancellationToken);
+            new GetNotificacionesQuery(empresaId, empleadoDestinatarioId, soloNoLeidas, tipo, pagina, tamanoPagina), cancellationToken);
 
-        return Ok(notificaciones);
+        return this.OkPaginado(notificaciones);
     }
 
     [HttpGet("{notificacionId:guid}")]

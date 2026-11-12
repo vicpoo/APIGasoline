@@ -31,10 +31,12 @@ public class CarrosController : ControllerBase
     public async Task<ActionResult<IReadOnlyList<CarroDto>>> GetAll(
         [FromQuery] Guid? empresaId,
         [FromQuery] EstadoCarro? estado,
+        [FromQuery] int? pagina,
+        [FromQuery] int? tamanoPagina,
         CancellationToken cancellationToken)
     {
-        var carros = await _sender.Send(new GetCarrosQuery(empresaId, estado), cancellationToken);
-        return Ok(carros);
+        var carros = await _sender.Send(new GetCarrosQuery(empresaId, estado, pagina, tamanoPagina), cancellationToken);
+        return this.OkPaginado(carros);
     }
 
     [RequierePrivilegio(Permisos.CarroVerDetalle, Permisos.ViajeRegistrar)]

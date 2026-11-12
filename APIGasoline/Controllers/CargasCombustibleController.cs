@@ -32,10 +32,12 @@ public class CargasCombustibleController : ControllerBase
         [FromQuery] Guid? viajeId,
         [FromQuery] DateTime? desde,
         [FromQuery] DateTime? hasta,
+        [FromQuery] int? pagina,
+        [FromQuery] int? tamanoPagina,
         CancellationToken cancellationToken)
     {
-        var cargas = await _sender.Send(new GetCargasCombustibleQuery(empresaId, viajeId, desde, hasta), cancellationToken);
-        return Ok(cargas);
+        var cargas = await _sender.Send(new GetCargasCombustibleQuery(empresaId, viajeId, desde, hasta, pagina, tamanoPagina), cancellationToken);
+        return this.OkPaginado(cargas);
     }
 
     [RequierePrivilegio(Permisos.ViajeVerDetalle, Permisos.CargaEditar, Permisos.CargaEliminar, Permisos.AuditoriaVer)]

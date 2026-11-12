@@ -1,4 +1,5 @@
-﻿using APIGasoline.Domain.Entities;
+﻿using APIGasoline.Domain.Common;
+using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -17,13 +18,14 @@ public class ViajeRepository : IViajeRepository
     public Task<Viaje?> GetByIdAsync(Guid viajeId, CancellationToken cancellationToken = default)
         => _context.Viajes.FirstOrDefaultAsync(v => v.ViajeId == viajeId, cancellationToken);
 
-    public async Task<IReadOnlyList<Viaje>> GetAllAsync(
-        Guid? empresaId = null,
-        Guid? carroId = null,
-        Guid? empleadoOperadorId = null,
-        Guid? solicitudReservaId = null,
-        EstadoViaje? estado = null,
-        CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Viaje>> GetAllAsync(Guid? empresaId = null, Guid? carroId = null, Guid? empleadoOperadorId = null, Guid? solicitudReservaId = null, EstadoViaje? estado = null, CancellationToken cancellationToken = default)
+        => await Consultar(empresaId, carroId, empleadoOperadorId, solicitudReservaId, estado).ToListAsync(cancellationToken);
+
+    /// <summary>F011: como <see cref="GetAllAsync"/>, pero solo una página (y el total).</summary>
+    public Task<PaginaDe<Viaje>> GetPaginaAsync(Paginacion pagina, Guid? empresaId = null, Guid? carroId = null, Guid? empleadoOperadorId = null, Guid? solicitudReservaId = null, EstadoViaje? estado = null, CancellationToken cancellationToken = default)
+        => Consultar(empresaId, carroId, empleadoOperadorId, solicitudReservaId, estado).APaginaAsync(pagina, cancellationToken);
+
+    private IQueryable<Viaje> Consultar(Guid? empresaId, Guid? carroId, Guid? empleadoOperadorId, Guid? solicitudReservaId, EstadoViaje? estado)
     {
         var query = _context.Viajes.AsNoTracking();
 
@@ -42,10 +44,9 @@ public class ViajeRepository : IViajeRepository
         if (estado is not null)
             query = query.Where(v => v.Estado == estado);
 
-        return await query
+        return query
             .OrderByDescending(v => v.FechaInicio)
-            .ThenByDescending(v => v.ViajeId)
-            .ToListAsync(cancellationToken);
+            .ThenByDescending(v => v.ViajeId);
     }
 
     public Task<bool> ExisteEnCursoPorCarroAsync(Guid carroId, CancellationToken cancellationToken = default)

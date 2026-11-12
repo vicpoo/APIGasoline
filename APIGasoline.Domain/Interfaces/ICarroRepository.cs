@@ -1,4 +1,5 @@
-﻿using APIGasoline.Domain.Entities;
+﻿using APIGasoline.Domain.Common;
+using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Enums;
 
 namespace APIGasoline.Domain.Interfaces;
@@ -10,6 +11,9 @@ public interface ICarroRepository
     Task<IReadOnlyList<Carro>> GetByIdsAsync(IEnumerable<Guid> carroIds, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<Carro>> GetAllAsync(Guid? empresaId = null, EstadoCarro? estado = null, CancellationToken cancellationToken = default);
+
+    /// <summary>Lo mismo que <see cref="GetAllAsync"/>, paginado: solo la página pedida y el total (F011).</summary>
+    Task<PaginaDe<Carro>> GetPaginaAsync(Paginacion pagina, Guid? empresaId = null, EstadoCarro? estado = null, CancellationToken cancellationToken = default);
     Task<bool> ExistsAsync(Guid carroId, CancellationToken cancellationToken = default);
     Task<bool> PlacasExistsAsync(string placas, Guid? excludeCarroId = null, CancellationToken cancellationToken = default);
     Task AddAsync(Carro carro, CancellationToken cancellationToken = default);

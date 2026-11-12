@@ -170,6 +170,12 @@ La sesión dura un mes sin bajar la seguridad porque se usan **dos tokens**:
 - **"sesión":** solo pide iniciar sesión (autoservicio, solo sobre lo propio).
 - **"público":** no pide nada.
 
+**Listados paginados (F011):** `GET /api/carros`, `/api/viajes`, `/api/solicitudes-reserva`, `/api/cargas-combustible`, `/api/notificaciones` y `/api/viajes/{id}/puntos-ruta` aceptan `?pagina=` (desde 1) y `?tamanoPagina=` (por defecto 50, máximo 200; en puntos GPS 1000 y máximo 5000). El cuerpo sigue siendo una lista; el total viene en el header `X-Total-Count` (y la página en `X-Pagina` y `X-Tamano-Pagina`). Las URLs firmadas de fotos solo se generan para la página que se devuelve. Las solicitudes pendientes salen de la más antigua a la más nueva (cola); el resto de los listados, lo más reciente primero. El GPX (`/puntos-ruta/gpx`) sigue llevando la ruta completa.
+
+**Reportes de flota (F012):** `/api/reportes/flota`, `/flota/pdf` y `/flota/excel` sin fechas son del último mes; el periodo máximo es de 366 días (si no, `400`). El PDF admite hasta 5,000 cargas en el detalle y el Excel 50,000.
+
+**Duplicados por concurrencia (F010):** la BD tiene índices únicos para un viaje en curso por carro, una pausa abierta por viaje y un punto GPS por momento de captura. Si dos peticiones chocan, la segunda responde `409` (un lote GPS repetido responde `200` como reintento, sin duplicar puntos).
+
 ### 4.1 Auth
 
 | Método | Ruta | Privilegio | Qué hace |

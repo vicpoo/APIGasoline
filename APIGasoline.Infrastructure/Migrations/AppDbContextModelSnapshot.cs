@@ -989,7 +989,8 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasDatabaseName("ix_punto_ruta_empresa_id_viaje_id");
 
                     b.HasIndex("ViajeId", "TimestampCaptura")
-                        .HasDatabaseName("ix_punto_ruta_viaje_id_timestamp_captura");
+                        .IsUnique()
+                        .HasDatabaseName("uq_punto_ruta_viaje_id_timestamp_captura");
 
                     b.ToTable("punto_ruta", (string)null);
                 });
@@ -1644,6 +1645,11 @@ namespace APIGasoline.Infrastructure.Migrations
                     b.HasAlternateKey("EmpresaId", "ViajeId")
                         .HasName("uq_viaje_empresa_id_viaje_id");
 
+                    b.HasIndex("CarroId")
+                        .IsUnique()
+                        .HasDatabaseName("uq_viaje_carro_id_en_curso")
+                        .HasFilter("[estado] = 'en_curso'");
+
                     b.HasIndex("EmpresaId")
                         .HasDatabaseName("ix_viaje_empresa_id");
 
@@ -1711,6 +1717,11 @@ namespace APIGasoline.Infrastructure.Migrations
 
                     b.HasIndex("EmpresaId")
                         .HasDatabaseName("ix_viaje_pausa_empresa_id");
+
+                    b.HasIndex("ViajeId")
+                        .IsUnique()
+                        .HasDatabaseName("uq_viaje_pausa_viaje_id_abierta")
+                        .HasFilter("[fecha_fin] IS NULL");
 
                     b.HasIndex("EmpresaId", "ViajeId")
                         .HasDatabaseName("ix_viaje_pausa_empresa_id_viaje_id");

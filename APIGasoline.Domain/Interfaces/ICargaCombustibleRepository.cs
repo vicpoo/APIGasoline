@@ -1,4 +1,5 @@
-﻿using APIGasoline.Domain.Entities;
+﻿using APIGasoline.Domain.Common;
+using APIGasoline.Domain.Entities;
 
 namespace APIGasoline.Domain.Interfaces;
 
@@ -13,6 +14,9 @@ public interface ICargaCombustibleRepository
         DateTime? desde = null,
         DateTime? hasta = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>Lo mismo que <see cref="GetAllAsync"/>, paginado: solo la página pedida y el total (F011).</summary>
+    Task<PaginaDe<CargaCombustible>> GetPaginaAsync(Paginacion pagina, Guid? empresaId = null, Guid? viajeId = null, DateTime? desde = null, DateTime? hasta = null, CancellationToken cancellationToken = default);
 
     /// <summary>Detecta reenvíos de la misma carga (mismo viaje y misma fecha).</summary>
     Task<bool> ExisteEnFechaAsync(Guid viajeId, DateTime fechaCarga, Guid? excludeCargaCombustibleId = null, CancellationToken cancellationToken = default);

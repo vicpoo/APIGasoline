@@ -1,4 +1,5 @@
-﻿using APIGasoline.Application.Features.PuntosRuta.Commands;
+﻿using APIGasoline.Extensions;
+using APIGasoline.Application.Features.PuntosRuta.Commands;
 using APIGasoline.Application.Features.PuntosRuta.Common;
 using APIGasoline.Application.Features.PuntosRuta.DTOs;
 using APIGasoline.Application.Features.PuntosRuta.Queries;
@@ -28,10 +29,15 @@ public class PuntosRutaController : ControllerBase
     /// </summary>
     [RequierePrivilegio(Permisos.ViajeVerDetalle, Permisos.ViajeRegistrar)]
     [HttpGet("api/viajes/{viajeId:guid}/puntos-ruta")]
-    public async Task<ActionResult<IReadOnlyList<PuntoRutaDto>>> GetByViaje(Guid viajeId, CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyList<PuntoRutaDto>>> GetByViaje(
+        Guid viajeId,
+        [FromQuery] int? pagina,
+        [FromQuery] int? tamanoPagina,
+        CancellationToken cancellationToken)
     {
-        var puntos = await _sender.Send(new GetPuntosRutaByViajeQuery(viajeId), cancellationToken);
-        return Ok(puntos);
+        // Página grande (1000 por defecto, máximo 5000): un punto pesa poco
+        var puntos = await _sender.Send(new GetPuntosRutaByViajeQuery(viajeId, pagina, tamanoPagina), cancellationToken);
+        return this.OkPaginado(puntos);
     }
 
     /// <summary>
@@ -41,7 +47,8 @@ public class PuntosRutaController : ControllerBase
     [HttpGet("api/viajes/{viajeId:guid}/puntos-ruta/gpx")]
     public async Task<IActionResult> GetGpx(Guid viajeId, CancellationToken cancellationToken)
     {
-        var puntos = await _sender.Send(new GetPuntosRutaByViajeQuery(viajeId), cancellationToken);
+        // El GPX lleva la ruta completa
+        var puntos = await _sender.Send(new GetRutaCompletaViajeQuery(viajeId), cancellationToken);
         return File(ExportadorGpx.Generar(viajeId, puntos), "application/gpx+xml", $"viaje-{viajeId}.gpx");
     }
 

@@ -1,4 +1,5 @@
-﻿using APIGasoline.Domain.Entities;
+﻿using APIGasoline.Domain.Common;
+using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Enums;
 
 namespace APIGasoline.Domain.Interfaces;
@@ -16,6 +17,9 @@ public interface ISolicitudReservaRepository
         Guid? empleadoSolicitanteId = null,
         EstadoSolicitudReserva? estado = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>Lo mismo que <see cref="GetAllAsync"/>, paginado: solo la página pedida y el total (F011).</summary>
+    Task<PaginaDe<SolicitudReserva>> GetPaginaAsync(Paginacion pagina, Guid? empresaId = null, Guid? carroId = null, Guid? empleadoSolicitanteId = null, EstadoSolicitudReserva? estado = null, CancellationToken cancellationToken = default);
 
     /// <summary>Pendientes del mismo carro (se rechazan al aprobar otra).</summary>
     Task<IReadOnlyList<SolicitudReserva>> GetPendientesByCarroAsync(Guid carroId, Guid excludeSolicitudReservaId, CancellationToken cancellationToken = default);

@@ -85,7 +85,7 @@ public sealed class ControlGeneralTests(Escenario e)
     [Fact]
     public async Task La_plataforma_ve_los_carros_de_las_dos_empresas()
     {
-        var respuesta = await e.GetAsync(Actor.Plataforma, "/api/carros");
+        var respuesta = await e.GetAsync(Actor.Plataforma, "/api/carros?tamanoPagina=200");
 
         Assert.True(respuesta.Exito, respuesta.ToString());
         Assert.Contains(e.A.Carro1Id.ToString(), respuesta.Cuerpo, StringComparison.OrdinalIgnoreCase);

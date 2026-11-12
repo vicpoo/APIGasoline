@@ -1,4 +1,5 @@
-﻿using APIGasoline.Domain.Entities;
+﻿using APIGasoline.Domain.Common;
+using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Enums;
 
 namespace APIGasoline.Domain.Interfaces;
@@ -15,6 +16,9 @@ public interface IViajeRepository
         Guid? solicitudReservaId = null,
         EstadoViaje? estado = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>Lo mismo que <see cref="GetAllAsync"/>, paginado: solo la página pedida y el total (F011).</summary>
+    Task<PaginaDe<Viaje>> GetPaginaAsync(Paginacion pagina, Guid? empresaId = null, Guid? carroId = null, Guid? empleadoOperadorId = null, Guid? solicitudReservaId = null, EstadoViaje? estado = null, CancellationToken cancellationToken = default);
 
     Task<bool> ExisteEnCursoPorCarroAsync(Guid carroId, CancellationToken cancellationToken = default);
 

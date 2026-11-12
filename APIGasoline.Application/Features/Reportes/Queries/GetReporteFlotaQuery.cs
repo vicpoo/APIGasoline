@@ -13,6 +13,7 @@ namespace APIGasoline.Application.Features.Reportes.Queries;
 /// Reporte de la flota (o de un carro): km, cargas, litros y dinero por carro en el periodo.
 /// Es parte del módulo de auditoría: usa el privilegio auditoria.ver y las mismas reglas de empresa
 /// (solo la del token, salvo plataforma.multiempresa).
+/// El periodo lo acota <see cref="PeriodoReporte"/>: sin fechas es el último mes y el máximo es de 366 días (F012).
 /// </summary>
 public sealed record GetReporteFlotaQuery(Guid? EmpresaId, Guid? CarroId, DateTime? Desde, DateTime? Hasta) : IQuery<ReporteFlotaDto>;
 
@@ -33,8 +34,7 @@ public sealed class GetReporteFlotaQueryHandler : IQueryHandler<GetReporteFlotaQ
     {
         var empresaId = await PermisosAuditoria.ResolverEmpresaAsync(_usuarioActual, request.EmpresaId, cancellationToken);
 
-        if (request.Desde is not null && request.Hasta is not null && request.Hasta < request.Desde)
-            throw new BadRequestException("La fecha 'hasta' no puede ser anterior a 'desde'.");
+        var (desde, hasta) = PeriodoReporte.Resolver(request.Desde, request.Hasta, _reloj.Now);
 
         var repositorio = _unitOfWork.ReportesFlota;
 
@@ -42,10 +42,10 @@ public sealed class GetReporteFlotaQueryHandler : IQueryHandler<GetReporteFlotaQ
         if (request.CarroId is not null && carros.Count == 0)
             throw new NotFoundException("No se encontró el vehículo en tu empresa.");
 
-        var viajes = await repositorio.GetViajesPorCarroAsync(empresaId, request.CarroId, request.Desde, request.Hasta, cancellationToken);
-        var cargas = await repositorio.GetCargasPorCarroAsync(empresaId, request.CarroId, request.Desde, request.Hasta, cancellationToken);
-        var kmGps = await repositorio.GetKmGpsPorCarroAsync(empresaId, request.CarroId, request.Desde, request.Hasta, cancellationToken);
-        var detalleCargas = await repositorio.GetDetalleCargasAsync(empresaId, request.CarroId, request.Desde, request.Hasta, cancellationToken);
+        var viajes = await repositorio.GetViajesPorCarroAsync(empresaId, request.CarroId, desde, hasta, cancellationToken);
+        var cargas = await repositorio.GetCargasPorCarroAsync(empresaId, request.CarroId, desde, hasta, cancellationToken);
+        var kmGps = await repositorio.GetKmGpsPorCarroAsync(empresaId, request.CarroId, desde, hasta, cancellationToken);
+        var detalleCargas = await repositorio.GetDetalleCargasAsync(empresaId, request.CarroId, desde, hasta, cancellationToken);
 
         var empresa = empresaId is null
             ? "Todas las empresas"
@@ -55,8 +55,8 @@ public sealed class GetReporteFlotaQueryHandler : IQueryHandler<GetReporteFlotaQ
             empresaId,
             empresa,
             request.CarroId,
-            request.Desde,
-            request.Hasta,
+            desde,
+            hasta,
             _reloj.Now,
             carros,
             viajes,
@@ -88,6 +88,13 @@ public sealed class GetReporteFlotaArchivoQueryHandler : IQueryHandler<GetReport
         var reporte = await _sender.Send(
             new GetReporteFlotaQuery(request.EmpresaId, request.CarroId, request.Desde, request.Hasta),
             cancellationToken);
+
+        // Tope de filas del archivo (F012): el documento se arma completo en memoria
+        var filas = reporte.DetalleCargas?.Count ?? 0;
+        if (request.Formato == FormatoReporte.Excel)
+            PeriodoReporte.ValidarFilas(filas, PeriodoReporte.MaxFilasExcel, "Excel");
+        else
+            PeriodoReporte.ValidarFilas(filas, PeriodoReporte.MaxFilasPdf, "PDF");
 
         var nombre = NombreArchivo(reporte);
         return request.Formato switch

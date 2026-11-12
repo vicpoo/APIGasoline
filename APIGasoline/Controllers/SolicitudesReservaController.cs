@@ -1,4 +1,5 @@
-﻿using APIGasoline.Application.Features.SolicitudesReserva.Commands;
+﻿using APIGasoline.Extensions;
+using APIGasoline.Application.Features.SolicitudesReserva.Commands;
 using APIGasoline.Application.Features.SolicitudesReserva.DTOs;
 using APIGasoline.Application.Features.SolicitudesReserva.Queries;
 using APIGasoline.Contracts.SolicitudesReserva;
@@ -32,12 +33,14 @@ public class SolicitudesReservaController : ControllerBase
         [FromQuery] Guid? carroId,
         [FromQuery] Guid? empleadoSolicitanteId,
         [FromQuery] EstadoSolicitudReserva? estado,
+        [FromQuery] int? pagina,
+        [FromQuery] int? tamanoPagina,
         CancellationToken cancellationToken)
     {
         var solicitudes = await _sender.Send(
-            new GetSolicitudesReservaQuery(empresaId, carroId, empleadoSolicitanteId, estado), cancellationToken);
+            new GetSolicitudesReservaQuery(empresaId, carroId, empleadoSolicitanteId, estado, pagina, tamanoPagina), cancellationToken);
 
-        return Ok(solicitudes);
+        return this.OkPaginado(solicitudes);
     }
 
     /// <summary>

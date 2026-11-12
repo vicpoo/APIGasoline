@@ -1948,3 +1948,97 @@ END;
 COMMIT;
 GO
 
+BEGIN TRANSACTION;
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261112174728_IndicesUnicosConcurrencia'
+)
+BEGIN
+    EXEC(N'EXEC sys.sp_set_session_context @key = N''apigasoline.ve_todas'', @value = 1;');
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261112174728_IndicesUnicosConcurrencia'
+)
+BEGIN
+    EXEC(N'WITH repetidos AS (
+        SELECT ROW_NUMBER() OVER (PARTITION BY viaje_id, timestamp_captura ORDER BY punto_ruta_id) AS n
+        FROM dbo.punto_ruta)
+    DELETE FROM repetidos WHERE n > 1;');
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261112174728_IndicesUnicosConcurrencia'
+)
+BEGIN
+    EXEC(N'WITH abiertas AS (
+        SELECT fecha_inicio, fecha_fin,
+               ROW_NUMBER() OVER (PARTITION BY viaje_id ORDER BY fecha_inicio DESC, viaje_pausa_id DESC) AS n
+        FROM dbo.viaje_pausa
+        WHERE fecha_fin IS NULL)
+    UPDATE abiertas SET fecha_fin = fecha_inicio WHERE n > 1;');
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261112174728_IndicesUnicosConcurrencia'
+)
+BEGIN
+    EXEC(N'WITH en_curso AS (
+        SELECT estado, fecha_fin, motivo_interrupcion,
+               ROW_NUMBER() OVER (PARTITION BY carro_id ORDER BY fecha_inicio DESC, viaje_id DESC) AS n
+        FROM dbo.viaje
+        WHERE estado = ''en_curso'')
+    UPDATE en_curso
+    SET estado = ''interrumpido'',
+        fecha_fin = SYSDATETIME(),
+        motivo_interrupcion = N''Cerrado por la migración: el carro tenía otro viaje en curso más reciente.''
+    WHERE n > 1;');
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261112174728_IndicesUnicosConcurrencia'
+)
+BEGIN
+    DROP INDEX [ix_punto_ruta_viaje_id_timestamp_captura] ON [punto_ruta];
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261112174728_IndicesUnicosConcurrencia'
+)
+BEGIN
+    EXEC(N'CREATE UNIQUE INDEX [uq_viaje_pausa_viaje_id_abierta] ON [viaje_pausa] ([viaje_id]) WHERE [fecha_fin] IS NULL');
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261112174728_IndicesUnicosConcurrencia'
+)
+BEGIN
+    EXEC(N'CREATE UNIQUE INDEX [uq_viaje_carro_id_en_curso] ON [viaje] ([carro_id]) WHERE [estado] = ''en_curso''');
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261112174728_IndicesUnicosConcurrencia'
+)
+BEGIN
+    CREATE UNIQUE INDEX [uq_punto_ruta_viaje_id_timestamp_captura] ON [punto_ruta] ([viaje_id], [timestamp_captura]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261112174728_IndicesUnicosConcurrencia'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20261112174728_IndicesUnicosConcurrencia', N'10.0.12');
+END;
+
+COMMIT;
+GO
+

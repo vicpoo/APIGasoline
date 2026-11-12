@@ -7,6 +7,8 @@ namespace APIGasoline.Infrastructure.Persistence;
 /// Traduce el error de SQL Server por llave o índice único duplicado (2601 / 2627) a un mensaje
 /// para el cliente (409). Hace falta por Row-Level Security: si el dato repetido es de OTRA empresa,
 /// la validación previa del handler no lo ve y el que lo detecta es el índice único.
+/// También protege lo que dos peticiones simultáneas podrían duplicar (F010): un viaje en curso por
+/// carro, una pausa abierta por viaje y un punto GPS por momento de captura.
 /// El mensaje nunca incluye el valor repetido ni de quién es.
 /// </summary>
 public static class ViolacionUnicidad
@@ -23,6 +25,11 @@ public static class ViolacionUnicidad
         ("uq_usuario_rol_usuario_id_rol_id", "El usuario ya tiene ese rol."),
         ("uq_rol_privilegio_rol_id_privilegio_id", "El rol ya tiene ese privilegio."),
         ("uq_ruta_procesada_viaje_id", "El viaje ya tiene ruta procesada."),
+        // F010: lo que antes solo revisaba la aplicación (leer y luego insertar) y dos peticiones
+        // simultáneas podían saltarse
+        ("uq_viaje_carro_id_en_curso", "El carro ya tiene un viaje en curso."),
+        ("uq_viaje_pausa_viaje_id_abierta", "El viaje ya está en pausa."),
+        ("uq_punto_ruta_viaje_id_timestamp_captura", "Ya se registró un punto GPS con ese momento de captura para el viaje."),
     ];
 
     private const string MensajeGeneral = "Ya existe un registro con esos datos (o con ese id).";

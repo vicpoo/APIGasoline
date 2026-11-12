@@ -77,8 +77,10 @@ public class PuntoRutaConfiguration : IEntityTypeConfiguration<PuntoRuta>
         builder.HasIndex(p => new { p.EmpresaId, p.ViajeId })
             .HasDatabaseName("ix_punto_ruta_empresa_id_viaje_id");
 
-        // Para la llave foránea y para leer la ruta ordenada por tiempo
+        // Para la llave foránea, para leer la ruta ordenada por tiempo y (F010) para que un lote
+        // reenviado mientras el primero se guardaba no duplique puntos: un punto por momento de captura
         builder.HasIndex(p => new { p.ViajeId, p.TimestampCaptura })
-            .HasDatabaseName("ix_punto_ruta_viaje_id_timestamp_captura");
+            .IsUnique()
+            .HasDatabaseName("uq_punto_ruta_viaje_id_timestamp_captura");
     }
 }

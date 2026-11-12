@@ -2,8 +2,9 @@
 --  APIGasoline — Esquema de la base de datos (SQL Server)
 --  Generado con `dotnet ef migrations script` a partir de las migraciones
 --  20261111182911_InicialSqlServer, 20261111211442_AgregarEmpresaAUsuario,
---  20261111222631_SeguridadPorFilas, 20261112170727_EstructuraOrganizacional y
---  20261112172840_EmpresaDesactivada (APIGasoline.Infrastructure/Migrations).
+--  20261111222631_SeguridadPorFilas, 20261112170727_EstructuraOrganizacional,
+--  20261112172840_EmpresaDesactivada y 20261112174728_IndicesUnicosConcurrencia
+--  (APIGasoline.Infrastructure/Migrations).
 --
 --  25 tablas · 51 llaves foráneas · 21 CHECK
 --  Estructura organizacional (fase 8): la empresa es la raíz de corporativos,
@@ -926,6 +927,46 @@ ALTER TABLE [sesion_usuario] ADD CONSTRAINT [ck_sesion_usuario_motivo_revocacion
 
 INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
 VALUES (N'20261112172840_EmpresaDesactivada', N'10.0.12');
+
+COMMIT;
+GO
+
+BEGIN TRANSACTION;
+EXEC(N'EXEC sys.sp_set_session_context @key = N''apigasoline.ve_todas'', @value = 1;');
+
+EXEC(N'WITH repetidos AS (
+    SELECT ROW_NUMBER() OVER (PARTITION BY viaje_id, timestamp_captura ORDER BY punto_ruta_id) AS n
+    FROM dbo.punto_ruta)
+DELETE FROM repetidos WHERE n > 1;');
+
+EXEC(N'WITH abiertas AS (
+    SELECT fecha_inicio, fecha_fin,
+           ROW_NUMBER() OVER (PARTITION BY viaje_id ORDER BY fecha_inicio DESC, viaje_pausa_id DESC) AS n
+    FROM dbo.viaje_pausa
+    WHERE fecha_fin IS NULL)
+UPDATE abiertas SET fecha_fin = fecha_inicio WHERE n > 1;');
+
+EXEC(N'WITH en_curso AS (
+    SELECT estado, fecha_fin, motivo_interrupcion,
+           ROW_NUMBER() OVER (PARTITION BY carro_id ORDER BY fecha_inicio DESC, viaje_id DESC) AS n
+    FROM dbo.viaje
+    WHERE estado = ''en_curso'')
+UPDATE en_curso
+SET estado = ''interrumpido'',
+    fecha_fin = SYSDATETIME(),
+    motivo_interrupcion = N''Cerrado por la migración: el carro tenía otro viaje en curso más reciente.''
+WHERE n > 1;');
+
+DROP INDEX [ix_punto_ruta_viaje_id_timestamp_captura] ON [punto_ruta];
+
+CREATE UNIQUE INDEX [uq_viaje_pausa_viaje_id_abierta] ON [viaje_pausa] ([viaje_id]) WHERE [fecha_fin] IS NULL;
+
+CREATE UNIQUE INDEX [uq_viaje_carro_id_en_curso] ON [viaje] ([carro_id]) WHERE [estado] = 'en_curso';
+
+CREATE UNIQUE INDEX [uq_punto_ruta_viaje_id_timestamp_captura] ON [punto_ruta] ([viaje_id], [timestamp_captura]);
+
+INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+VALUES (N'20261112174728_IndicesUnicosConcurrencia', N'10.0.12');
 
 COMMIT;
 GO

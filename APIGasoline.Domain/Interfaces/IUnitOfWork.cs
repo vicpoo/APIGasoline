@@ -35,6 +35,13 @@ public interface IUnitOfWork : IDisposable
     IReporteFlotaRepository ReportesFlota { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Como <see cref="SaveChangesAsync"/>, pero si un índice único lo rechaza (otra petición guardó
+    /// lo mismo un instante antes) devuelve false y descarta los cambios pendientes, para que el
+    /// handler vuelva a leer y decida (por ejemplo, responder como reintento idempotente).
+    /// </summary>
+    Task<bool> SaveChangesSalvoDuplicadoAsync(CancellationToken cancellationToken = default);
     Task BeginTransactionAsync(CancellationToken cancellationToken = default);
     Task CommitTransactionAsync(CancellationToken cancellationToken = default);
     Task RollbackTransactionAsync(CancellationToken cancellationToken = default);

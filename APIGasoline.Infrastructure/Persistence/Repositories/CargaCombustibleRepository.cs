@@ -1,4 +1,5 @@
-﻿using APIGasoline.Domain.Entities;
+﻿using APIGasoline.Domain.Common;
+using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,12 +17,14 @@ public class CargaCombustibleRepository : ICargaCombustibleRepository
     public Task<CargaCombustible?> GetByIdAsync(Guid cargaCombustibleId, CancellationToken cancellationToken = default)
         => _context.CargasCombustible.FirstOrDefaultAsync(c => c.CargaCombustibleId == cargaCombustibleId, cancellationToken);
 
-    public async Task<IReadOnlyList<CargaCombustible>> GetAllAsync(
-        Guid? empresaId = null,
-        Guid? viajeId = null,
-        DateTime? desde = null,
-        DateTime? hasta = null,
-        CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<CargaCombustible>> GetAllAsync(Guid? empresaId = null, Guid? viajeId = null, DateTime? desde = null, DateTime? hasta = null, CancellationToken cancellationToken = default)
+        => await Consultar(empresaId, viajeId, desde, hasta).ToListAsync(cancellationToken);
+
+    /// <summary>F011: como <see cref="GetAllAsync"/>, pero solo una página (y el total).</summary>
+    public Task<PaginaDe<CargaCombustible>> GetPaginaAsync(Paginacion pagina, Guid? empresaId = null, Guid? viajeId = null, DateTime? desde = null, DateTime? hasta = null, CancellationToken cancellationToken = default)
+        => Consultar(empresaId, viajeId, desde, hasta).APaginaAsync(pagina, cancellationToken);
+
+    private IQueryable<CargaCombustible> Consultar(Guid? empresaId, Guid? viajeId, DateTime? desde, DateTime? hasta)
     {
         var query = _context.CargasCombustible.AsNoTracking();
 
@@ -37,10 +40,9 @@ public class CargaCombustibleRepository : ICargaCombustibleRepository
         if (hasta is not null)
             query = query.Where(c => c.FechaCarga <= hasta);
 
-        return await query
+        return query
             .OrderByDescending(c => c.FechaCarga)
-            .ThenByDescending(c => c.CargaCombustibleId)
-            .ToListAsync(cancellationToken);
+            .ThenByDescending(c => c.CargaCombustibleId);
     }
 
     public Task<bool> ExisteEnFechaAsync(Guid viajeId, DateTime fechaCarga, Guid? excludeCargaCombustibleId = null, CancellationToken cancellationToken = default)

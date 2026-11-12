@@ -1,4 +1,5 @@
-﻿using APIGasoline.Application.Common.Interfaces;
+﻿using APIGasoline.Domain.Common;
+using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Common.Security;
 using APIGasoline.Application.Features.SolicitudesReserva.Common;
 using APIGasoline.Application.Features.SolicitudesReserva.DTOs;
@@ -18,9 +19,11 @@ public sealed record GetSolicitudesReservaQuery(
     Guid? EmpresaId = null,
     Guid? CarroId = null,
     Guid? EmpleadoSolicitanteId = null,
-    EstadoSolicitudReserva? Estado = null) : IQuery<IReadOnlyList<SolicitudReservaDto>>;
+    EstadoSolicitudReserva? Estado = null,
+    int? Pagina = null,
+    int? TamanoPagina = null) : IQuery<PaginaDe<SolicitudReservaDto>>;
 
-public sealed class GetSolicitudesReservaQueryHandler : IQueryHandler<GetSolicitudesReservaQuery, IReadOnlyList<SolicitudReservaDto>>
+public sealed class GetSolicitudesReservaQueryHandler : IQueryHandler<GetSolicitudesReservaQuery, PaginaDe<SolicitudReservaDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
@@ -35,16 +38,17 @@ public sealed class GetSolicitudesReservaQueryHandler : IQueryHandler<GetSolicit
         _storage = storage;
     }
 
-    public async Task<IReadOnlyList<SolicitudReservaDto>> Handle(GetSolicitudesReservaQuery request, CancellationToken cancellationToken)
+    public async Task<PaginaDe<SolicitudReservaDto>> Handle(GetSolicitudesReservaQuery request, CancellationToken cancellationToken)
     {
         // Solo su empresa y, sin solicitud.ver_todas, solo sus propias solicitudes
         var empresaId = await _usuarioActual.ResolverEmpresaAsync(request.EmpresaId, cancellationToken);
         var empleadoSolicitanteId = await _usuarioActual.ResolverEmpleadoAsync(request.EmpleadoSolicitanteId, Permisos.SolicitudVerTodas, cancellationToken);
 
-        var solicitudes = await _unitOfWork.SolicitudesReserva.GetAllAsync(
+        var pagina = await _unitOfWork.SolicitudesReserva.GetPaginaAsync(
+            new Paginacion(request.Pagina, request.TamanoPagina),
             empresaId, request.CarroId, empleadoSolicitanteId, request.Estado, cancellationToken);
 
-        return await _mapper.Map<IReadOnlyList<SolicitudReservaDto>>(solicitudes)
-            .ConDatosAsync(_unitOfWork, _storage, cancellationToken);
+        return pagina.Con(await _mapper.Map<IReadOnlyList<SolicitudReservaDto>>(pagina.Elementos)
+            .ConDatosAsync(_unitOfWork, _storage, cancellationToken));
     }
 }

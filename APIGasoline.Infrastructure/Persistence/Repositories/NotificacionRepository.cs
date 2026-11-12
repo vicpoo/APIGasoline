@@ -1,4 +1,5 @@
-﻿using APIGasoline.Domain.Entities;
+﻿using APIGasoline.Domain.Common;
+using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -17,12 +18,14 @@ public class NotificacionRepository : INotificacionRepository
     public Task<Notificacion?> GetByIdAsync(Guid notificacionId, CancellationToken cancellationToken = default)
         => _context.Notificaciones.FirstOrDefaultAsync(n => n.NotificacionId == notificacionId, cancellationToken);
 
-    public async Task<IReadOnlyList<Notificacion>> GetAllAsync(
-        Guid? empresaId = null,
-        Guid? empleadoDestinatarioId = null,
-        bool soloNoLeidas = false,
-        TipoNotificacion? tipo = null,
-        CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Notificacion>> GetAllAsync(Guid? empresaId = null, Guid? empleadoDestinatarioId = null, bool soloNoLeidas = false, TipoNotificacion? tipo = null, CancellationToken cancellationToken = default)
+        => await Consultar(empresaId, empleadoDestinatarioId, soloNoLeidas, tipo).ToListAsync(cancellationToken);
+
+    /// <summary>F011: como <see cref="GetAllAsync"/>, pero solo una página (y el total).</summary>
+    public Task<PaginaDe<Notificacion>> GetPaginaAsync(Paginacion pagina, Guid? empresaId = null, Guid? empleadoDestinatarioId = null, bool soloNoLeidas = false, TipoNotificacion? tipo = null, CancellationToken cancellationToken = default)
+        => Consultar(empresaId, empleadoDestinatarioId, soloNoLeidas, tipo).APaginaAsync(pagina, cancellationToken);
+
+    private IQueryable<Notificacion> Consultar(Guid? empresaId, Guid? empleadoDestinatarioId, bool soloNoLeidas, TipoNotificacion? tipo)
     {
         var query = _context.Notificaciones.AsNoTracking();
 
@@ -38,10 +41,9 @@ public class NotificacionRepository : INotificacionRepository
         if (tipo is not null)
             query = query.Where(n => n.Tipo == tipo);
 
-        return await query
+        return query
             .OrderByDescending(n => n.FechaEnvio)
-            .ThenByDescending(n => n.NotificacionId)
-            .ToListAsync(cancellationToken);
+            .ThenByDescending(n => n.NotificacionId);
     }
 
     public Task<int> ContarNoLeidasAsync(Guid empleadoDestinatarioId, CancellationToken cancellationToken = default)

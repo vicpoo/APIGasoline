@@ -1,4 +1,5 @@
-﻿using APIGasoline.Domain.Entities;
+﻿using APIGasoline.Domain.Common;
+using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,12 +18,17 @@ public class PuntoRutaRepository : IPuntoRutaRepository
         => _context.PuntosRuta.FirstOrDefaultAsync(p => p.PuntoRutaId == puntoRutaId, cancellationToken);
 
     public async Task<IReadOnlyList<PuntoRuta>> GetByViajeAsync(Guid viajeId, CancellationToken cancellationToken = default)
-        => await _context.PuntosRuta
+        => await DelViaje(viajeId).ToListAsync(cancellationToken);
+
+    public Task<PaginaDe<PuntoRuta>> GetPaginaByViajeAsync(Guid viajeId, Paginacion pagina, CancellationToken cancellationToken = default)
+        => DelViaje(viajeId).APaginaAsync(pagina, cancellationToken);
+
+    private IQueryable<PuntoRuta> DelViaje(Guid viajeId)
+        => _context.PuntosRuta
             .AsNoTracking()
             .Where(p => p.ViajeId == viajeId)
             .OrderBy(p => p.TimestampCaptura)
-            .ThenBy(p => p.PuntoRutaId)
-            .ToListAsync(cancellationToken);
+            .ThenBy(p => p.PuntoRutaId);
 
     public async Task<HashSet<DateTime>> GetTimestampsByViajeAsync(Guid viajeId, CancellationToken cancellationToken = default)
     {

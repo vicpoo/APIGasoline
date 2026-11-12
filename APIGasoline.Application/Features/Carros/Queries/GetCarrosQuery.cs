@@ -1,4 +1,5 @@
-﻿using APIGasoline.Application.Common.Interfaces;
+﻿using APIGasoline.Domain.Common;
+using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Common.Storage;
 using APIGasoline.Application.Features.Carros.DTOs;
 using APIGasoline.Domain.Enums;
@@ -11,9 +12,9 @@ namespace APIGasoline.Application.Features.Carros.Queries;
 /// <summary>
 /// Lista los carros. Se puede filtrar por empresa, por estado o por ambos.
 /// </summary>
-public sealed record GetCarrosQuery(Guid? EmpresaId = null, EstadoCarro? Estado = null) : IQuery<IReadOnlyList<CarroDto>>;
+public sealed record GetCarrosQuery(Guid? EmpresaId = null, EstadoCarro? Estado = null, int? Pagina = null, int? TamanoPagina = null) : IQuery<PaginaDe<CarroDto>>;
 
-public sealed class GetCarrosQueryHandler : IQueryHandler<GetCarrosQuery, IReadOnlyList<CarroDto>>
+public sealed class GetCarrosQueryHandler : IQueryHandler<GetCarrosQuery, PaginaDe<CarroDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
@@ -26,9 +27,12 @@ public sealed class GetCarrosQueryHandler : IQueryHandler<GetCarrosQuery, IReadO
         _storage = storage;
     }
 
-    public async Task<IReadOnlyList<CarroDto>> Handle(GetCarrosQuery request, CancellationToken cancellationToken)
+    public async Task<PaginaDe<CarroDto>> Handle(GetCarrosQuery request, CancellationToken cancellationToken)
     {
-        var carros = await _unitOfWork.Carros.GetAllAsync(request.EmpresaId, request.Estado, cancellationToken);
-        return await _mapper.Map<IReadOnlyList<CarroDto>>(carros).ConUrlsAsync(_storage, cancellationToken);
+        var pagina = await _unitOfWork.Carros.GetPaginaAsync(
+            new Paginacion(request.Pagina, request.TamanoPagina), request.EmpresaId, request.Estado, cancellationToken);
+
+        // Fotos firmadas solo de la página que se devuelve
+        return pagina.Con(await _mapper.Map<IReadOnlyList<CarroDto>>(pagina.Elementos).ConUrlsAsync(_storage, cancellationToken));
     }
 }

@@ -61,5 +61,11 @@ public class ViajePausaConfiguration : IEntityTypeConfiguration<ViajePausa>
         // Para leer las pausas de un viaje en orden y encontrar la última
         builder.HasIndex(p => new { p.ViajeId, p.FechaInicio })
             .HasDatabaseName("ix_viaje_pausa_viaje_id_fecha_inicio");
+
+        // F010: una sola pausa abierta por viaje (dos "pausar" simultáneos no dejan una huérfana)
+        builder.HasIndex(p => p.ViajeId)
+            .IsUnique()
+            .HasFilter("[fecha_fin] IS NULL")
+            .HasDatabaseName("uq_viaje_pausa_viaje_id_abierta");
     }
 }
