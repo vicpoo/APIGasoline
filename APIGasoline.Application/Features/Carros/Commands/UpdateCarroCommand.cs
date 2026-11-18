@@ -57,8 +57,8 @@ public sealed class UpdateCarroCommandHandler : ICommandHandler<UpdateCarroComma
         if (!await _unitOfWork.Empresas.ExistsAsync(carro.EmpresaId, cancellationToken))
             throw new NotFoundException($"No existe una empresa con el id {carro.EmpresaId}.");
 
-        if (await _unitOfWork.Carros.PlacasExistsAsync(carro.Placas, carro.CarroId, cancellationToken))
-            throw new ConflictException($"Ya existe otro carro con las placas '{carro.Placas}'.");
+        if (await _unitOfWork.Carros.PlacasExistsAsync(carro.EmpresaId, carro.Placas, carro.CarroId, cancellationToken))
+            throw new ConflictException($"Ya existe otro carro con las placas '{carro.Placas}' en la empresa.");
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

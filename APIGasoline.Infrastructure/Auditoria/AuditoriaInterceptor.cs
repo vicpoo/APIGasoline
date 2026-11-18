@@ -50,11 +50,13 @@ public sealed class AuditoriaInterceptor : SaveChangesInterceptor
 
     private readonly IUsuarioActual _usuarioActual;
     private readonly IContextoAuditoria _contexto;
+    private readonly IContextoEmpresa _contextoEmpresa;
 
-    public AuditoriaInterceptor(IUsuarioActual usuarioActual, IContextoAuditoria contexto)
+    public AuditoriaInterceptor(IUsuarioActual usuarioActual, IContextoAuditoria contexto, IContextoEmpresa contextoEmpresa)
     {
         _usuarioActual = usuarioActual;
         _contexto = contexto;
+        _contextoEmpresa = contextoEmpresa;
     }
 
     public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
@@ -143,7 +145,7 @@ public sealed class AuditoriaInterceptor : SaveChangesInterceptor
         var motivo = _contexto.ObtenerMotivo(entidadId) ?? DeducirMotivo(entrada);
 
         return AuditoriaEvento.Registrar(
-            ObtenerEmpresaId(entrada, entidadId),
+            ObtenerEmpresaId(entrada, entidadId) ?? EmpresaDelActor(),
             _usuarioActual.UsuarioId,
             accion,
             entrada.Metadata.GetTableName() ?? entrada.Metadata.ClrType.Name,
@@ -202,6 +204,14 @@ public sealed class AuditoriaInterceptor : SaveChangesInterceptor
 
         return null;
     }
+
+    /// <summary>
+    /// Para registros sin columna empresa_id (asignaciones de roles, privilegios de roles): si quien
+    /// hace el cambio es de una empresa, el evento es de esa empresa. Así lo puede ver su auditor y
+    /// la política de Row-Level Security lo deja guardar (A005). Plataforma y procesos del sistema: sin empresa.
+    /// </summary>
+    private Guid? EmpresaDelActor()
+        => _contextoEmpresa.VeTodasLasEmpresas ? null : _contextoEmpresa.EmpresaId;
 
     private static Guid? ObtenerEmpresaId(EntityEntry entrada, Guid entidadId)
     {

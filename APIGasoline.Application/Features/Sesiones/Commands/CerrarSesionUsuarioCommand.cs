@@ -34,9 +34,15 @@ public sealed class CerrarSesionUsuarioCommandHandler : ICommandHandler<CerrarSe
 
     public async Task Handle(CerrarSesionUsuarioCommand request, CancellationToken cancellationToken)
     {
-        // El usuario de otra empresa "no existe" (filtro por empresa). Las sesiones no tienen filtro propio.
-        if (request.UsuarioId != _usuarioActual.UsuarioId && !await _unitOfWork.Usuarios.ExistsAsync(request.UsuarioId, cancellationToken))
-            throw new NotFoundException($"No existe un usuario con el id {request.UsuarioId}.");
+        // El usuario de otra empresa "no existe" (filtro por empresa; las sesiones también se filtran por su usuario)
+        if (request.UsuarioId != _usuarioActual.UsuarioId)
+        {
+            var destino = await _unitOfWork.Usuarios.GetByIdAsync(request.UsuarioId, cancellationToken)
+                ?? throw new NotFoundException($"No existe un usuario con el id {request.UsuarioId}.");
+
+            // A008: no se cierran las sesiones de alguien con más privilegios que uno
+            await TechoPrivilegios.ExigirUsuarioAsync(_unitOfWork, _usuarioActual, destino.UsuarioId, destino.EmpresaId, cancellationToken);
+        }
 
         var sesion = await _unitOfWork.Sesiones.GetByIdAsync(request.SesionId, cancellationToken);
 

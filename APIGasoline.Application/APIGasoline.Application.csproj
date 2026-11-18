@@ -5,7 +5,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AutoMapper" Version="14.0.0" />
+    <!-- 15.1.4: corrige GHSA-rvv3-g6hj-g44x, GHSA-6vhm-j9h7-f9gh y GHSA-gpwp-5797-mjff (N005).
+         Desde la 15 pide licencia: se lee de la variable de entorno AUTOMAPPER_LICENSE_KEY. -->
+    <PackageReference Include="AutoMapper" Version="15.1.4" />
     <PackageReference Include="MediatR" Version="12.5.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
   </ItemGroup>

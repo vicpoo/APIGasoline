@@ -59,8 +59,8 @@ public sealed class CreateCarroCommandHandler : ICommandHandler<CreateCarroComma
         if (!await _unitOfWork.Empresas.ExistsAsync(carro.EmpresaId, cancellationToken))
             throw new NotFoundException($"No existe una empresa con el id {carro.EmpresaId}.");
 
-        if (await _unitOfWork.Carros.PlacasExistsAsync(carro.Placas, null, cancellationToken))
-            throw new ConflictException($"Ya existe un carro con las placas '{carro.Placas}'.");
+        if (await _unitOfWork.Carros.PlacasExistsAsync(carro.EmpresaId, carro.Placas, null, cancellationToken))
+            throw new ConflictException($"Ya existe un carro con las placas '{carro.Placas}' en la empresa.");
 
         await _unitOfWork.Carros.AddAsync(carro, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

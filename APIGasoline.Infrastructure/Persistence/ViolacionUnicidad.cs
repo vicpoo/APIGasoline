@@ -16,7 +16,7 @@ public static class ViolacionUnicidad
     private static readonly (string Indice, string Mensaje)[] Mensajes =
     [
         ("uq_usuario_email", "Ya existe un usuario con ese correo."),
-        ("uq_carro_placas", "Ya existe un carro con esas placas."),
+        ("uq_carro_empresa_id_placas", "Ya existe un carro con esas placas en la empresa."),
         ("uq_dispositivo_empleado_token_fcm", "Este dispositivo ya está registrado a otro empleado."),
         ("uq_empleado_usuario_id", "El usuario ya está asignado a otro empleado."),
         ("uq_centro_costo_empresa_id_clave", "Ya existe un centro de costo con esa clave."),

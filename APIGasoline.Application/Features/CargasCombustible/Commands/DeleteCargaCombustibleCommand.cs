@@ -13,26 +13,25 @@ namespace APIGasoline.Application.Features.CargasCombustible.Commands;
 /// Elimina una carga ya enviada. Sigue las mismas reglas que editarla (<see cref="ReglasCorreccion"/>):
 /// motivo obligatorio; con el viaje en curso, el operador del viaje; con el viaje cerrado, solo quien
 /// tenga viaje.corregir_cerrado. El borrado queda en la auditoría con su motivo.
+/// La foto del ticket NO se borra (A002): es la evidencia de la carga, igual que al corregirla o al
+/// cambiar la foto del tablero. El evento de auditoría guarda su llave, así que sigue localizable.
 /// </summary>
 public sealed record DeleteCargaCombustibleCommand(Guid CargaCombustibleId, string? Motivo) : ICommand;
 
 public sealed class DeleteCargaCombustibleCommandHandler : ICommandHandler<DeleteCargaCombustibleCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IFileStorageService _storage;
     private readonly IPublisher _publisher;
     private readonly IUsuarioActual _usuarioActual;
     private readonly IContextoAuditoria _auditoria;
 
     public DeleteCargaCombustibleCommandHandler(
         IUnitOfWork unitOfWork,
-        IFileStorageService storage,
         IPublisher publisher,
         IUsuarioActual usuarioActual,
         IContextoAuditoria auditoria)
     {
         _unitOfWork = unitOfWork;
-        _storage = storage;
         _publisher = publisher;
         _usuarioActual = usuarioActual;
         _auditoria = auditoria;
@@ -49,16 +48,11 @@ public sealed class DeleteCargaCombustibleCommandHandler : ICommandHandler<Delet
         // Quién puede eliminar y con qué motivo (mismas reglas que corregir)
         var motivo = await ReglasCorreccion.ValidarAsync(_usuarioActual, viaje, request.Motivo, cancellationToken);
 
-        var comprobante = carga.FotoComprobante;
-
         // El interceptor guarda la fila borrada con esta acción y motivo
         _auditoria.Registrar(carga.CargaCombustibleId, AccionAuditoria.Eliminar, motivo);
 
         _unitOfWork.CargasCombustible.Remove(carga);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        // El registro ya se borró: si falla la limpieza del archivo solo se registra en el log
-        await _storage.IntentarEliminarAsync(comprobante);
 
         // Si el viaje ya está cerrado, el handler recalcula su rendimiento km/L
         await _publisher.Publish(new RutaViajeModificadaNotification(carga.ViajeId), cancellationToken);

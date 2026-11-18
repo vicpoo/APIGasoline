@@ -18,15 +18,11 @@ namespace APIGasoline.Infrastructure.Persistence;
 public sealed class AislamientoEmpresaInterceptor : SaveChangesInterceptor
 {
     /// <summary>
-    /// Tablas técnicas que escribe el propio sistema (bitácora, outbox, sesiones). Los handlers que
-    /// las tocan validan antes al usuario o al registro dueño.
+    /// Tablas sin aislamiento entre empresas. Hoy ninguna: la bitácora (auditoria_evento), el outbox
+    /// y las sesiones también tienen filtro de EF, regla aquí y Row-Level Security (A005).
+    /// Si una tabla nueva de verdad no es de ninguna empresa, va aquí y AislamientoEmpresaTests lo acepta.
     /// </summary>
-    public static readonly IReadOnlySet<Type> Exentas = new HashSet<Type>
-    {
-        typeof(AuditoriaEvento),
-        typeof(OutboxMensaje),
-        typeof(SesionUsuario),
-    };
+    public static readonly IReadOnlySet<Type> Exentas = new HashSet<Type>();
 
     /// <summary>Catálogos de la plataforma: un usuario de una empresa nunca los modifica.</summary>
     public static readonly IReadOnlySet<Type> SoloPlataforma = new HashSet<Type>
@@ -34,11 +30,16 @@ public sealed class AislamientoEmpresaInterceptor : SaveChangesInterceptor
         typeof(Privilegio),
     };
 
-    /// <summary>Sin columna empresa_id: su empresa sale del usuario o del rol al que apuntan.</summary>
+    /// <summary>
+    /// Su empresa sale del usuario o del rol al que apuntan. Sesiones: su empresa_id es la del
+    /// empleado al iniciar sesión y queda vacía para un administrador sin empleado, así que se
+    /// aíslan por el usuario dueño.
+    /// </summary>
     public static readonly IReadOnlySet<Type> PorRelacion = new HashSet<Type>
     {
         typeof(UsuarioRol),
         typeof(RolPrivilegio),
+        typeof(SesionUsuario),
     };
 
     private const string PropiedadEmpresa = "EmpresaId";
@@ -106,6 +107,14 @@ public sealed class AislamientoEmpresaInterceptor : SaveChangesInterceptor
 
                 foreach (var rolId in Valores<Guid>(entrada, nameof(UsuarioRol.RolId)))
                     Exigir(await EmpresaDeRolAsync(context, rolId, sincrono, cancellationToken), empresa);
+
+                continue;
+            }
+
+            if (entrada.Entity is SesionUsuario)
+            {
+                foreach (var usuarioId in Valores<Guid>(entrada, nameof(SesionUsuario.UsuarioId)))
+                    Exigir(await EmpresaDeUsuarioAsync(context, usuarioId, sincrono, cancellationToken), empresa);
 
                 continue;
             }

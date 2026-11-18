@@ -37,11 +37,14 @@ public interface IUnitOfWork : IDisposable
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Como <see cref="SaveChangesAsync"/>, pero si un índice único lo rechaza (otra petición guardó
-    /// lo mismo un instante antes) devuelve false y descarta los cambios pendientes, para que el
-    /// handler vuelva a leer y decida (por ejemplo, responder como reintento idempotente).
+    /// Como <see cref="SaveChangesAsync"/>, pero si choca con otra petición simultánea devuelve false
+    /// y descarta los cambios pendientes, para que el handler vuelva a leer y lo intente otra vez
+    /// (por ejemplo, responder como reintento idempotente). Choques que cubre:
+    /// - Un índice único lo rechazó (otra petición guardó lo mismo un instante antes).
+    /// - SQL Server eligió esta transacción como víctima de un interbloqueo (error 1205) y la deshizo.
+    /// Cualquier otro error se lanza igual que en <see cref="SaveChangesAsync"/>.
     /// </summary>
-    Task<bool> SaveChangesSalvoDuplicadoAsync(CancellationToken cancellationToken = default);
+    Task<bool> SaveChangesSalvoConcurrenciaAsync(CancellationToken cancellationToken = default);
     Task BeginTransactionAsync(CancellationToken cancellationToken = default);
     Task CommitTransactionAsync(CancellationToken cancellationToken = default);
     Task RollbackTransactionAsync(CancellationToken cancellationToken = default);

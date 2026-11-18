@@ -20,6 +20,9 @@
     <PackageReference Include="Minio" Version="6.0.5" />
     <!-- Reportes de la flota: PDF (PDFsharp-MigraDoc) y Excel (ClosedXML). Ambas con licencia MIT -->
     <PackageReference Include="PDFsharp-MigraDoc" Version="6.2.4" />
+    <!-- N005: fija la dependencia transitiva (SqlClient trae 9.0.11, PDFsharp 8.0.1) en una versión
+         sin GHSA-846f-f764-76mx ni GHSA-2fmv-rv2c-59x7. Quitar cuando SqlClient y PDFsharp la traigan corregida. -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
     <PackageReference Include="ClosedXML" Version="0.105.1" />
   </ItemGroup>
 

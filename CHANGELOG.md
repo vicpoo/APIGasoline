@@ -2,6 +2,36 @@
 
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y las versiones siguen [SemVer](https://semver.org/lang/es/).
 
+## [Sin publicar]
+
+Correcciones de las revisiones de aislamiento multiempresa (A001 a A009) y de correcciones (N001 a N006). HTTPS (A004) queda pendiente.
+
+### ⚠️ Cambios que pueden afectar a los clientes
+
+- **Lote GPS simultáneo (N001):** si el mismo lote choca con otro envío al mismo tiempo, la API reintenta sola; si aun así no puede, responde **503 con `Retry-After`** en lugar de 500.
+- **Administrar a otro usuario (A008):** desactivarlo, cambiarle el correo o cerrarle sesiones exige tener todos sus privilegios (403 si no).
+- **Registrar un celular ya registrado en otra empresa (A006):** el mensaje del 409 ya no dice "de otra empresa".
+- **Placas únicas por empresa (A006):** dos empresas pueden registrar las mismas placas (migración `PlacasUnicasPorEmpresa`); repetirlas en la misma empresa sigue respondiendo 409.
+- **AutoMapper 15.1.4 (N005):** corrige GHSA-rvv3-g6hj-g44x, GHSA-6vhm-j9h7-f9gh y GHSA-gpwp-5797-mjff. Desde la versión 15 pide licencia: en producción se configura `AUTOMAPPER_LICENSE_KEY` en el `.env` (sin ella solo escribe un aviso en el log).
+
+### Seguridad
+
+- **A005:** `auditoria_evento`, `outbox_mensaje` y `sesion_usuario` entran al aislamiento: filtro de EF, guardián de escrituras y Row-Level Security (migración `AislamientoTablasTecnicas`). Los eventos de auditoría de asignaciones de roles quedan con la empresa de quien hizo el cambio.
+- **N004:** la bitácora es de solo inserción para el login de la API (`DENY UPDATE, DELETE`, migración `BitacoraSoloInsercion` y `crear-logins.sql`).
+- **A007:** la BD exige que el usuario de un empleado sea de la misma empresa o de ninguna (migración `EmpleadoUsuarioMismaEmpresa`).
+- **A003:** tope de 16 hosts para firmar URLs de MinIO con `PublicEndpoint = auto`.
+- **N005:** `System.Security.Cryptography.Pkcs` fijado en 10.0.14.
+
+### Corregido
+
+- **A001:** las fechas JSON con `Z` (UTC) se pasan a la hora local del servidor, como las que traen offset.
+- **A002:** eliminar una carga ya no borra la foto del ticket (es evidencia).
+- **N002, N003:** documentación de 400/413 y restos de MySQL.
+
+### Pruebas
+
+- `FechasConZonaTests`, casos de A005 y A007 en `SeguridadPorFilasTests`, dos casos de techo de usuarios en la matriz de lo propio (el gestor de roles de las pruebas ahora también tiene `usuario.ver` y `usuario.gestionar`), `MigracionesTests` (A009) y lotes GPS encimados (N001).
+
 ## [2.0.0] - 2026-11-12
 
 Versión que cierra la revisión de código CR-9e1766d9852c005af924 (hallazgos F001 a F017) y cambia el motor a SQL Server. El despliegue paso a paso está en `docs/Despliegue-AWS.md`.

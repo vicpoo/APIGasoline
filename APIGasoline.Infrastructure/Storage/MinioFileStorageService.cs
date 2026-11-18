@@ -18,6 +18,13 @@ public class MinioFileStorageService : IFileStorageService
     // Solo firman URLs (no hacen llamadas de red). Uno por endpoint público: con PublicEndpoint = "auto"
     // puede haber varios (localhost, 10.0.2.2, IP de la PC...).
     private readonly ConcurrentDictionary<string, IMinioClient> _clientesPublicos = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// A003: con "auto" el host sale del encabezado Host, que manda el cliente. Sin tope, cambiar el Host
+    /// en cada petición crearía un cliente nuevo cada vez y la memoria crecería sin fin. Con uso normal
+    /// hay 2 o 3 hosts (IP pública, localhost, emulador); pasado el tope se firma con el endpoint fijo.
+    /// </summary>
+    public const int MaxClientesPublicos = 16;
     private readonly IHostPeticionActual? _hostPeticion;
     private readonly MinioSettings _settings;
     private readonly ILogger<MinioFileStorageService> _logger;
@@ -104,8 +111,7 @@ public class MinioFileStorageService : IFileStorageService
         {
             // La firma incluye el host: se firma con el mismo host al que el cliente va a pedir la foto
             var endpoint = _settings.EndpointPublicoPara(_hostPeticion?.Host);
-            var cliente = _clientesPublicos.GetOrAdd(endpoint, CrearCliente);
-            return await cliente.PresignedGetObjectAsync(args);
+            return await ClientePublico(endpoint).PresignedGetObjectAsync(args);
         }
         catch (Exception ex)
         {
@@ -113,6 +119,23 @@ public class MinioFileStorageService : IFileStorageService
             _logger.LogWarning(ex, "No se pudo generar la URL del archivo {Llave}.", llave);
             return null;
         }
+    }
+
+    private IMinioClient ClientePublico(string endpoint)
+    {
+        if (_clientesPublicos.TryGetValue(endpoint, out var cliente))
+            return cliente;
+
+        if (_clientesPublicos.Count >= MaxClientesPublicos)
+        {
+            _logger.LogWarning(
+                "Se alcanzó el tope de {Tope} hosts distintos para firmar URLs; se usa el endpoint fijo en vez de {Endpoint}. " +
+                "Fija Minio__PublicEndpoint en producción.", MaxClientesPublicos, endpoint);
+
+            return _clientesPublicos.GetOrAdd(_settings.EndpointPublicoEfectivo, CrearCliente);
+        }
+
+        return _clientesPublicos.GetOrAdd(endpoint, CrearCliente);
     }
 
     private IMinioClient CrearCliente(string endpoint)

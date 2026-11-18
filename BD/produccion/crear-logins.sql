@@ -49,5 +49,12 @@ ALTER ROLE db_datareader ADD MEMBER [apigasoline_app];
 ALTER ROLE db_datawriter ADD MEMBER [apigasoline_app];
 GO
 
-PRINT N'Logins listos: apigasoline_migrador (db_owner de $(MSSQL_DATABASE)) y apigasoline_app (solo datos).';
+-- N004: la bitácora es de solo inserción para la API (no puede editar ni borrar su propio rastro).
+-- En el primer arranque la tabla todavía no existe (la crea la API al migrar); entonces lo aplica la
+-- migración BitacoraSoloInsercion. Aquí se repite en cada arranque por si el login se creó después.
+IF OBJECT_ID(N'dbo.auditoria_evento', N'U') IS NOT NULL
+    DENY UPDATE, DELETE ON dbo.auditoria_evento TO [apigasoline_app];
+GO
+
+PRINT N'Logins listos: apigasoline_migrador (db_owner de $(MSSQL_DATABASE)) y apigasoline_app (solo datos; bitácora solo inserción).';
 GO

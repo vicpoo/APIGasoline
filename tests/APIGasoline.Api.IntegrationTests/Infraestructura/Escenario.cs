@@ -29,8 +29,9 @@ public enum Actor
     /// <summary>Otro operador de la Empresa A (el "atacante" de la matriz de lo propio).</summary>
     OperadorA2,
     /// <summary>
-    /// Empleado de la Empresa A que administra roles (rol.ver, rol.gestionar, rol.asignar) pero solo
-    /// tiene carro.ver de lo demás: el "atacante" de las pruebas de techo de privilegios.
+    /// Empleado de la Empresa A que administra roles (rol.ver, rol.gestionar, rol.asignar) y usuarios
+    /// (usuario.ver, usuario.gestionar) pero solo tiene carro.ver de lo demás: el "atacante" de las
+    /// pruebas de techo de privilegios.
     /// </summary>
     GestorRolesA,
 }
@@ -172,7 +173,8 @@ public sealed class Escenario : IAsyncLifetime
             var rol = APIGasoline.Domain.Entities.Rol.Crear("Gestor de roles", "Administra roles (pruebas de techo de privilegios).", activo: true, empresaId: d.EmpresaId);
             contexto.Roles.Add(rol);
 
-            var claves = new[] { "rol.ver", "rol.gestionar", "rol.asignar", "carro.ver" };
+            // usuario.ver y usuario.gestionar: para probar que no administra cuentas con más privilegios (A008)
+            var claves = new[] { "rol.ver", "rol.gestionar", "rol.asignar", "carro.ver", "usuario.ver", "usuario.gestionar" };
             foreach (var privilegio in await contexto.Privilegios.Where(p => claves.Contains(p.Clave)).ToListAsync())
                 contexto.RolPrivilegios.Add(APIGasoline.Domain.Entities.RolPrivilegio.Crear(rol.RolId, privilegio.PrivilegioId));
 

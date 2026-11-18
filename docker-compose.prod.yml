@@ -37,12 +37,15 @@ services:
       ConnectionStrings__Migraciones: "Server=db,1433;Database=${MSSQL_DATABASE:-apigasoline};User Id=apigasoline_migrador;Password=${MSSQL_MIGRADOR_PASSWORD};TrustServerCertificate=True;"
       Jwt__Key: ${JWT_KEY}
       Minio__Endpoint: minio:9000
-      # "auto" = las URLs de las fotos se firman con el host que usó el cliente (IP pública de EC2) + puerto 9000
+      # "auto" = las URLs de las fotos se firman con el host que usó el cliente (IP pública de EC2) + puerto 9000.
+      # Mejor fijarlo (MINIO_PUBLIC_ENDPOINT=13.222.72.73:9000 o el dominio): el host lo manda el cliente (A003).
       Minio__PublicEndpoint: ${MINIO_PUBLIC_ENDPOINT:-auto}
       Minio__AccessKey: ${MINIO_ROOT_USER}
       Minio__SecretKey: ${MINIO_ROOT_PASSWORD}
       Minio__Bucket: ${MINIO_BUCKET:-apigasoline}
       Minio__UseSsl: "false"
+      # AutoMapper 15+ (licencia de Lucky Penny Software). Sin ella solo escribe un aviso en el log.
+      AUTOMAPPER_LICENSE_KEY: ${AUTOMAPPER_LICENSE_KEY:-}
       Push__Proveedor: ${PUSH_PROVEEDOR:-NoOp}
       Push__Firebase__CredencialesPath: /app/secrets/apigasoline-firebase.json
       BaseDatos__MigrarAlIniciar: "true"

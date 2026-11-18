@@ -110,9 +110,11 @@ public class CarroConfiguration : IEntityTypeConfiguration<Carro>
             .HasConstraintName("fk_carro_empresa")
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasIndex(c => c.Placas)
+        // A006: las placas son únicas dentro de cada empresa (antes en toda la BD). Dos empresas del
+        // grupo pueden registrar el mismo vehículo y una empresa ya no puede sondear las placas de otra.
+        builder.HasIndex(c => new { c.EmpresaId, c.Placas })
             .IsUnique()
-            .HasDatabaseName("uq_carro_placas");
+            .HasDatabaseName("uq_carro_empresa_id_placas");
 
         builder.HasIndex(c => c.EmpresaId)
             .HasDatabaseName("ix_carro_empresa_id");

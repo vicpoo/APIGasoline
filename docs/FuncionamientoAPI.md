@@ -98,8 +98,8 @@ DTO (AutoMapper) → respuesta JSON
 | 403 | Sin el privilegio, o el registro es de otro empleado u otra empresa. El mensaje dice qué privilegio falta. |
 | 404 | El registro no existe. |
 | 409 | Conflicto: duplicado, registro en uso, o dos personas modificaron lo mismo al mismo tiempo. Algunos traen `codigo` en el cuerpo para la app: `VIAJE_EN_CURSO` (con `viajeId`, `empleadoOperadorId`, `fechaInicio` del otro viaje), `ID_DUPLICADO` (con `id`) y `CARGA_MISMA_FECHA`. |
-| 413 | El archivo excede el tamaño permitido (5 MB). |
-| 503 | El almacenamiento de archivos (MinIO) no está disponible. |
+| 413 | El cuerpo de la petición pasa de 6 MB (límite del servidor). Un archivo de más de 5 MB pero de menos de 6 MB responde **400** (lo rechaza la validación del archivo). |
+| 503 | El almacenamiento de archivos (MinIO) no está disponible, o la operación chocó con otra simultánea (interbloqueo de SQL Server) y hay que repetirla: trae `Retry-After`. La app lo trata como error temporal y reintenta sola. |
 
 Todas las respuestas de error usan este formato:
 

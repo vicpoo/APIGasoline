@@ -51,9 +51,10 @@ public sealed class RegistrarDispositivoCommandHandler : ICommandHandler<Registr
 
         if (existente is null)
         {
-            // El celular sigue registrado a un empleado de otra empresa: no se le puede quitar desde aquí
+            // El celular sigue registrado a un empleado de otra empresa: no se le puede quitar desde aquí.
+            // El mensaje no dice "de otra empresa" (A006): no debe confirmar que el dato existe en otra empresa.
             if (await _unitOfWork.Dispositivos.TokenRegistradoAsync(request.TokenFcm.Trim(), cancellationToken))
-                throw new ConflictException("Este dispositivo ya está registrado a un empleado de otra empresa.");
+                throw new ConflictException("Este dispositivo ya está registrado a otro empleado. Hay que desactivarlo ahí antes de registrarlo de nuevo.");
 
             dispositivo = DispositivoEmpleado.Registrar(empleado.EmpresaId, empleado.EmpleadoId, request.TokenFcm, request.Plataforma, ahora);
             await _unitOfWork.Dispositivos.AddAsync(dispositivo, cancellationToken);

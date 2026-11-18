@@ -21,7 +21,9 @@ public static class DependencyInjection
             // "Lo tuyo, o lo de otros con privilegio" (requests que implementan IRecursoPropio)
             cfg.AddOpenBehavior(typeof(AccesoPropioBehavior<,>));
         });
-        services.AddAutoMapper(assembly);
+        // AutoMapper 15+: la licencia se toma de la variable de entorno AUTOMAPPER_LICENSE_KEY
+        // (sin licencia solo escribe un aviso en el log y sigue funcionando)
+        services.AddAutoMapper(_ => { }, assembly);
 
         // Aislamiento entre empresas: de qué empresa son los datos de la petición (filtro de EF y guardián)
         services.AddScoped<IContextoEmpresa, ContextoEmpresa>();

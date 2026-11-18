@@ -15,7 +15,8 @@ public interface ICarroRepository
     /// <summary>Lo mismo que <see cref="GetAllAsync"/>, paginado: solo la página pedida y el total (F011).</summary>
     Task<PaginaDe<Carro>> GetPaginaAsync(Paginacion pagina, Guid? empresaId = null, EstadoCarro? estado = null, CancellationToken cancellationToken = default);
     Task<bool> ExistsAsync(Guid carroId, CancellationToken cancellationToken = default);
-    Task<bool> PlacasExistsAsync(string placas, Guid? excludeCarroId = null, CancellationToken cancellationToken = default);
+    /// <summary>Si ya hay un carro con esas placas en la empresa (las placas son únicas por empresa).</summary>
+    Task<bool> PlacasExistsAsync(Guid empresaId, string placas, Guid? excludeCarroId = null, CancellationToken cancellationToken = default);
     Task AddAsync(Carro carro, CancellationToken cancellationToken = default);
     void Remove(Carro carro);
 }

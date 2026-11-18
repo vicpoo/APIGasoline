@@ -1,5 +1,9 @@
 # Cambios v4 — Auditoría y trazabilidad
 
+> **Documento histórico.** Describe el cambio cuando el motor era MySQL. Hoy la base es SQL Server:
+> lo vigente está en `BD/README.md`. Las instrucciones para usuarios de MySQL y la columna `rol.empresa_clave`
+> ya no aplican (la bitácora de solo inserción la aplica la migración `BitacoraSoloInsercion`).
+
 Este documento resume lo que cambió en la API y en la base de datos al pasar del modelo v3 al v4.
 El modelo completo está en `BD/BaseDatos.dbml`.
 

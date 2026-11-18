@@ -1,5 +1,6 @@
 ﻿using APIGasoline.Application.Common.Exceptions;
 using APIGasoline.Application.Common.Interfaces;
+using APIGasoline.Application.Common.Security;
 using APIGasoline.Application.Common.Sesiones;
 using APIGasoline.Application.Features.Usuarios.DTOs;
 using APIGasoline.Domain.Enums;
@@ -30,6 +31,9 @@ public sealed class UpdateUsuarioCommandHandler : ICommandHandler<UpdateUsuarioC
     {
         var usuario = await _unitOfWork.Usuarios.GetByIdAsync(request.UsuarioId, cancellationToken)
             ?? throw new NotFoundException($"No existe un usuario con el id {request.UsuarioId}.");
+
+        // A008: no se administra la cuenta de alguien con más privilegios que uno
+        await TechoPrivilegios.ExigirUsuarioAsync(_unitOfWork, _usuarioActual, usuario.UsuarioId, usuario.EmpresaId, cancellationToken);
 
         var estabaActivo = usuario.EstaActivo;
 

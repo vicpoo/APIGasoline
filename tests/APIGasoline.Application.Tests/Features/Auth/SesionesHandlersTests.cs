@@ -87,6 +87,22 @@ public class SesionesHandlersTests
         Assert.Equal(Id(9), sesion.RevocadaPorUsuarioId);
     }
 
+    /// <summary>A008: no se cierran las sesiones de alguien con privilegios que uno no tiene.</summary>
+    [Fact]
+    public async Task CerrarTodas_DeUnUsuarioConMasPrivilegios_Lanza403()
+    {
+        UsuarioVisible(Id(1));
+        _uow.ClavesPorUsuario[_uow.Usuarios[Id(1)].UsuarioId] = ["usuario.gestionar", "viaje.eliminar"];
+        var (sesion, _) = Sesion(Id(1));
+        var handler = new CerrarSesionesUsuarioCommandHandler(_unitOfWork, new UsuarioActualFalso(Id(9), null, "usuario.gestionar"), _reloj);
+
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
+            handler.Handle(new CerrarSesionesUsuarioCommand(Id(1), ConservarActual: false), CancellationToken.None));
+
+        Assert.False(sesion.EstaRevocada);
+        Assert.Equal(0, _uow.Guardados);
+    }
+
     [Fact]
     public async Task CerrarUna_SesionDeOtroUsuario_Lanza404()
     {

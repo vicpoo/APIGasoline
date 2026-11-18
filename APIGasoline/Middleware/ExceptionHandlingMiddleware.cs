@@ -58,6 +58,19 @@ public class ExceptionHandlingMiddleware
             // con Row-Level Security pasa cuando el que ya lo tiene es de otra empresa.
             await WriteProblemAsync(context, StatusCodes.Status409Conflict, "Conflicto", mensaje);
         }
+        catch (ReintentarMasTardeException ex)
+        {
+            _logger.LogWarning(ex, "Operación que chocó con otra simultánea; se pidió reintentar.");
+            await WriteReintentarAsync(context, ex.Message);
+        }
+        catch (Exception ex) when (Interbloqueo.Es(ex))
+        {
+            // N001: SQL Server eligió esta petición como víctima de un interbloqueo y la deshizo.
+            // No hay nada mal en los datos: 503 + Retry-After para que el cliente la repita
+            // (la app lo trata como error temporal; un 500 o un 409 no eran correctos).
+            _logger.LogWarning(ex, "Interbloqueo de SQL Server (1205); se pidió reintentar.");
+            await WriteReintentarAsync(context, "La operación chocó con otra al mismo tiempo. Vuelve a intentarlo en unos segundos.");
+        }
         catch (AlmacenamientoException ex)
         {
             _logger.LogError(ex, "Falla del almacenamiento de archivos.");
@@ -101,6 +114,15 @@ public class ExceptionHandlingMiddleware
             options: null,
             contentType: "application/problem+json");
     }
+
+    /// <summary>503 temporal con Retry-After: la misma petición funcionará si se repite.</summary>
+    private static Task WriteReintentarAsync(HttpContext context, string detail)
+    {
+        context.Response.Headers.RetryAfter = SegundosParaReintentar.ToString();
+        return WriteProblemAsync(context, StatusCodes.Status503ServiceUnavailable, "Intenta de nuevo", detail);
+    }
+
+    private const int SegundosParaReintentar = 2;
 
     /// <summary>"codigo" y los datos del conflicto, para que la app decida sin leer el mensaje.</summary>
     private static Dictionary<string, object?>? ConExtensiones(ConflictException ex)

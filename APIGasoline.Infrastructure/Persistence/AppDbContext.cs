@@ -78,8 +78,7 @@ public class AppDbContext : DbContext
     /// Aislamiento entre empresas en TODAS las lecturas: un usuario que no es de la plataforma solo
     /// ve las filas de su empresa (un registro de otra empresa "no existe": 404, y las listas no lo traen).
     /// Las escrituras las revisa <see cref="AislamientoEmpresaInterceptor"/>.
-    /// Tablas sin filtro: catálogo de la plataforma (privilegio) y tablas técnicas
-    /// (auditoría, outbox, sesiones), que sus handlers validan por su cuenta.
+    /// Tabla sin filtro: el catálogo de la plataforma (privilegio).
     /// </summary>
     private void AplicarFiltroPorEmpresa(ModelBuilder modelBuilder)
     {
@@ -99,6 +98,16 @@ public class AppDbContext : DbContext
         FiltrarPorColumnaEmpresa<Notificacion>(modelBuilder);
         FiltrarPorColumnaEmpresa<DispositivoEmpleado>(modelBuilder);
         FiltrarPorColumnaEmpresa<RevisionAuditoria>(modelBuilder);
+        FiltrarPorColumnaEmpresa<OutboxMensaje>(modelBuilder);
+
+        // Bitácora (A005): solo la de su empresa. Los eventos sin empresa (cambios de la plataforma
+        // a roles globales o al catálogo) solo los ve la plataforma.
+        modelBuilder.Entity<AuditoriaEvento>().HasQueryFilter(FiltrosConsulta.Empresa,
+            a => SinFiltroDeEmpresa || a.EmpresaId == EmpresaDelFiltro);
+
+        // Sesiones (A005): las de los usuarios de su empresa (su empresa_id queda vacía si el usuario no tiene empleado)
+        modelBuilder.Entity<SesionUsuario>().HasQueryFilter(FiltrosConsulta.Empresa,
+            s => SinFiltroDeEmpresa || Usuarios.Any(u => u.UsuarioId == s.UsuarioId && u.EmpresaId == EmpresaDelFiltro));
 
         // La empresa: solo la propia
         modelBuilder.Entity<Empresa>().HasQueryFilter(FiltrosConsulta.Empresa,
@@ -124,4 +133,4 @@ public class AppDbContext : DbContext
     private void FiltrarPorColumnaEmpresa<T>(ModelBuilder modelBuilder) where T : class
         => modelBuilder.Entity<T>().HasQueryFilter(FiltrosConsulta.Empresa,
             e => SinFiltroDeEmpresa || EF.Property<Guid>(e, "EmpresaId") == EmpresaDelFiltro);
-}
+}

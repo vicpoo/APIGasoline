@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using APIGasoline.Extensions;
+using System.Text.Json;
 using System.Threading.RateLimiting;
 using System.Text.Json.Serialization;
 using System.Text;
@@ -41,6 +42,8 @@ builder.Services
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
+        // A001: una fecha con "Z" se pasa a la hora local del servidor, igual que las que traen offset
+        options.JsonSerializerOptions.Converters.Add(new FechaHoraLocalJsonConverter());
     });
 
 builder.Services.AddOpenApi();

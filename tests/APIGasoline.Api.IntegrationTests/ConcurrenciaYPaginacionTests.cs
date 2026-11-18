@@ -69,10 +69,54 @@ public sealed class ConcurrenciaTests(Escenario e)
         var respuestas = await Task.WhenAll(Enumerable.Range(0, 3).Select(_ =>
             e.EnviarAsync(Actor.OperadorA, HttpMethod.Post, $"/api/viajes/{viajeId}/puntos-ruta", Escenario.ComoJson(lote))));
 
-        // Ninguno falla con 500, y en la BD queda cada punto una sola vez
-        Assert.All(respuestas, r => Assert.True(r.Exito || r.Status == HttpStatusCode.Conflict, r.ToString()));
-        Assert.Contains(respuestas, r => r.Exito);
+        // Ninguno falla con 500 (N001: el interbloqueo se reintenta), y en la BD queda cada punto una sola vez
+        Assert.All(respuestas, r => Assert.True(r.Exito, r.ToString()));
         Assert.Equal(20, await e.EnBdAsync(c => c.PuntosRuta.CountAsync(p => p.ViajeId == viajeId)));
+    }
+
+    /// <summary>
+    /// N001: antes, con la suite completa, el lote simultáneo fallaba ~1 de cada 2 corridas con 500 por un
+    /// interbloqueo de SQL Server (1205). Se repite varias rondas con lotes que se enciman en parte, que es
+    /// lo que más interbloqueos provocaba. Nunca debe salir 500; un 503 (pedir reintento) se tolera.
+    /// </summary>
+    [Fact]
+    public async Task Lotes_GPS_simultaneos_que_se_enciman_nunca_responden_500()
+    {
+        const int rondas = 8;
+        const int enviosPorRonda = 4;
+
+        for (var ronda = 0; ronda < rondas; ronda++)
+        {
+            var viajeId = await e.ViajeAsync(e.A);
+            var inicio = DateTime.Now.AddMinutes(-50);
+
+            // Cada envío trae 30 puntos y se desplaza 10: comparten 20 con el siguiente
+            object Lote(int desplazamiento) => new
+            {
+                puntos = Enumerable.Range(1 + desplazamiento, 30).Select(i => new
+                {
+                    latitud = 16.75m + i * 0.001m,
+                    longitud = -93.12m - i * 0.001m,
+                    timestampCaptura = Escenario.Fecha(inicio.AddSeconds(i * 20)),
+                    precisionMetros = 5,
+                }),
+            };
+
+            var respuestas = await Task.WhenAll(Enumerable.Range(0, enviosPorRonda).Select(n =>
+                e.EnviarAsync(Actor.OperadorA, HttpMethod.Post, $"/api/viajes/{viajeId}/puntos-ruta", Escenario.ComoJson(Lote(n * 10)))));
+
+            Assert.All(respuestas, r => Assert.True(
+                r.Exito || r.Status == HttpStatusCode.ServiceUnavailable,
+                $"Ronda {ronda + 1}: {r}"));
+
+            // Puntos distintos: del 1 al 30 + 10 * (envíos - 1) = 60. Si algún envío pidió reintento,
+            // pueden faltar los suyos, pero nunca hay duplicados.
+            var guardados = await e.EnBdAsync(c => c.PuntosRuta.CountAsync(p => p.ViajeId == viajeId));
+            var distintos = await e.EnBdAsync(c => c.PuntosRuta.Where(p => p.ViajeId == viajeId).Select(p => p.TimestampCaptura).Distinct().CountAsync());
+            Assert.Equal(distintos, guardados);
+            if (respuestas.All(r => r.Exito))
+                Assert.Equal(30 + 10 * (enviosPorRonda - 1), guardados);
+        }
     }
 
     [Fact]

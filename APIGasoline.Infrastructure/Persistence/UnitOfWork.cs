@@ -76,14 +76,22 @@ public class UnitOfWork : IUnitOfWork
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         => _context.SaveChangesAsync(cancellationToken);
 
-    public async Task<bool> SaveChangesSalvoDuplicadoAsync(CancellationToken cancellationToken = default)
+    public async Task<bool> SaveChangesSalvoConcurrenciaAsync(CancellationToken cancellationToken = default)
     {
         try
         {
             await _context.SaveChangesAsync(cancellationToken);
             return true;
         }
-        catch (DbUpdateException ex) when (ViolacionUnicidad.EsDuplicado(ex, out _))
+        // Con una transacción manual abierta, un interbloqueo la deshace completa: no se puede
+        // reintentar solo este SaveChanges, así que ese caso se lanza (lo traduce el middleware)
+        catch (DbUpdateException ex) when (ViolacionUnicidad.EsDuplicado(ex, out _) || (_transaction is null && Interbloqueo.Es(ex)))
+        {
+            _context.ChangeTracker.Clear();
+            return false;
+        }
+        // Según dónde ocurra, el interbloqueo puede llegar como SqlException sin envolver
+        catch (Exception ex) when (_transaction is null && Interbloqueo.Es(ex))
         {
             _context.ChangeTracker.Clear();
             return false;

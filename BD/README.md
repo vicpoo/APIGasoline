@@ -64,11 +64,12 @@ Web / Postman ──────────────────┘         
 
 ## 2. Convenciones (verificadas en el esquema)
 
-**Identificadores.** Todas las PK y FK son `binary(16)` con UUID v7 generado por la aplicación (`MySqlGuidFormat.Binary16`, orden RFC 4122, compatible con `UUID_TO_BIN` / `BIN_TO_UUID`). No hay `AUTO_INCREMENT` ni defaults en las llaves.
+**Identificadores.** Todas las PK y FK son `binary(16)` con UUID v7 generado por la aplicación, guardado en orden RFC 4122 (`GuidBinarioConverter`). No hay `IDENTITY` ni defaults en las llaves.
 
 ```sql
-SELECT BIN_TO_UUID(usuario_id) AS usuario_id, email FROM usuario;
-SELECT * FROM usuario WHERE usuario_id = UUID_TO_BIN('0192f3a4-...');
+-- SQL Server: el UUID se ve en hexadecimal sin guiones (mismo orden que el texto del UUID)
+SELECT CONVERT(varchar(34), usuario_id, 1) AS usuario_id_hex, email FROM usuario;
+SELECT * FROM usuario WHERE usuario_id = 0x0192F3A4...;
 ```
 
 **Nombres.** Tablas en singular y `snake_case`; llaves `entidad_id`; índices `ix_<tabla>_<columnas>`, únicos `uq_<tabla>_<columnas>`, foráneas `fk_<tabla>_<destino>`.
@@ -119,7 +120,7 @@ empresa/{empresa_id}/{entidad}/{id}/{carpeta}/{tipo}-{uuid}.{ext}
 - **Referencias lógicas sin FK:** `notificacion.referencia_id`, `outbox_mensaje.agregado_id`, `auditoria_evento.entidad_id`.
 - **`privilegio`** no tiene `empresa_id` (es el catálogo de la plataforma). Desde la fase 8 `corporativo` y `division` sí son de una empresa.
 - **`usuario.empresa_id`** (fase 3) dice de qué empresa es la cuenta; NULL = administrador de la plataforma o cuenta aún sin asignar. Al crearle su empleado se le asigna la empresa del empleado, y una cuenta nunca pasa de una empresa a otra. La migración `AgregarEmpresaAUsuario` la llenó con la empresa del empleado (o, sin empleado, la de sus roles de empresa).
-- **`carro.placas` y `usuario.email`** son únicos en todo el sistema, no por empresa.
+- **`carro.placas`** es único dentro de cada empresa (A006, migración `PlacasUnicasPorEmpresa`): dos empresas pueden registrar el mismo vehículo. **`usuario.email`** sigue siendo único en todo el sistema, porque el inicio de sesión es solo con el correo.
 
 ### 3.3. Aislamiento en la API (fase 3)
 
@@ -132,12 +133,13 @@ empresa/{empresa_id}/{entidad}/{id}/{carpeta}/{tipo}-{uuid}.{ext}
 | `usuario_rol` | Los de usuarios de X |
 | `rol_privilegio` | Los de roles que puede ver |
 | `privilegio` | Todo (catálogo); solo la plataforma lo modifica |
-| `auditoria_evento`, `outbox_mensaje`, `sesion_usuario` | Sin filtro: sus endpoints validan la empresa o el usuario dueño |
+| `auditoria_evento`, `outbox_mensaje` | Solo `empresa_id = X` (los eventos sin empresa, de cambios de la plataforma, solo los ve la plataforma) |
+| `sesion_usuario` | Las de usuarios de X (su `empresa_id` queda vacío si el usuario no tiene empleado) |
 
 - Un registro de otra empresa "no existe": su detalle responde 404 y las listas no lo traen.
 - Escribir con el `empresa_id` de otra empresa, colgar algo de un registro ajeno, asignar o modificar un rol global, o cambiar el `empresa_id` de un registro responde **403**. Para la plataforma, cambiar `empresa_id` cuando es parte de una llave compuesta responde **409** (antes era un 500).
 - Sin usuario (login, refresh, workers, siembra) y con `plataforma.multiempresa` no hay filtro.
-- Las validaciones de unicidad global (placas, correo, token del celular) ignoran solo el filtro `Empresa` y devuelven sí/no.
+- Las validaciones de unicidad global (correo, token del celular) ignoran solo el filtro `Empresa` y devuelven sí/no. Las placas se validan dentro de la empresa.
 - Las pruebas `tests/APIGasoline.Api.IntegrationTests` (matriz de fugas) y `tests/APIGasoline.Architecture.Tests` (`AislamientoEmpresaTests`) lo vigilan.
 
 ### 3.4. Row-Level Security en SQL Server (fase 6)
@@ -153,6 +155,17 @@ Segundo candado, dentro de la base de datos: aunque una consulta se salte el fil
 | rol | `rls.fn_rol_visible(empresa_id)`: propios y globales | `rls.fn_misma_empresa(empresa_id)`, también BEFORE UPDATE/DELETE (los globales no se tocan) |
 | usuario_rol | `rls.fn_usuario_de_la_empresa(usuario_id)` | `rls.fn_asignacion_de_la_empresa(usuario_id, rol_id)`: usuario y rol de la empresa |
 | rol_privilegio | `rls.fn_rol_privilegio_visible(rol_id)` | `rls.fn_rol_de_la_empresa(rol_id)` |
+| auditoria_evento, outbox_mensaje (A005) | `rls.fn_misma_empresa(empresa_id)` | La misma, AFTER INSERT y AFTER UPDATE. Un evento sin empresa solo lo ve y lo escribe la plataforma; por eso `AuditoriaInterceptor` le pone la empresa de quien hace el cambio cuando el registro no tiene `empresa_id` (asignaciones y privilegios de roles). |
+| sesion_usuario (A005) | `rls.fn_usuario_de_la_empresa(usuario_id)` | La misma, AFTER INSERT y AFTER UPDATE |
+
+**Empleado y usuario de la misma empresa (A007, migración `EmpleadoUsuarioMismaEmpresa`).** Los predicados de bloqueo de `empleado` y `usuario` son `rls.fn_empleado_escribible` y `rls.fn_usuario_escribible`: además de la regla de arriba, el usuario de un empleado tiene que ser de la misma empresa que el empleado o de ninguna (de ese vínculo sale la empresa del token). No revisan las filas que ya existían; para encontrar incoherencias:
+
+```sql
+EXEC sys.sp_set_session_context N'apigasoline.ve_todas', 1;
+SELECT e.empleado_id, e.empresa_id AS empresa_empleado, u.usuario_id, u.empresa_id AS empresa_usuario
+FROM dbo.empleado AS e JOIN dbo.usuario AS u ON u.usuario_id = e.usuario_id
+WHERE u.empresa_id IS NOT NULL AND u.empresa_id <> e.empresa_id;
+```
 
 - **Sin `SESSION_CONTEXT` no se ve nada** (falla cerrado). Para consultar a mano en SSMS, Azure Data Studio o un script de mantenimiento, ejecuta primero:
 
@@ -160,9 +173,10 @@ Segundo candado, dentro de la base de datos: aunque una consulta se salte el fil
   EXEC sys.sp_set_session_context N'apigasoline.ve_todas', 1;
   ```
 
-- **Índices únicos de toda la BD** (placas, correo, token del celular): si el valor repetido es de otra empresa, el handler no lo ve y el que lo detecta es el índice. La API responde 409 con un mensaje que no dice el valor ni de quién es (`ViolacionUnicidad`).
+- **Índices únicos de toda la BD** (correo, token del celular): si el valor repetido es de otra empresa, el handler no lo ve y el que lo detecta es el índice. La API responde 409 con un mensaje que no dice el valor ni de quién es (`ViolacionUnicidad`).
 - **La política está con `SCHEMABINDING = ON`:** una migración que quiera cambiar `empresa_id` (o `usuario_id`/`rol_id` en `usuario_rol` y `rol_privilegio`) en estas tablas tiene que quitar la política, cambiar la columna y volver a crearla.
-- **Tablas sin RLS:** `privilegio` (catálogo de la plataforma) y `auditoria_evento`, `outbox_mensaje`, `sesion_usuario` (técnicas), igual que en EF.
+- **Migraciones que tocan datos (A009):** las migraciones corren con el login migrador y **sin** `SESSION_CONTEXT`, así que un `UPDATE`, `DELETE` o `INSERT … SELECT` sobre una tabla con la política afecta **cero filas sin dar error**. Toda migración que modifique datos debe ejecutar primero `EXEC sys.sp_set_session_context @key = N'apigasoline.ve_todas', @value = 1;` (ejemplo: `IndicesUnicosConcurrencia`). `MigracionesTests` (pruebas de arquitectura) falla si una migración nueva toca datos sin hacerlo.
+- **Tabla sin RLS:** `privilegio` (catálogo de la plataforma), igual que en EF.
 - `SeguridadPorFilasTests` (pruebas de integración) habla con SQL Server directo para comprobarlo y falla si una tabla filtrada en EF no tiene su política.
 
 ---
@@ -480,7 +494,7 @@ Vehículos de la empresa, su estado, tipo y kilometraje.
 | `modelo` | varchar(80) | NN |  | Modelo. |
 | `anio` | int |  |  | Año del modelo. |
 | `color` | varchar(50) |  |  | Color. |
-| `placas` | varchar(20) | NN, único |  | Únicas en todo el sistema (no por empresa). |
+| `placas` | varchar(20) | NN |  | Únicas dentro de la empresa (`uq_carro_empresa_id_placas`). |
 | `foto_vehiculo` | varchar(255) |  |  | Llave en MinIO. |
 | `capacidad_tanque` | decimal(6,2) |  |  | Litros. Sirve para alertar cargas imposibles. |
 | `kilometraje_actual` | decimal(10,2) | NN | 0.00 | Último kilometraje conocido. Avanza al finalizar cada viaje. |
@@ -491,7 +505,7 @@ Vehículos de la empresa, su estado, tipo y kilometraje.
 | `motivo_baja` | varchar(255) |  |  | Por qué se dio de baja. |
 | `tipo_vehiculo` | enum('carro','moto','camioneta','camion') | NN | carro | v9. La app cambia el ícono según el tipo. |
 
-**Índices:** `ix_carro_empresa_id` (empresa_id); `uq_carro_empresa_id_carro_id` (empresa_id, carro_id) **único**; `uq_carro_placas` (placas) **único**
+**Índices:** `ix_carro_empresa_id` (empresa_id); `uq_carro_empresa_id_carro_id` (empresa_id, carro_id) **único**; `uq_carro_empresa_id_placas` (empresa_id, placas) **único**
 
 **Llaves foráneas:** (empresa_id) → `empresa`(empresa_id) ON DELETE RESTRICT
 
@@ -773,7 +787,7 @@ Revisiones de un responsable sobre un viaje o un carro en un periodo.
 - **Pausas:** solo una abierta por viaje, sin traslaparse y dentro del viaje.
 - **Cargas:** los litros no pueden superar `carro.capacidad_tanque`. Editar o borrar una carga ya enviada es una corrección: pide motivo y queda en `auditoria_evento` (con el viaje cerrado además se necesita `viaje.corregir_cerrado`).
 - **Auditoría:** el `AuditoriaInterceptor` de EF escribe `auditoria_evento` en la misma transacción que el cambio. Nunca guarda contraseñas, hashes ni tokens.
-- **Outbox:** el push se guarda en `outbox_mensaje` en la misma transacción que el cambio de negocio. `OutboxWorker` lo toma con `FOR UPDATE SKIP LOCKED`, así varias instancias de la API no envían el mismo mensaje.
+- **Outbox:** el push se guarda en `outbox_mensaje` en la misma transacción que el cambio de negocio. `OutboxWorker` lo toma con `WITH (UPDLOCK, READPAST, ROWLOCK)`, así varias instancias de la API no envían el mismo mensaje.
 - **Alertas y reportes** (`/api/auditoria/revision-combustible`, `/api/reportes/flota`): se calculan al consultar, no tienen tabla.
 
 ---
@@ -783,7 +797,7 @@ Revisiones de un responsable sobre un viaje o un carro en un periodo.
 | # | Documentación v9 | Lo que hay en la API / BD real |
 |---|---|---|
 | 1 | 23 tablas. | **24 tablas**: falta `sesion_usuario` (migración `20261106120000_SesionesUsuario`, 6-nov). Es la versión 10 del modelo. |
-| 2 | `auditoria_evento` es "solo inserción: el usuario de MySQL de la API no tiene UPDATE ni DELETE". | Ninguna migración ni `docker-compose` aplica ese `REVOKE`; solo aparece como instrucción en `docs/CambiosV4-Auditoria.md`. Con el usuario `root` de los compose, la tabla sí se puede modificar. Hoy lo garantiza solo la API (no expone endpoints para editarla). |
+| 2 | `auditoria_evento` es "solo inserción: el usuario de MySQL de la API no tiene UPDATE ni DELETE". | **Resuelto (N004):** la migración `BitacoraSoloInsercion` y `BD/produccion/crear-logins.sql` aplican `DENY UPDATE, DELETE ON dbo.auditoria_evento TO apigasoline_app`. En desarrollo (sin ese login) la tabla sigue siendo editable. |
 | 3 | `fecha_recepcion` `not null` en `viaje`, `punto_ruta`, `carga_combustible`, `cambio_estatus_carro`. | Son **nullable** con default `now()`. En la práctica nunca quedan en NULL porque la API las llena. |
 | 4 | `rol.empresa_clave` `not null`. | Es nullable en el esquema (columna generada). Nunca vale NULL por el `COALESCE`. |
 | 5 | Intercalación `utf8mb4_unicode_ci` (por el `docker-compose`). | Las tablas quedan en **`utf8mb4_0900_ai_ci`** (ver la sección 2). Ambas ignoran mayúsculas y acentos, pero ordenan distinto en algunos casos. |

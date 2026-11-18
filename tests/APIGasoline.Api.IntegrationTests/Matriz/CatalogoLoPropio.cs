@@ -162,6 +162,32 @@ public static class CatalogoLoPropio
                 EnBd(e, async c => (await c.Roles.AnyAsync(x => x.RolId == rolId)).ToString()));
         }) { Atacante = Actor.GestorRolesA, Controles = [Actor.AdminA] },
 
+        // A008: con usuario.gestionar no se administra la cuenta de alguien con más privilegios
+        new("Desactivar a un usuario con más privilegios que yo", Put, async e =>
+        {
+            var usuarioId = await OtroAdministradorAsync(e);
+            var email = await e.EnBdAsync(async c => (await c.Usuarios.SingleAsync(x => x.UsuarioId == usuarioId)).Email);
+            return new Preparado($"/api/usuarios/{usuarioId}", Json(new { email, estado = "inactivo" }),
+                EnBd(e, async c => (await c.Usuarios.SingleAsync(x => x.UsuarioId == usuarioId)).Estado.ToString()));
+        }) { Atacante = Actor.GestorRolesA, Controles = [Actor.AdminA] },
+
+        new("Cerrar las sesiones de un usuario con más privilegios que yo", Post, async e =>
+        {
+            var usuarioId = await OtroAdministradorAsync(e);
+
+            // Una sesión abierta, para que el control (AdminA) tenga algo que cerrar
+            await e.EnBdAsync(async c =>
+            {
+                c.Sesiones.Add(APIGasoline.Domain.Entities.SesionUsuario.Iniciar(
+                    usuarioId, e.A.EmpresaId, Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N"), null, null, null, null,
+                    DateTime.Now, TimeSpan.FromDays(1), TimeSpan.FromDays(7)));
+                return await c.SaveChangesAsync();
+            });
+
+            return new Preparado($"/api/usuarios/{usuarioId}/sesiones/cerrar-todas", null,
+                EnBd(e, async c => (await c.Sesiones.CountAsync(x => x.UsuarioId == usuarioId && x.FechaRevocacion != null)).ToString()));
+        }) { Atacante = Actor.GestorRolesA, Controles = [Actor.AdminA] },
+
         new("Editar un rol con privilegios que no tengo", Put, async e =>
         {
             var rolId = await RolConPrivilegioQueNoTieneAsync(e);
@@ -169,6 +195,13 @@ public static class CatalogoLoPropio
                 EnBd(e, async c => (await c.Roles.SingleAsync(x => x.RolId == rolId)).Nombre));
         }) { Atacante = Actor.GestorRolesA, Controles = [Actor.AdminA] },
     ];
+
+    /// <summary>Un usuario nuevo de la empresa A con el rol de administrador (nunca el AdminA del escenario).</summary>
+    private static async Task<Guid> OtroAdministradorAsync(Escenario e)
+    {
+        var id = await e.UsuarioConRolAsync(e.A, e.A.RolAdminId);
+        return await e.EnBdAsync(async c => (await c.UsuarioRoles.SingleAsync(x => x.UsuarioRolId == id)).UsuarioId);
+    }
 
     private static async Task<Guid> RolConPrivilegioQueNoTieneAsync(Escenario e)
     {

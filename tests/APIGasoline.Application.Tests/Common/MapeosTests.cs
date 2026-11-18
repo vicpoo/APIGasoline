@@ -1,6 +1,7 @@
 ﻿using APIGasoline.Application;
 using AutoMapper;
 using AutoMapper.Internal;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace APIGasoline.Application.Tests.Common;
 
@@ -13,7 +14,7 @@ public class MapeosTests
     [Fact]
     public void La_configuracion_de_AutoMapper_es_valida()
     {
-        var configuracion = new MapperConfiguration(cfg => cfg.AddMaps(typeof(DependencyInjection).Assembly));
+        var configuracion = new MapperConfiguration(cfg => cfg.AddMaps(typeof(DependencyInjection).Assembly), NullLoggerFactory.Instance);
 
         configuracion.AssertConfigurationIsValid();
     }
@@ -22,7 +23,7 @@ public class MapeosTests
     [Fact]
     public void Se_cargan_todos_los_perfiles()
     {
-        var configuracion = new MapperConfiguration(cfg => cfg.AddMaps(typeof(DependencyInjection).Assembly));
+        var configuracion = new MapperConfiguration(cfg => cfg.AddMaps(typeof(DependencyInjection).Assembly), NullLoggerFactory.Instance);
         var perfiles = typeof(DependencyInjection).Assembly.GetTypes().Count(t => t.IsSubclassOf(typeof(Profile)) && !t.IsAbstract);
 
         Assert.True(perfiles >= 20, $"Solo se encontraron {perfiles} perfiles.");

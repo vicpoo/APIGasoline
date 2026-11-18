@@ -200,12 +200,19 @@ public sealed class SeguridadPorFilasTests(Escenario e)
             $"(FILTER + BLOCK AFTER INSERT/UPDATE): {string.Join(", ", faltan)}. Agrégalas con una migración.");
     }
 
+    /// <summary>
+    /// A006: las placas son únicas dentro de cada empresa. Registrar las placas de un carro de otra
+    /// empresa funciona (ya no hay un 409 que confirme que existen allá); repetirlas en la misma, no.
+    /// </summary>
     [Fact]
-    public async Task Repetir_las_placas_de_otra_empresa_responde_409_sin_decir_de_quien_son()
+    public async Task Las_placas_de_otra_empresa_se_pueden_registrar_pero_no_repetir_en_la_misma()
     {
-        var placasDeB = await e.EnBdAsync(async c => (await c.Carros.FirstAsync(x => x.CarroId == e.B.Carro1Id)).Placas);
+        // Un carro nuevo de B con placas aleatorias: con las de la demo (DEMO-B01) los datos de A
+        // contendrían la marca de B y la matriz de fugas lo vería como fuga
+        var carroDeB = await e.CarroAsync(e.B);
+        var placasDeB = await e.EnBdAsync(async c => (await c.Carros.FirstAsync(x => x.CarroId == carroDeB)).Placas);
 
-        var respuesta = await e.EnviarAsync(Actor.AdminA, HttpMethod.Post, "/api/carros", Escenario.ComoJson(new
+        HttpContent Carro() => Escenario.ComoJson(new
         {
             empresaId = e.A.EmpresaId,
             marca = "Marca",
@@ -213,11 +220,74 @@ public sealed class SeguridadPorFilasTests(Escenario e)
             anio = 2022,
             placas = placasDeB,
             kilometrajeActual = 1000,
-        }));
+        });
 
-        Assert.Equal(HttpStatusCode.Conflict, respuesta.Status);
-        Assert.DoesNotContain(e.B.EmpresaId.ToString(), respuesta.Cuerpo, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain(placasDeB, respuesta.Cuerpo, StringComparison.OrdinalIgnoreCase);
+        var primera = await e.EnviarAsync(Actor.AdminA, HttpMethod.Post, "/api/carros", Carro());
+        var repetida = await e.EnviarAsync(Actor.AdminA, HttpMethod.Post, "/api/carros", Carro());
+
+        Assert.True(primera.Exito, primera.ToString());
+        Assert.Equal(HttpStatusCode.Conflict, repetida.Status);
+        Assert.Equal(2, await e.EnBdAsync(c => c.Carros.CountAsync(x => x.Placas == placasDeB)));
+    }
+
+    /// <summary>
+    /// A005: la bitácora, el outbox y las sesiones también tienen Row-Level Security. Con la empresa A
+    /// se ve exactamente lo de A (lo mismo que la plataforma cuenta para A) y nada de B.
+    /// </summary>
+    [Fact]
+    public async Task Con_la_empresa_A_la_bitacora_el_outbox_y_las_sesiones_de_B_no_existen()
+    {
+        const string sesionesDe = "SELECT COUNT(*) FROM sesion_usuario AS s WHERE EXISTS " +
+                                  "(SELECT 1 FROM usuario AS u WHERE u.usuario_id = s.usuario_id AND u.empresa_id = @e)";
+
+        int bitacoraDeA, outboxDeA, sesionesDeA;
+
+        await using (var plataforma = await AbrirAsync(veTodas: true))
+        {
+            Assert.True(await ContarDeAsync(plataforma, "auditoria_evento", e.B.EmpresaId) > 0, "Control: B debería tener eventos en la bitácora.");
+            Assert.True(await ContarAsync(plataforma, sesionesDe, ("@e", e.B.EmpresaId)) > 0, "Control: los usuarios de B deberían tener sesiones.");
+
+            bitacoraDeA = await ContarDeAsync(plataforma, "auditoria_evento", e.A.EmpresaId);
+            outboxDeA = await ContarDeAsync(plataforma, "outbox_mensaje", e.A.EmpresaId);
+            sesionesDeA = await ContarAsync(plataforma, sesionesDe, ("@e", e.A.EmpresaId));
+        }
+
+        await using var conexion = await AbrirAsync(empresa: e.A.EmpresaId);
+
+        Assert.Equal(bitacoraDeA, await ContarAsync(conexion, "SELECT COUNT(*) FROM auditoria_evento"));
+        Assert.Equal(outboxDeA, await ContarAsync(conexion, "SELECT COUNT(*) FROM outbox_mensaje"));
+        Assert.Equal(sesionesDeA, await ContarAsync(conexion, "SELECT COUNT(*) FROM sesion_usuario"));
+        Assert.True(bitacoraDeA > 0, "Control: A debería ver sus eventos de la bitácora.");
+    }
+
+    /// <summary>A005: con la empresa A no se puede dejar un evento de bitácora en B ni sin empresa.</summary>
+    [Fact]
+    public async Task Con_la_empresa_A_no_se_puede_escribir_bitacora_de_B()
+    {
+        await using var conexion = await AbrirAsync(empresa: e.A.EmpresaId);
+
+        var error = await Assert.ThrowsAsync<SqlException>(() => EjecutarAsync(conexion,
+            "UPDATE auditoria_evento SET empresa_id = @b WHERE auditoria_evento_id = " +
+            "(SELECT TOP (1) auditoria_evento_id FROM auditoria_evento ORDER BY auditoria_evento_id)",
+            ("@b", e.B.EmpresaId)));
+
+        Assert.Equal(ErrorPredicadoDeBloqueo, error.Number);
+    }
+
+    /// <summary>
+    /// A007: aun viendo todas las empresas, la BD no deja que el usuario de un empleado de A quede en B
+    /// (de ese vínculo sale la empresa del token).
+    /// </summary>
+    [Fact]
+    public async Task La_BD_no_deja_que_el_usuario_de_un_empleado_sea_de_otra_empresa()
+    {
+        await using var conexion = await AbrirAsync(veTodas: true);
+
+        var error = await Assert.ThrowsAsync<SqlException>(() => EjecutarAsync(conexion,
+            "UPDATE usuario SET empresa_id = @b WHERE usuario_id = @u",
+            ("@b", e.B.EmpresaId), ("@u", e.A.OperadorUsuarioId)));
+
+        Assert.Equal(ErrorPredicadoDeBloqueo, error.Number);
     }
 
     // ---- Conexión directa a SQL Server con el SESSION_CONTEXT que mandaría la API

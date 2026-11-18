@@ -19,6 +19,9 @@ namespace APIGasoline.Application.Features.PuntosRuta.Commands;
 ///   así la app puede reenviar un lote si se cortó la conexión. Si el mismo lote llega dos veces
 ///   al mismo tiempo, el índice único (viaje, timestamp) frena el segundo y aquí se vuelve a
 ///   filtrar contra lo ya guardado (F010): responde como reintento, sin duplicar.
+///   Si SQL Server elige esta petición como víctima de un interbloqueo (1205) también se vuelve a
+///   leer y a intentar (N001). Si después de varios intentos sigue chocando responde 503 para que
+///   la app lo reintente sola (antes respondía 500).
 /// - Todo el lote se guarda en un solo SaveChanges (si un punto es inválido, no se guarda ninguno).
 /// - Los puntos que caen dentro de una pausa del viaje se descartan (la app apaga el GPS en pausa;
 ///   esto es solo la red de seguridad para que la ruta no cuente el tiempo detenido).
@@ -30,6 +33,9 @@ public sealed record RegistrarLotePuntosRutaCommand(
 public sealed class RegistrarLotePuntosRutaCommandHandler : ICommandHandler<RegistrarLotePuntosRutaCommand, LotePuntosRutaResultadoDto>
 {
     public const int MaxPuntosPorLote = 1000;
+
+    /// <summary>Intentos de guardar el lote si choca con otra petición simultánea (duplicado o interbloqueo).</summary>
+    public const int MaxIntentosGuardar = 4;
 
     private readonly IUnitOfWork _unitOfWork;
     private readonly IDateTimeProvider _dateTime;
@@ -107,12 +113,13 @@ public sealed class RegistrarLotePuntosRutaCommandHandler : ICommandHandler<Regi
     }
 
     /// <summary>
-    /// Guarda los puntos que todavía no existen. Si otra petición guardó algunos en el mismo instante
-    /// (índice único), vuelve a leer y lo intenta una vez más solo con los que siguen faltando.
+    /// Guarda los puntos que todavía no existen. Si choca con otra petición en el mismo instante
+    /// (índice único o interbloqueo de SQL Server), vuelve a leer y lo intenta otra vez solo con los
+    /// que siguen faltando. Entre intentos espera un poco más cada vez para no volver a chocar.
     /// </summary>
     private async Task<IReadOnlyList<PuntoRuta>> GuardarNuevosAsync(Guid viajeId, IReadOnlyList<PuntoRuta> candidatos, CancellationToken cancellationToken)
     {
-        for (var intento = 1; ; intento++)
+        for (var intento = 1; intento <= MaxIntentosGuardar; intento++)
         {
             var existentes = await _unitOfWork.PuntosRuta.GetTimestampsByViajeAsync(viajeId, cancellationToken);
             var nuevos = DeduplicadorPuntosRuta.FiltrarNuevos(candidatos, existentes);
@@ -122,14 +129,18 @@ public sealed class RegistrarLotePuntosRutaCommandHandler : ICommandHandler<Regi
 
             await _unitOfWork.PuntosRuta.AddRangeAsync(nuevos, cancellationToken);
 
-            if (intento == 2)
-            {
-                await _unitOfWork.SaveChangesAsync(cancellationToken); // si vuelve a chocar: 409
+            if (await _unitOfWork.SaveChangesSalvoConcurrenciaAsync(cancellationToken))
                 return nuevos;
-            }
 
-            if (await _unitOfWork.SaveChangesSalvoDuplicadoAsync(cancellationToken))
-                return nuevos;
+            if (intento < MaxIntentosGuardar)
+                await Task.Delay(EsperaAntesDe(intento + 1), cancellationToken);
         }
+
+        throw new ReintentarMasTardeException(
+            "El lote de puntos chocó con otro envío simultáneo del mismo viaje. Vuelve a intentarlo en unos segundos.");
     }
+
+    /// <summary>50, 100, 200 ms... con algo de azar para que dos peticiones no reintenten al mismo tiempo.</summary>
+    private static TimeSpan EsperaAntesDe(int intento)
+        => TimeSpan.FromMilliseconds(25 * Math.Pow(2, intento - 1) + Random.Shared.Next(0, 25));
 }

@@ -1,6 +1,8 @@
 // ============================================================
-// APIGasoline — Base de datos (MySQL 8)
-// GENERADO desde la API: migraciones de EF Core aplicadas a un MySQL vacío
+// APIGasoline — Base de datos (SQL Server 2022; antes MySQL 8)
+// Generado originalmente desde la API con las migraciones de EF Core aplicadas a un MySQL vacío.
+// El motor actual es SQL Server: los tipos siguen escritos como en MySQL; las equivalencias
+// están en BD/README.md (sección 12).
 // y leídas de information_schema. Versión del modelo: 11 (EstructuraOrganizacional, fase 8; la fase 8 se editó a mano).
 // Pegar en https://dbdiagram.io para ver el diagrama.
 // ============================================================

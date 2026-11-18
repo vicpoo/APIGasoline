@@ -370,9 +370,9 @@ namespace APIGasoline.Infrastructure.Migrations
                     b.HasIndex("EmpresaId")
                         .HasDatabaseName("ix_carro_empresa_id");
 
-                    b.HasIndex("Placas")
+                    b.HasIndex("EmpresaId", "Placas")
                         .IsUnique()
-                        .HasDatabaseName("uq_carro_placas");
+                        .HasDatabaseName("uq_carro_empresa_id_placas");
 
                     b.ToTable("carro", null, t =>
                         {
