@@ -46,6 +46,9 @@ services:
       Minio__UseSsl: "false"
       # AutoMapper 15+ (licencia de Lucky Penny Software). Sin ella solo escribe un aviso en el log.
       AUTOMAPPER_LICENSE_KEY: ${AUTOMAPPER_LICENSE_KEY:-}
+      # Hosts aceptados en el encabezado Host (A003); los demás reciben 400. "*" = cualquiera.
+      # En producción: ALLOWED_HOSTS=13.222.72.73;localhost (agrega el dominio cuando haya uno).
+      AllowedHosts: ${ALLOWED_HOSTS:-*}
       Push__Proveedor: ${PUSH_PROVEEDOR:-NoOp}
       Push__Firebase__CredencialesPath: /app/secrets/apigasoline-firebase.json
       BaseDatos__MigrarAlIniciar: "true"

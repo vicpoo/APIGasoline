@@ -19,7 +19,7 @@ Correcciones de las revisiones de aislamiento multiempresa (A001 a A009) y de co
 - **A005:** `auditoria_evento`, `outbox_mensaje` y `sesion_usuario` entran al aislamiento: filtro de EF, guardián de escrituras y Row-Level Security (migración `AislamientoTablasTecnicas`). Los eventos de auditoría de asignaciones de roles quedan con la empresa de quien hizo el cambio.
 - **N004:** la bitácora es de solo inserción para el login de la API (`DENY UPDATE, DELETE`, migración `BitacoraSoloInsercion` y `crear-logins.sql`).
 - **A007:** la BD exige que el usuario de un empleado sea de la misma empresa o de ninguna (migración `EmpleadoUsuarioMismaEmpresa`).
-- **A003:** tope de 16 hosts para firmar URLs de MinIO con `PublicEndpoint = auto`.
+- **A003:** tope de 16 hosts para firmar URLs de MinIO con `PublicEndpoint = auto`. En producción `MINIO_PUBLIC_ENDPOINT` queda fijo y `ALLOWED_HOSTS` limita el encabezado `Host` (`AllowedHosts` en el compose).
 - **N005:** `System.Security.Cryptography.Pkcs` fijado en 10.0.14.
 
 ### Corregido
@@ -27,6 +27,10 @@ Correcciones de las revisiones de aislamiento multiempresa (A001 a A009) y de co
 - **A001:** las fechas JSON con `Z` (UTC) se pasan a la hora local del servidor, como las que traen offset.
 - **A002:** eliminar una carga ya no borra la foto del ticket (es evidencia).
 - **N002, N003:** documentación de 400/413 y restos de MySQL.
+
+### Documentación
+
+- `docs/RiesgosAceptados.md`: riesgos aceptados por escrito (A004 sin HTTPS por ahora, A006 correo único global, N006 asignaciones sin paginar).
 
 ### Pruebas
 
