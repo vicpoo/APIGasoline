@@ -327,6 +327,55 @@ public class CarroTests
         Assert.Equal(15580m, carro.KilometrajeActual);
     }
 
+    // --- Conflictos entre celulares: gana el cambio más reciente ---
+
+    private static readonly DateTime Ahora = new(2026, 11, 23, 12, 0, 0);
+
+    [Fact]
+    public void NormalizarFechaEdicion_SinFecha_UsaLaHoraDelServidor()
+    {
+        Assert.Equal(Ahora, Carro.NormalizarFechaEdicion(null, Ahora));
+    }
+
+    [Fact]
+    public void NormalizarFechaEdicion_CambioHechoAntesSinRed_ConservaSuHora()
+    {
+        var hechoSinRed = Ahora.AddHours(-2);
+
+        Assert.Equal(hechoSinRed, Carro.NormalizarFechaEdicion(hechoSinRed, Ahora));
+    }
+
+    [Fact]
+    public void NormalizarFechaEdicion_RelojDelCelularAdelantado_SeTomaComoAhora()
+    {
+        Assert.Equal(Ahora, Carro.NormalizarFechaEdicion(Ahora.AddDays(1), Ahora));
+    }
+
+    [Fact]
+    public void EsCambioAnterior_CarroSinFechaDeEdicion_AceptaCualquierCambio()
+    {
+        var carro = ConstruirCarro();
+
+        Assert.False(carro.EsCambioAnterior(Ahora.AddYears(-1)));
+    }
+
+    [Fact]
+    public void EsCambioAnterior_CambioHechoAntesDelUltimoGuardado_NoSeAplica()
+    {
+        var carro = ConstruirCarro();
+        carro.RegistrarEdicion(Ahora.AddMinutes(-30)); // el celular B lo editó a las 11:30
+
+        Assert.True(carro.EsCambioAnterior(Ahora.AddHours(-2)));   // el celular A lo había editado a las 10:00 sin red
+        Assert.False(carro.EsCambioAnterior(Ahora.AddMinutes(-30))); // misma hora: se acepta
+        Assert.False(carro.EsCambioAnterior(Ahora));                // posterior: se acepta
+    }
+
+    [Fact]
+    public void RegistrarEdicion_FechaVacia_LanzaDomainException()
+    {
+        Assert.Throws<DomainException>(() => ConstruirCarro().RegistrarEdicion(default));
+    }
+
     private static Carro ConstruirCarro(
         string marca = "Nissan",
         string modelo = "NP300",

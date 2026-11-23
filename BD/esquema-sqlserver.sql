@@ -146,6 +146,7 @@ CREATE TABLE [carro] (
     [fecha_baja] datetime2(0) NULL,
     [motivo_baja] nvarchar(255) NULL,
     [fecha_alta] datetime2(0) NULL DEFAULT (SYSDATETIME()),
+    [fecha_edicion] datetime2(0) NULL,
     CONSTRAINT [PK_carro] PRIMARY KEY ([carro_id]),
     CONSTRAINT [uq_carro_empresa_id_carro_id] UNIQUE ([empresa_id], [carro_id]),
     CONSTRAINT [ck_carro_estado] CHECK ([estado] IN ('disponible', 'ocupado', 'en_mantenimiento')),

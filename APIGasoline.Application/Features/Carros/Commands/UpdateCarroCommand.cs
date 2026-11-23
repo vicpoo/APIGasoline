@@ -2,6 +2,7 @@
 using APIGasoline.Application.Common.Interfaces;
 using APIGasoline.Application.Common.Storage;
 using APIGasoline.Application.Features.Carros.DTOs;
+using APIGasoline.Domain.Entities;
 using APIGasoline.Domain.Enums;
 using APIGasoline.Domain.Interfaces;
 using AutoMapper;
@@ -11,6 +12,10 @@ namespace APIGasoline.Application.Features.Carros.Commands;
 
 /// <summary>
 /// Actualiza los datos del carro. La foto NO se cambia aquí: usa SubirFotoVehiculoCommand / EliminarFotoVehiculoCommand.
+/// <para>
+/// <paramref name="FechaEdicion"/>: cuándo se hizo el cambio en el celular (puede llegar tarde si estaba sin red).
+/// Si otro celular ya guardó un cambio más reciente, este no se aplica: 409 con código CAMBIO_MAS_RECIENTE.
+/// </para>
 /// </summary>
 public sealed record UpdateCarroCommand(
     Guid CarroId,
@@ -22,7 +27,8 @@ public sealed record UpdateCarroCommand(
     string Placas,
     decimal? CapacidadTanque,
     decimal KilometrajeActual,
-    TipoVehiculo? TipoVehiculo = null) : ICommand<CarroDto>;
+    TipoVehiculo? TipoVehiculo = null,
+    DateTime? FechaEdicion = null) : ICommand<CarroDto>;
 
 public sealed class UpdateCarroCommandHandler : ICommandHandler<UpdateCarroCommand, CarroDto>
 {
@@ -44,6 +50,13 @@ public sealed class UpdateCarroCommandHandler : ICommandHandler<UpdateCarroComma
         var carro = await _unitOfWork.Carros.GetByIdAsync(request.CarroId, cancellationToken)
             ?? throw new NotFoundException($"No existe un carro con el id {request.CarroId}.");
 
+        // Gana el cambio más reciente: si otro celular ya guardó uno posterior, este no se aplica
+        var fechaEdicion = Carro.NormalizarFechaEdicion(request.FechaEdicion, _dateTime.Now);
+        if (carro.EsCambioAnterior(fechaEdicion))
+            throw new ConflictException(
+                "Otro dispositivo guardó un cambio más reciente de este carro.",
+                CodigosConflicto.CambioMasReciente);
+
         // El dominio valida y normaliza los datos
         carro.CambiarEmpresa(request.EmpresaId);
         carro.CambiarDatos(request.Marca, request.Modelo, request.Anio, request.Color, _dateTime.Now.Year);
@@ -52,6 +65,7 @@ public sealed class UpdateCarroCommandHandler : ICommandHandler<UpdateCarroComma
         carro.ActualizarKilometraje(request.KilometrajeActual);
         if (request.TipoVehiculo is { } tipo)
             carro.CambiarTipoVehiculo(tipo);
+        carro.RegistrarEdicion(fechaEdicion);
         // El estado NO se cambia aquí: usa /api/cambios-estatus-carro (queda en la bitácora)
 
         if (!await _unitOfWork.Empresas.ExistsAsync(carro.EmpresaId, cancellationToken))

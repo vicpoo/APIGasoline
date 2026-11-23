@@ -61,7 +61,8 @@ public class CarrosController : ControllerBase
             request.CapacidadTanque,
             request.KilometrajeActual,
             request.Estado,
-            request.TipoVehiculo);
+            request.TipoVehiculo,
+            request.FechaEdicion);
 
         var carro = await _sender.Send(command, cancellationToken);
 
@@ -82,7 +83,8 @@ public class CarrosController : ControllerBase
             request.Placas,
             request.CapacidadTanque,
             request.KilometrajeActual,
-            request.TipoVehiculo);
+            request.TipoVehiculo,
+            request.FechaEdicion);
 
         var carro = await _sender.Send(command, cancellationToken);
 

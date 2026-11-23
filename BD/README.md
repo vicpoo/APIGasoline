@@ -503,6 +503,7 @@ Vehículos de la empresa, su estado, tipo y kilometraje.
 | `dado_de_baja` | tinyint(1) | NN | 0 | Baja del vehículo (ya no se puede pedir). El historial se conserva. |
 | `fecha_baja` | timestamp |  |  | Cuándo se dio de baja. |
 | `motivo_baja` | varchar(255) |  |  | Por qué se dio de baja. |
+| `fecha_edicion` | timestamp |  |  | Hora del último cambio de datos (alta o edición). Entre celulares gana el cambio más reciente (ver sección 8). NULL en carros anteriores a la migración `CarroFechaEdicion`. |
 | `tipo_vehiculo` | enum('carro','moto','camioneta','camion') | NN | carro | v9. La app cambia el ícono según el tipo. |
 
 **Índices:** `ix_carro_empresa_id` (empresa_id); `uq_carro_empresa_id_carro_id` (empresa_id, carro_id) **único**; `uq_carro_empresa_id_placas` (empresa_id, placas) **único**
@@ -789,6 +790,7 @@ Revisiones de un responsable sobre un viaje o un carro en un periodo.
 - **Auditoría:** el `AuditoriaInterceptor` de EF escribe `auditoria_evento` en la misma transacción que el cambio. Nunca guarda contraseñas, hashes ni tokens.
 - **Outbox:** el push se guarda en `outbox_mensaje` en la misma transacción que el cambio de negocio. `OutboxWorker` lo toma con `WITH (UPDLOCK, READPAST, ROWLOCK)`, así varias instancias de la API no envían el mismo mensaje.
 - **Alertas y reportes** (`/api/auditoria/revision-combustible`, `/api/reportes/flota`): se calculan al consultar, no tienen tabla.
+- **Editar carros desde varios celulares:** gana el cambio más reciente, no el último que llega. El celular manda `fechaEdicion` (cuándo hizo el cambio, aunque llegue tarde por estar sin red); si es anterior a `carro.fecha_edicion`, el `PUT` responde 409 `CAMBIO_MAS_RECIENTE` y no aplica nada. Sin `fechaEdicion`, o con una hora en el futuro, se usa la hora del servidor.
 
 ---
 
@@ -828,7 +830,8 @@ Todo lo demás de la v9 (columnas, tipos, enums, FKs compuestas, CHECK de `revis
 | SQL Server | `20261111222631_SeguridadPorFilas` (fase 6) | Row-Level Security: esquema `rls`, funciones de predicado y política `rls.aislamiento_empresa`. |
 | 11 | `EstructuraOrganizacional` (fase 8) | La empresa es la raíz: `corporativo.empresa_id` y `division.empresa_id`; **`corporativo_division`** (N:M); `centro_costo.corporativo_id`/`division_id` opcionales; `empresa` pierde `corporativo_id`/`division_id`; las tres tablas entran a la política de RLS; `corporativo.gestionar` pasa a ámbito empresa. Datos existentes: cada corporativo queda en la primera empresa que lo usaba (los que no usaba ninguna se borran con sus divisiones) y la relación división → corporativo se vuelve liga. |
 | 12 | `EmpresaDesactivada` (fase 9A) | Nuevo motivo de cierre de sesión `empresa_desactivada`: al desactivar una empresa se cierran sus sesiones y ya no puede iniciar sesión ni renovar el token. |
-| **13** | `IndicesUnicosConcurrencia` (fase 9B) | Índices únicos (F010): un viaje en curso por carro y una pausa abierta por viaje (filtrados) y `(viaje_id, timestamp_captura)` en `punto_ruta`. Antes de crearlos se limpian duplicados: puntos repetidos se borran, pausas abiertas de más se cierran y viajes en curso de más quedan interrumpidos. |
+| 13 | `IndicesUnicosConcurrencia` (fase 9B) | Índices únicos (F010): un viaje en curso por carro y una pausa abierta por viaje (filtrados) y `(viaje_id, timestamp_captura)` en `punto_ruta`. Antes de crearlos se limpian duplicados: puntos repetidos se borran, pausas abiertas de más se cierran y viajes en curso de más quedan interrumpidos. |
+| **14** | `CarroFechaEdicion` | `carro.fecha_edicion`: gana el cambio más reciente al editar un carro desde varios celulares (409 `CAMBIO_MAS_RECIENTE`). |
 
 ---
 

@@ -322,6 +322,10 @@ namespace APIGasoline.Infrastructure.Migrations
                         .HasColumnType("datetime2(0)")
                         .HasColumnName("fecha_baja");
 
+                    b.Property<DateTime?>("FechaEdicion")
+                        .HasColumnType("datetime2(0)")
+                        .HasColumnName("fecha_edicion");
+
                     b.Property<string>("FotoVehiculo")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)")

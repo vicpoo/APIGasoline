@@ -33,4 +33,11 @@ public class CreateCarroRequest
 
     /// <summary>"carro", "moto", "camioneta" o "camion". Si no se manda, es "carro".</summary>
     public TipoVehiculo TipoVehiculo { get; set; } = TipoVehiculo.Carro;
+
+    /// <summary>
+    /// Cuándo se hizo el cambio en el celular (hora con zona, ej. "2026-11-23T10:00:00-06:00"). Opcional.
+    /// Si otro celular ya guardó un cambio más reciente del carro, este no se aplica (409 CAMBIO_MAS_RECIENTE).
+    /// Sin ella se usa la hora del servidor.
+    /// </summary>
+    public DateTime? FechaEdicion { get; set; }
 }

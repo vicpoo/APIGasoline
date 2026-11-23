@@ -41,6 +41,13 @@ public class Carro
 
     public DateTime? FechaAlta { get; private set; }
 
+    /// <summary>
+    /// Cuándo se hizo el último cambio de los datos del carro (alta o edición), en hora local del servidor.
+    /// Varios celulares pueden editar el mismo carro sin red y mandar sus cambios después: gana el cambio
+    /// MÁS RECIENTE (por la hora en que se hizo), no el último que llega. Null en carros anteriores a esta regla.
+    /// </summary>
+    public DateTime? FechaEdicion { get; private set; }
+
     // Requerido por Entity Framework
     private Carro()
     {
@@ -169,6 +176,29 @@ public class Carro
     }
 
     public bool EstaDisponible => Estado == EstadoCarro.Disponible && !DadoDeBaja;
+
+    /// <summary>
+    /// Hora del cambio que se va a aplicar: la que manda el celular (cuándo lo hizo, aunque llegue tarde) o
+    /// <paramref name="ahora"/> si no la manda (versiones viejas de la app). Una hora en el futuro (reloj del
+    /// celular adelantado) se toma como <paramref name="ahora"/>, para que ese celular no gane siempre.
+    /// </summary>
+    public static DateTime NormalizarFechaEdicion(DateTime? fechaEdicion, DateTime ahora)
+        => fechaEdicion is { } fecha && fecha < ahora ? fecha : ahora;
+
+    /// <summary>
+    /// true si el cambio se hizo ANTES del último cambio guardado (otro celular guardó uno más reciente):
+    /// ya no se aplica. Con la misma hora se acepta.
+    /// </summary>
+    public bool EsCambioAnterior(DateTime fechaEdicion) => FechaEdicion is { } ultima && fechaEdicion < ultima;
+
+    /// <summary>Anota la hora del cambio que se acaba de aplicar (usar <see cref="NormalizarFechaEdicion"/>).</summary>
+    public void RegistrarEdicion(DateTime fechaEdicion)
+    {
+        if (fechaEdicion == default)
+            throw new DomainException("La fecha de edición es obligatoria.");
+
+        FechaEdicion = fechaEdicion;
+    }
 
  
     public void Ocupar()

@@ -12,6 +12,7 @@ Correcciones de las revisiones de aislamiento multiempresa (A001 a A009) y de co
 - **Administrar a otro usuario (A008):** desactivarlo, cambiarle el correo o cerrarle sesiones exige tener todos sus privilegios (403 si no).
 - **Registrar un celular ya registrado en otra empresa (A006):** el mensaje del 409 ya no dice "de otra empresa".
 - **Placas únicas por empresa (A006):** dos empresas pueden registrar las mismas placas (migración `PlacasUnicasPorEmpresa`); repetirlas en la misma empresa sigue respondiendo 409.
+- **Conflictos al editar carros:** `POST` y `PUT /api/carros` aceptan `fechaEdicion` (cuándo se hizo el cambio en el celular). Gana el cambio más reciente, no el último que llega: si otro celular ya guardó uno posterior, el `PUT` responde **409 con `codigo: "CAMBIO_MAS_RECIENTE"`** y no aplica nada. Sin `fechaEdicion` se usa la hora del servidor (versiones viejas de la app funcionan igual). Una hora en el futuro se toma como la del servidor. Migración `CarroFechaEdicion` (columna `carro.fecha_edicion`, NULL en los carros existentes).
 - **AutoMapper 15.1.4 (N005):** corrige GHSA-rvv3-g6hj-g44x, GHSA-6vhm-j9h7-f9gh y GHSA-gpwp-5797-mjff. Desde la versión 15 pide licencia: en producción se configura `AUTOMAPPER_LICENSE_KEY` en el `.env` (sin ella solo escribe un aviso en el log).
 
 ### Seguridad

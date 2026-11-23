@@ -23,7 +23,8 @@ public sealed record CreateCarroCommand(
     decimal? CapacidadTanque,
     decimal KilometrajeActual,
     EstadoCarro Estado,
-    TipoVehiculo TipoVehiculo = TipoVehiculo.Carro) : ICommand<CarroDto>;
+    TipoVehiculo TipoVehiculo = TipoVehiculo.Carro,
+    DateTime? FechaEdicion = null) : ICommand<CarroDto>;
 
 public sealed class CreateCarroCommandHandler : ICommandHandler<CreateCarroCommand, CarroDto>
 {
@@ -54,6 +55,8 @@ public sealed class CreateCarroCommandHandler : ICommandHandler<CreateCarroComma
             _dateTime.Now.Year,
             request.Estado,
             request.TipoVehiculo);
+        // Hora del alta: si después otro celular lo edita, se compara contra esta
+        carro.RegistrarEdicion(Carro.NormalizarFechaEdicion(request.FechaEdicion, _dateTime.Now));
 
         // Las empresas eliminadas (soft delete) no cuentan como existentes
         if (!await _unitOfWork.Empresas.ExistsAsync(carro.EmpresaId, cancellationToken))

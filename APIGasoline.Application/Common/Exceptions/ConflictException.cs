@@ -33,4 +33,10 @@ public static class CodigosConflicto
 
     /// <summary>Ya hay una carga del mismo viaje en la misma fecha y hora.</summary>
     public const string CargaMismaFecha = "CARGA_MISMA_FECHA";
+
+    /// <summary>
+    /// Otro celular guardó un cambio MÁS RECIENTE de ese carro (por la hora en que se hizo): este ya no se
+    /// aplica. La app descarta su cambio y se queda con el del servidor.
+    /// </summary>
+    public const string CambioMasReciente = "CAMBIO_MAS_RECIENTE";
 }

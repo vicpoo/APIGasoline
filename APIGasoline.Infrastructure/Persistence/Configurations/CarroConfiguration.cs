@@ -93,6 +93,11 @@ public class CarroConfiguration : IEntityTypeConfiguration<Carro>
             .HasColumnName("motivo_baja")
             .HasMaxLength(Carro.MotivoBajaMaxLength);
 
+        // Hora del último cambio de datos (alta o edición): gana el cambio más reciente entre celulares
+        builder.Property(c => c.FechaEdicion)
+            .HasColumnName("fecha_edicion")
+            .HasColumnType(TiposSql.FechaHora);
+
         // Propiedad calculada en el dominio, no es columna
         builder.Ignore(c => c.EstaDisponible);
 

@@ -357,6 +357,7 @@ Table carro {
   fecha_baja timestamp [note: 'Cuándo se dio de baja.']
   motivo_baja varchar(255) [note: 'Por qué se dio de baja.']
   tipo_vehiculo carro_tipo_vehiculo [not null, default: 'carro', note: 'v9. La app cambia el ícono según el tipo.']
+  fecha_edicion timestamp [note: 'Hora del último cambio de datos (alta o edición). Entre celulares gana el cambio más reciente: uno anterior responde 409 CAMBIO_MAS_RECIENTE.']
 
   indexes {
     empresa_id [name: 'ix_carro_empresa_id']
